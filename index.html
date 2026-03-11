@@ -6,101 +6,191 @@
     <title>Distorted Jew ($DJEW) - The Ultimate Meme Coin</title>
     <meta name="description" content="Join the most based community in crypto. Distorted Jew ($DJEW) is here to take over.">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/logo.jpg" type="image/jpeg">
 </head>
 <body>
-    <div id="particles-js"></div>
-    
-    <nav class="glass-nav">
-        <div class="logo">
-            <span class="neon-text">$DJEW</span>
+    <!-- Grain overlay -->
+    <div class="grain-overlay"></div>
+    <!-- Glow orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <nav class="glass-nav" id="navbar">
+        <div class="nav-inner">
+            <a href="#hero" class="logo">
+                <img src="assets/logo.jpg" alt="$DJEW" class="logo-img">
+                <span class="logo-text">$DJEW</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#tokenomics">Tokenomics</a></li>
+                <li><a href="#contract">Contract</a></li>
+                <li><a href="#buy">How to Buy</a></li>
+            </ul>
+            <a href="#buy" class="nav-cta">Buy Now</a>
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
         </div>
-        <ul class="nav-links">
-            <li><a href="#about">About</a></li>
-            <li><a href="#tokenomics">Tokenomics</a></li>
-            <li><a href="#buy" class="buy-btn">How to Buy</a></li>
-        </ul>
     </nav>
 
     <main>
+        <!-- HERO -->
         <section id="hero" class="hero">
-            <div class="hero-content">
-                <h1 class="glitch" data-text="DISTORTED JEW">DISTORTED JEW</h1>
-                <p class="subtitle">The timeline is distorted. The gains are real.</p>
+            <div class="hero-content reveal">
+                <div class="badge">🔥 Trending on Solana</div>
+                <h1 class="hero-title">
+                    <span class="line">DISTORTED</span>
+                    <span class="line accent">JEW</span>
+                </h1>
+                <p class="hero-sub">The timeline is distorted. The gains are real. <br>Join the most unhinged community in crypto.</p>
                 <div class="hero-buttons">
-                    <a href="#buy" class="btn primary-btn btn-glow">Buy $DJEW</a>
-                    <a href="https://t.me/yourtelegram" target="_blank" class="btn secondary-btn">Join Community</a>
+                    <a href="#buy" class="btn primary-btn">
+                        <span>Buy $DJEW</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="https://t.me/" target="_blank" class="btn outline-btn">Join Telegram</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <span class="hero-stat-value" data-count="1000000000">0</span>
+                        <span class="hero-stat-label">Total Supply</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-value">0%</span>
+                        <span class="hero-stat-label">Tax</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-value">100%</span>
+                        <span class="hero-stat-label">Community</span>
+                    </div>
                 </div>
             </div>
-            <div class="hero-image-container">
-                <!-- User's image will go here -->
-                <img src="assets/logo.jpg" alt="Distorted Jew Logo" id="main-logo" class="floating">
+            <div class="hero-visual reveal reveal-delay-1">
+                <div class="hero-img-ring">
+                    <div class="ring ring-1"></div>
+                    <div class="ring ring-2"></div>
+                    <div class="ring ring-3"></div>
+                    <img src="assets/logo.jpg" alt="Distorted Jew" id="main-logo" class="hero-logo">
+                </div>
             </div>
         </section>
 
-        <section id="about" class="glass-section fade-in">
-            <div class="section-content">
-                <h2>Why $DJEW?</h2>
-                <div class="cards-container">
-                    <div class="glass-card hover-lift">
+        <!-- ABOUT -->
+        <section id="about" class="section">
+            <div class="container">
+                <div class="section-header reveal">
+                    <span class="section-tag">Why Us</span>
+                    <h2 class="section-title">Why <span class="accent">$DJEW</span>?</h2>
+                    <p class="section-desc">We're not just another meme coin. We're a movement.</p>
+                </div>
+                <div class="cards-grid">
+                    <div class="card reveal reveal-delay-1">
+                        <div class="card-icon">🏛️</div>
                         <h3>100% Community</h3>
-                        <p>No presale, no team tokens, zero taxes. Pure organic growth propelled by memes.</p>
+                        <p>No presale, no team tokens, zero taxes. Pure organic growth propelled by memes and vibes.</p>
                     </div>
-                    <div class="glass-card hover-lift">
+                    <div class="card reveal reveal-delay-2">
+                        <div class="card-icon">🔒</div>
                         <h3>Unruggable</h3>
-                        <p>Liquidity burned, contract renounced. Completely safe for the community.</p>
+                        <p>Liquidity burned forever, contract renounced. Sleep easy knowing your bag is safe.</p>
                     </div>
-                    <div class="glass-card hover-lift">
+                    <div class="card reveal reveal-delay-3">
+                        <div class="card-icon">⚡</div>
                         <h3>Meme Power</h3>
-                        <p>Harnessing the distorted energy of the internet to create a viral movement.</p>
+                        <p>Harnessing the distorted energy of the internet to create the next viral movement in crypto.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="tokenomics" class="glass-section fade-in">
-            <div class="section-content">
-                <h2>Tokenomics</h2>
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <span class="stat-value neon-blue">1B</span>
-                        <span class="stat-label">Total Supply</span>
+        <!-- TOKENOMICS -->
+        <section id="tokenomics" class="section section-alt">
+            <div class="container">
+                <div class="section-header reveal">
+                    <span class="section-tag">Numbers</span>
+                    <h2 class="section-title">Token<span class="accent">omics</span></h2>
+                </div>
+                <div class="tokenomics-grid">
+                    <div class="token-card reveal reveal-delay-1">
+                        <div class="token-value blue">1B</div>
+                        <div class="token-label">Total Supply</div>
+                        <div class="token-bar"><div class="token-fill blue-fill" style="width:100%"></div></div>
                     </div>
-                    <div class="stat-box">
-                        <span class="stat-value neon-pink">0%</span>
-                        <span class="stat-label">Buy/Sell Tax</span>
+                    <div class="token-card reveal reveal-delay-2">
+                        <div class="token-value pink">0%</div>
+                        <div class="token-label">Buy / Sell Tax</div>
+                        <div class="token-bar"><div class="token-fill pink-fill" style="width:0%"></div></div>
                     </div>
-                    <div class="stat-box">
-                        <span class="stat-value neon-green">100%</span>
-                        <span class="stat-label">To Liquidity Pool</span>
+                    <div class="token-card reveal reveal-delay-3">
+                        <div class="token-value green">100%</div>
+                        <div class="token-label">Liquidity Pool</div>
+                        <div class="token-bar"><div class="token-fill green-fill" style="width:100%"></div></div>
+                    </div>
+                    <div class="token-card reveal reveal-delay-4">
+                        <div class="token-value orange">🔥</div>
+                        <div class="token-label">LP Burned</div>
+                        <div class="token-bar"><div class="token-fill orange-fill" style="width:100%"></div></div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="buy" class="glass-section fade-in">
-            <div class="section-content text-center">
-                <h2>How to Buy</h2>
-                <div class="buy-steps">
-                    <div class="step">
-                        <div class="step-num">1</div>
-                        <h3>Get Phantom Wallet</h3>
-                        <p>Download Phantom or your wallet of choice from the app store or google play store for free.</p>
+        <!-- CONTRACT -->
+        <section id="contract" class="section">
+            <div class="container">
+                <div class="section-header reveal">
+                    <span class="section-tag">Verified</span>
+                    <h2 class="section-title">Contract <span class="accent">Address</span></h2>
+                    <p class="section-desc">Always verify the contract address before buying.</p>
+                </div>
+                <div class="contract-box reveal reveal-delay-1">
+                    <div class="contract-label">Solana Contract Address</div>
+                    <div class="contract-address-row">
+                        <code class="contract-address" id="contract-address">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</code>
+                        <button class="copy-btn" id="copy-btn" aria-label="Copy contract address">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            <span class="copy-text">Copy</span>
+                        </button>
                     </div>
-                    <div class="step">
-                        <div class="step-num">2</div>
+                    <div class="contract-links">
+                        <a href="#" class="contract-link">View on Solscan ↗</a>
+                        <a href="#" class="contract-link">View on Birdeye ↗</a>
+                        <a href="#" class="contract-link">DexScreener ↗</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HOW TO BUY -->
+        <section id="buy" class="section section-alt">
+            <div class="container">
+                <div class="section-header reveal">
+                    <span class="section-tag">Get Started</span>
+                    <h2 class="section-title">How to <span class="accent">Buy</span></h2>
+                </div>
+                <div class="steps-grid">
+                    <div class="step-card reveal reveal-delay-1">
+                        <div class="step-num">01</div>
+                        <h3>Get a Wallet</h3>
+                        <p>Download <strong>Phantom</strong> wallet from the app store or your browser extension store.</p>
+                    </div>
+                    <div class="step-card reveal reveal-delay-2">
+                        <div class="step-num">02</div>
                         <h3>Get Some SOL</h3>
-                        <p>Have SOL in your wallet to switch to $DJEW. If you don't have any SOL, you can buy directly on phantom.</p>
+                        <p>Buy SOL directly on Phantom, or transfer from an exchange like Coinbase or Binance.</p>
                     </div>
-                    <div class="step">
-                        <div class="step-num">3</div>
+                    <div class="step-card reveal reveal-delay-3">
+                        <div class="step-num">03</div>
                         <h3>Go to Raydium</h3>
-                        <p>Connect to Raydium. Go to Raydium.io in google chrome or on the browser inside your Phantom app. Connect your wallet.</p>
+                        <p>Head to <strong>raydium.io</strong> with your browser or the built-in browser inside Phantom. Connect your wallet.</p>
                     </div>
-                    <div class="step">
-                        <div class="step-num">4</div>
+                    <div class="step-card reveal reveal-delay-4">
+                        <div class="step-num">04</div>
                         <h3>Swap for $DJEW</h3>
-                        <p>Switch SOL for $DJEW. We have Zero taxes so you don't need to worry about buying with a specific slippage.</p>
+                        <p>Paste the contract address, swap SOL for $DJEW. Zero tax—no slippage worries!</p>
                     </div>
                 </div>
             </div>
@@ -108,14 +198,20 @@
     </main>
 
     <footer>
-        <div class="footer-content">
-            <p>&copy; 2026 Distorted Jew. All rights reserved.</p>
-            <p class="disclaimer">$DJEW is a meme coin with no intrinsic value or expectation of financial return. There is no formal team or roadmap.</p>
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <img src="assets/logo.jpg" alt="$DJEW" class="footer-logo">
+                <span class="footer-name">$DJEW</span>
+            </div>
+            <div class="footer-links">
+                <a href="#">Twitter</a>
+                <a href="#">Telegram</a>
+                <a href="#">DexScreener</a>
+            </div>
+            <p class="disclaimer">$DJEW is a meme coin with no intrinsic value or expectation of financial return. There is no formal team or roadmap. Trade at your own risk.</p>
         </div>
     </footer>
 
-    <!-- Particles.js for background effects -->
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
