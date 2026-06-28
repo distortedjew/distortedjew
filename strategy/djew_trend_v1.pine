@@ -1,0 +1,160 @@
+// ============================================================================
+//  DJEW Trend v1 — Crypto Spot Trend-Following Strategy (Pine Script v5)
+// ============================================================================
+//
+//  WHAT IT DOES
+//  ------------
+//  Long-only trend follower for crypto spot pairs (e.g. BTC/USDT, ETH/USDT,
+//  SOL/USDT). Designed for the 15m–1h timeframe.
+//
+//  ENTRY (all must be true on close):
+//    1. Fast EMA crosses ABOVE Slow EMA          → trend turning up
+//    2. Price is above the long-term Trend EMA   → broader uptrend filter
+//    3. ADX > threshold                          → market is trending, not chopping
+//    4. Volume > volume MA                       → momentum confirmation
+//
+//  EXIT (whichever hits first):
+//    - ATR-based stop loss (optionally trailing, ratchets up only)
+//    - ATR-based take profit (optional, set multiplier to 0 to disable)
+//    - Fast EMA crosses BELOW Slow EMA           → trend invalidation
+//
+//  POSITION SIZING
+//    Risk-based: position size is calculated so that hitting the stop loses
+//    exactly `Risk % per trade` of current equity. This keeps risk consistent
+//    across volatility regimes.
+//
+//  HOW TO USE
+//  ----------
+//   1. Open TradingView → Pine Editor (bottom panel).
+//   2. Paste this entire file in, click "Save", then "Add to chart".
+//   3. Open a crypto spot chart (e.g. BINANCE:BTCUSDT, 1h).
+//   4. Click the strategy settings (gear icon) to tune inputs.
+//   5. Open the "Strategy Tester" tab to see backtest results.
+//   6. To live-trade: right-click chart → "Add alert" → Condition = this
+//      strategy → "Alert() function calls only" → paste your webhook URL.
+//      The alert payload is already a JSON string ready for a bridge service
+//      (3Commas, Cornix, AutoView) or a self-hosted webhook receiver.
+//
+//  IMPORTANT
+//  ---------
+//   - Backtest on at least 2 years of data before risking real money.
+//   - Past performance does NOT guarantee future results.
+//   - Commission (0.1%) and slippage (2 ticks) are baked in by default —
+//     adjust to match your exchange's actual fees.
+//   - Spot only: this strategy never shorts.
+// ============================================================================
+
+//@version=5
+strategy("DJEW Trend v1",
+     overlay              = true,
+     initial_capital      = 10000,
+     default_qty_type     = strategy.percent_of_equity,
+     default_qty_value    = 100,
+     commission_type      = strategy.commission.percent,
+     commission_value     = 0.1,
+     slippage             = 2,
+     pyramiding           = 0,
+     calc_on_every_tick   = false,
+     process_orders_on_close = false)
+
+// ───────── Inputs ─────────
+gTrend  = "Trend"
+emaFastLen  = input.int(21,  "Fast EMA",  minval = 2, group = gTrend)
+emaSlowLen  = input.int(55,  "Slow EMA",  minval = 2, group = gTrend)
+emaTrendLen = input.int(200, "Trend EMA", minval = 2, group = gTrend)
+
+gFilter = "Filters"
+useAdx     = input.bool(true,  "Require ADX above threshold", group = gFilter)
+adxLen     = input.int(14,     "ADX Length",        minval = 1, group = gFilter)
+adxThresh  = input.float(20,   "ADX Threshold",     minval = 0, group = gFilter)
+useVolume  = input.bool(true,  "Require Volume > average", group = gFilter)
+volMaLen   = input.int(20,     "Volume MA Length",  minval = 1, group = gFilter)
+
+gRisk = "Risk Management"
+riskPct     = input.float(1.0, "Risk % of equity per trade", minval = 0.1, maxval = 10.0, step = 0.1, group = gRisk)
+atrLen      = input.int(14,    "ATR Length",                 minval = 1, group = gRisk)
+atrStopMult = input.float(2.0, "ATR Stop Multiplier",        minval = 0.1, step = 0.1, group = gRisk)
+atrTpMult   = input.float(4.0, "ATR Take-Profit Multiplier (0 = disabled)", minval = 0.0, step = 0.1, group = gRisk)
+useTrailing = input.bool(true, "Trail stop with ATR (ratchets up only)", group = gRisk)
+
+gSess = "Backtest Range"
+useDateFilter = input.bool(false, "Limit backtest to date range", group = gSess)
+startDate     = input.time(timestamp("2023-01-01 00:00"), "Start", group = gSess)
+endDate       = input.time(timestamp("2099-01-01 00:00"), "End",   group = gSess)
+
+// ───────── Indicators ─────────
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+emaTrend = ta.ema(close, emaTrendLen)
+[diPlus, diMinus, adxVal] = ta.dmi(adxLen, adxLen)
+atr      = ta.atr(atrLen)
+volMa    = ta.sma(volume, volMaLen)
+
+// ───────── Conditions ─────────
+inDateRange = not useDateFilter or (time >= startDate and time <= endDate)
+trendUp     = close > emaTrend
+crossUp     = ta.crossover(emaFast, emaSlow)
+crossDown   = ta.crossunder(emaFast, emaSlow)
+adxOk       = not useAdx    or adxVal > adxThresh
+volOk       = not useVolume or volume > volMa
+
+longSignal  = crossUp and trendUp and adxOk and volOk and inDateRange
+
+// ───────── Position Sizing (risk-based) ─────────
+stopDistance = atr * atrStopMult
+riskAmount   = strategy.equity * (riskPct / 100.0)
+qtyByRisk    = stopDistance > 0 ? riskAmount / stopDistance : 0.0
+
+// ───────── Entry ─────────
+if longSignal and strategy.position_size == 0
+    strategy.entry("Long", strategy.long, qty = qtyByRisk)
+
+// ───────── Stop / TP tracking ─────────
+var float stopLevel = na
+var float tpLevel   = na
+justOpened = strategy.position_size > 0 and strategy.position_size[1] == 0
+
+if justOpened
+    stopLevel := strategy.position_avg_price - atr * atrStopMult
+    tpLevel   := atrTpMult > 0 ? strategy.position_avg_price + atr * atrTpMult : na
+
+if strategy.position_size > 0
+    if useTrailing
+        newStop = close - atr * atrStopMult
+        if not na(stopLevel) and newStop > stopLevel
+            stopLevel := newStop
+    strategy.exit("Exit", from_entry = "Long", stop = stopLevel, limit = tpLevel)
+
+    // Trend invalidation: close on fast/slow EMA cross-down
+    if crossDown
+        strategy.close("Long", comment = "TrendFlip")
+
+if strategy.position_size == 0
+    stopLevel := na
+    tpLevel   := na
+
+// ───────── Plotting ─────────
+pFast  = plot(emaFast,  "EMA Fast",  color = color.new(color.aqua, 0))
+pSlow  = plot(emaSlow,  "EMA Slow",  color = color.new(color.orange, 0))
+plot(emaTrend, "EMA Trend", color = color.new(color.gray, 0), linewidth = 2)
+fill(pFast, pSlow, color = emaFast > emaSlow ? color.new(color.green, 88) : color.new(color.red, 88))
+
+plot(strategy.position_size > 0 ? stopLevel : na, "Stop", color = color.new(color.red,    0), style = plot.style_linebr, linewidth = 2)
+plot(strategy.position_size > 0 ? tpLevel   : na, "TP",   color = color.new(color.lime,   0), style = plot.style_linebr, linewidth = 2)
+
+plotshape(longSignal, "Entry", shape.triangleup, location.belowbar, color.new(color.green, 0), size = size.tiny)
+
+// ───────── Alerts (webhook-ready JSON) ─────────
+// Configure a TradingView alert on this strategy with "Alert() function calls only"
+// to forward these payloads to your webhook bridge.
+if longSignal and strategy.position_size == 0
+    alert('{"action":"buy","symbol":"' + syminfo.ticker + '","price":' + str.tostring(close) + ',"qty":' + str.tostring(qtyByRisk) + ',"stop":' + str.tostring(close - atr * atrStopMult) + '}', alert.freq_once_per_bar_close)
+
+if strategy.position_size > 0 and (crossDown or (not na(stopLevel) and low <= stopLevel) or (not na(tpLevel) and high >= tpLevel))
+    alert('{"action":"sell","symbol":"' + syminfo.ticker + '","price":' + str.tostring(close) + '}', alert.freq_once_per_bar_close)
+
+// Legacy alertcondition() — still usable if you prefer per-condition alerts
+alertcondition(longSignal, title = "Long Entry",
+     message = '{"action":"buy","symbol":"{{ticker}}","price":"{{close}}"}')
+alertcondition(crossDown,  title = "Long Exit (Trend Flip)",
+     message = '{"action":"sell","symbol":"{{ticker}}","price":"{{close}}"}')
