@@ -126,9 +126,57 @@ just checking for the absence of thrown errors.
   itself, per the "don't illegally stream" requirement) renders as a
   "Now Playing" card in chat. Verified working end-to-end.
 
-## Phase 8 — Admin dashboard, analytics, security hardening, docs 🚧
+## Phase 8 — Admin dashboard, analytics, security hardening, docs ✅
 
 - Analytics event pipeline done (`src/lib/analytics/track.ts`), used by
   matchmaking/chat/connect handlers already.
+- Admin dashboard (`src/app/admin/*`, RBAC-gated by `requireAdmin`/
+  `requireFullAdmin`) with overview, reports queue + resolution actions,
+  user search/moderation, active-session browser, moderation-action log,
+  and a landing-stats/report-category analytics page. All backed by real
+  Prisma queries against the same schema the app writes to — no mock data.
+- Security headers: a Content-Security-Policy plus X-Content-Type-Options,
+  X-Frame-Options, Referrer-Policy, and a camera/microphone-scoped
+  Permissions-Policy (`next.config.ts`). Note: `script-src` needs
+  `'unsafe-inline'` — Next.js App Router ships inline `<script>` tags
+  carrying RSC hydration data, and without it the app fails to hydrate
+  at all (a request-scoped nonce would remove the need for this, but
+  requires wiring through the custom server + App Router, out of scope
+  here). `style-src 'unsafe-inline'` is a similar pragmatic tradeoff for
+  Tailwind/Radix's inline positioning styles. `script-src` otherwise
+  only allows same-origin + the Turnstile CAPTCHA origin, so external
+  script injection is still blocked. Verified with a real two-browser
+  Playwright run (age-gate → matchmaking → live message exchange) showing
+  zero console/CSP errors under the new headers.
+- CAPTCHA abstraction (`src/lib/captcha/`): mock always-pass dev provider
+  (default) + real Cloudflare Turnstile server-side verification, same
+  provider-swap pattern as moderation/translation/storage. Wired into
+  registration (`TurnstileWidget` renders nothing — and the API route
+  skips verification via the mock provider — when no site key/secret is
+  configured, so signup keeps working end-to-end without external
+  credentials).
 - `.env.example`, `docker-compose.yml`, README done.
-- Still needed: `/admin/*` pages, vitest test suite, CSP headers.
+- Vitest test suite (86 tests, 14 files) covering the areas called out in
+  the original spec:
+  - **Auth**: password hashing round-trip (`src/lib/auth/password.test.ts`),
+    session JWT sign/verify/tamper-rejection (`src/lib/auth/jwt.test.ts`).
+  - **Permissions**: `requireAdmin`/`requireFullAdmin` role branching
+    (`src/lib/auth/require-admin.test.ts`).
+  - **WS**: handshake auth — valid/missing/malformed/banned/suspended/
+    deleted-user sessions (`server/ws/auth.test.ts`).
+  - **Matchmaking + block/report**: pairing, interest-mode filtering,
+    block-list enforcement (both directions), post-match rematch cooldown,
+    `leaveQueue` (`src/lib/matchmaking/engine.test.ts`), plus the
+    block-list Redis cache in isolation (`src/lib/matchmaking/blocklist.test.ts`).
+  - **API validation**: register/login/guest, report, and room-creation
+    Zod schemas — valid and rejected cases (`src/lib/validation/*.test.ts`).
+  - **Game state**: the trivia engine's round/reveal/scoring state
+    machine, including edge cases (intruder actions, malformed payloads,
+    post-reveal answers ignored) (`src/lib/games/definitions/trivia.test.ts`).
+  - Also: the rule-based moderation engine's category/risk-score behavior,
+    the Redis-backed rate limiter (isolation, reset-after-window), and
+    WebRTC ICE server config (STUN fallback, TURN credential gating, no
+    credential leakage).
+  - Integration tests (matchmaking, blocklist, rate-limit, WS auth) run
+    against the real local Postgres/Redis from `.env` — each test creates
+    and tears down its own rows/keys, verified to leave no residue.

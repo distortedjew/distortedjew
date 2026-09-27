@@ -71,6 +71,19 @@ npm run build        # next build (production bundle)
 npm run start         # run the production server (NODE_ENV=production)
 ```
 
+### Tests
+
+`npm run test` runs the Vitest suite: password hashing, session JWTs, RBAC
+(`requireAdmin`/`requireFullAdmin`), Zod request-validation schemas, the
+rule-based moderation engine, WebRTC ICE server configuration, the trivia
+game engine's round/scoring state machine, and — as integration tests
+against your local Postgres/Redis (same `.env` as `npm run dev`) —
+matchmaking (pairing, interest filters, block enforcement, rematch
+cooldown), the block-list cache, the Redis rate limiter, and WebSocket
+handshake auth (valid/expired/banned/suspended sessions). Bring up
+Postgres and Redis (`docker compose up -d` or local services) before
+running it; each integration test creates and cleans up its own rows/keys.
+
 ## Environment variables
 
 See `.env.example` for the full list with inline documentation. Highlights:
