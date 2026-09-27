@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Sparkles, LogOut, Settings, User as UserIcon, ShieldCheck } from "lucide-react";
+import {
+  Sparkles,
+  LogOut,
+  Settings,
+  User as UserIcon,
+  ShieldCheck,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/app-shell/notification-bell";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 
@@ -47,7 +54,10 @@ export function Topbar({ user }: { user: AppUser }) {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-6">
-          <Link href="/discover" className="flex items-center gap-2 font-display text-lg font-semibold">
+          <Link
+            href="/discover"
+            className="flex items-center gap-2 font-display text-lg font-semibold"
+          >
             <span className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground">
               <Sparkles className="size-4" />
             </span>
@@ -75,45 +85,53 @@ export function Topbar({ user }: { user: AppUser }) {
           </nav>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-1 pr-1 outline-none hover:bg-accent">
-            <Avatar className="size-8">
-              <AvatarImage src={user.avatarUrl ?? undefined} alt={user.username} />
-              <AvatarFallback>{initial}</AvatarFallback>
-            </Avatar>
-            <Badge variant="muted" className="hidden sm:inline-flex">
-              Lv {user.level}
-            </Badge>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>
-              {user.displayName || user.username}
-              {user.isGuest && <span className="ml-1.5 text-muted-foreground">(guest)</span>}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/profile">
-                <UserIcon /> Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/settings">
-                <Settings /> Settings
-              </Link>
-            </DropdownMenuItem>
-            {(user.role === "ADMIN" || user.role === "MODERATOR") && (
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-1 pr-1 outline-none hover:bg-accent">
+              <Avatar className="size-8">
+                <AvatarImage
+                  src={user.avatarUrl ?? undefined}
+                  alt={user.username}
+                />
+                <AvatarFallback>{initial}</AvatarFallback>
+              </Avatar>
+              <Badge variant="muted" className="hidden sm:inline-flex">
+                Lv {user.level}
+              </Badge>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                {user.displayName || user.username}
+                {user.isGuest && (
+                  <span className="ml-1.5 text-muted-foreground">(guest)</span>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/admin">
-                  <ShieldCheck /> Admin
+                <Link href="/profile">
+                  <UserIcon /> Profile
                 </Link>
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onSelect={logout}>
-              <LogOut /> Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings /> Settings
+                </Link>
+              </DropdownMenuItem>
+              {(user.role === "ADMIN" || user.role === "MODERATOR") && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin">
+                    <ShieldCheck /> Admin
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onSelect={logout}>
+                <LogOut /> Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
