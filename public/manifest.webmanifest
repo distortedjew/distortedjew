@@ -4,8 +4,8 @@
   "description": "Random text, voice, and video chat matched by interests, language, and vibe.",
   "start_url": "/discover",
   "display": "standalone",
-  "background_color": "#151420",
-  "theme_color": "#151420",
+  "background_color": "#FCFBFF",
+  "theme_color": "#A78BFA",
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
