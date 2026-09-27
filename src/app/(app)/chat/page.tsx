@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/db/client";
 import { ChatExperience } from "@/components/chat/chat-experience";
 import type { MatchChannel, MatchMode } from "@/types/ws";
 
@@ -34,10 +35,17 @@ export default async function ChatPage({
   const language = get("language") || null;
   const country = get("country") || null;
 
+  const settings = await prisma.userSettings.findUnique({
+    where: { userId: session.sub },
+    select: { preferredLanguage: true, autoTranslate: true },
+  });
+
   return (
     <ChatExperience
       filters={{ mode, channel, interests, language, country }}
       selfId={session.sub}
+      preferredLanguage={settings?.preferredLanguage ?? "en"}
+      autoTranslate={settings?.autoTranslate ?? false}
     />
   );
 }

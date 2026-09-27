@@ -13,7 +13,17 @@ import type { MatchFilters, PublicPeerInfo } from "@/types/ws";
 
 type Phase = "searching" | "active" | "ended";
 
-export function ChatExperience({ filters, selfId }: { filters: MatchFilters; selfId: string }) {
+export function ChatExperience({
+  filters,
+  selfId,
+  preferredLanguage,
+  autoTranslate,
+}: {
+  filters: MatchFilters;
+  selfId: string;
+  preferredLanguage: string;
+  autoTranslate: boolean;
+}) {
   const router = useRouter();
   const { send, status } = useSocket();
   const [phase, setPhase] = useState<Phase>("searching");
@@ -151,6 +161,8 @@ export function ChatExperience({ filters, selfId }: { filters: MatchFilters; sel
           onConnect={handleConnect}
           onOpenGames={() => setGamesOpen(true)}
           selfId={selfId}
+          preferredLanguage={preferredLanguage}
+          autoTranslate={autoTranslate}
         />
       ) : (
         <CallView

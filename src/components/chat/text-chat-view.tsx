@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { SkipForward, Heart, Shield, Smile, Send, Gamepad2, Ban } from "lucide-react";
+import { SkipForward, Heart, Shield, Smile, Send, Gamepad2, Ban, Languages, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReportDialog } from "./report-dialog";
+import { MusicShareDialog, NowPlayingCard, type MusicShare } from "./music-share-dialog";
 import { useSocket, useSocketMessage } from "@/hooks/socket-provider";
 import { cn } from "@/lib/utils";
 import type { ChatMessagePayload, PublicPeerInfo } from "@/types/ws";
@@ -29,6 +30,8 @@ export function TextChatView({
   onConnect,
   onOpenGames,
   selfId,
+  preferredLanguage,
+  autoTranslate,
 }: {
   peer: PublicPeerInfo;
   matchId: string;
@@ -41,13 +44,40 @@ export function TextChatView({
   onConnect: () => void;
   onOpenGames: () => void;
   selfId: string;
+  preferredLanguage: string;
+  autoTranslate: boolean;
 }) {
   const { send } = useSocket();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [peerTyping, setPeerTyping] = useState(false);
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function translateMessage(message: LocalMessage) {
+    if (message.translatedBody || translatingId) return;
+    setTranslatingId(message.id);
+    try {
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: message.body, targetLanguage: preferredLanguage }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === message.id
+              ? { ...m, translatedBody: data.translatedText, translatedLang: preferredLanguage }
+              : m,
+          ),
+        );
+      }
+    } finally {
+      setTranslatingId(null);
+    }
+  }
 
   useSocketMessage("chat:message", (msg) => {
     if (msg.message.matchId !== matchId) return;
@@ -55,6 +85,10 @@ export function TextChatView({
       if (prev.some((m) => m.id === msg.message.id)) return prev;
       return [...prev, { ...msg.message, self: msg.message.senderId === selfId }];
     });
+    const isIncoming = msg.message.senderId !== selfId;
+    if (isIncoming && autoTranslate && msg.message.kind === "TEXT") {
+      translateMessage({ ...msg.message, self: false });
+    }
   });
 
   useSocketMessage("chat:typing", (msg) => {
@@ -117,6 +151,16 @@ export function TextChatView({
     ]);
   }
 
+  function shareMusic(share: MusicShare) {
+    send({
+      type: "chat:message",
+      matchId,
+      body: `🎵 ${share.title} — ${share.artist}`,
+      kind: "MUSIC_SHARE",
+      metadata: { ...share },
+    });
+  }
+
   const initial = peer.peerDisplayName.slice(0, 1).toUpperCase();
 
   return (
@@ -142,6 +186,7 @@ export function TextChatView({
           <Button variant="ghost" size="icon-sm" onClick={onOpenGames} title="Play a game">
             <Gamepad2 className="size-4" />
           </Button>
+          <MusicShareDialog onShare={shareMusic} />
           <Button
             variant={connectState === "mutual" ? "default" : "ghost"}
             size="icon-sm"
@@ -183,6 +228,14 @@ export function TextChatView({
               <div key={m.id} className={cn("text-2xl", m.self ? "self-end" : "self-start")}>
                 {m.body}
               </div>
+            ) : m.kind === "MUSIC_SHARE" ? (
+              <div key={m.id} className={cn("max-w-[75%]", m.self ? "self-end" : "self-start")}>
+                <NowPlayingCard
+                  title={(m.metadata?.title as string) ?? m.body}
+                  artist={(m.metadata?.artist as string) ?? ""}
+                  url={m.metadata?.url as string | undefined}
+                />
+              </div>
             ) : (
               <motion.div
                 key={m.id}
@@ -197,7 +250,24 @@ export function TextChatView({
               >
                 {m.body}
                 {m.translatedBody && (
-                  <div className={cn("mt-1 text-xs opacity-70")}>{m.translatedBody}</div>
+                  <div className="mt-1 flex items-center gap-1 text-xs opacity-70">
+                    <Languages className="size-3" />
+                    {m.translatedBody}
+                  </div>
+                )}
+                {!m.self && !m.translatedBody && (
+                  <button
+                    onClick={() => translateMessage(m)}
+                    disabled={translatingId === m.id}
+                    className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-50"
+                  >
+                    {translatingId === m.id ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Languages className="size-3" />
+                    )}
+                    Translate
+                  </button>
                 )}
               </motion.div>
             ),

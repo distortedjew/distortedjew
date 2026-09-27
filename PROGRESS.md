@@ -108,14 +108,23 @@ attached, and missing explicit `.play()` calls on remote `<video>`/
 the remote `<video>` element's pixels in a running two-browser test, not
 just checking for the absence of thrown errors.
 
-## Phase 7 — Translation, AI moderation, music, icebreakers 🚧
+## Phase 7 — Translation, AI moderation, music, icebreakers ✅
 
 - Moderation: always-on rule engine + optional pluggable AI provider done
   (`src/lib/moderation/`).
 - Icebreakers: local provider done (`src/lib/icebreakers.ts`), sent
   automatically on match.
-- Still needed: translation provider abstraction + UI, music "Now Playing"
-  card.
+- Translation: provider abstraction (`src/lib/translation/`) — a real
+  LibreTranslate-compatible HTTP client, and an honest dev/mock fallback
+  (a genuine small phrasebook, not a fake pass-through — anything outside
+  it returns unchanged with a note explaining how to get full coverage).
+  Wired into 1:1 text chat: a per-message "Translate" button, plus
+  auto-translate of incoming messages when the viewer's Settings →
+  auto-translate toggle is on. Verified working in a real two-browser
+  session.
+- Music sharing: a share dialog (song/artist/optional link — never audio
+  itself, per the "don't illegally stream" requirement) renders as a
+  "Now Playing" card in chat. Verified working end-to-end.
 
 ## Phase 8 — Admin dashboard, analytics, security hardening, docs 🚧
 
