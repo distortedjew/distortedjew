@@ -180,3 +180,25 @@ just checking for the absence of thrown errors.
   - Integration tests (matchmaking, blocklist, rate-limit, WS auth) run
     against the real local Postgres/Redis from `.env` — each test creates
     and tears down its own rows/keys, verified to leave no residue.
+
+## Post-Phase-8 — theme, notification center, password reset ✅
+
+- Restyled to a soft pastel palette (lavender/sky/pink/mint, `#252433`
+  text) with Plus Jakarta Sans headings, per updated brand direction.
+  Light is now the default theme; dark is kept as an available toggle.
+- Notification center: the `Notification` table and WS push already
+  existed (achievements, moderation actions) but had no way to ever be
+  seen again after the fact. Added `GET`/`PATCH /api/notifications`
+  and a bell in the topbar (`src/components/app-shell/notification-bell.tsx`)
+  with an unread badge, dropdown, live WS updates, and mark-read/mark-all.
+  Verified end-to-end against a real guest session and Postgres.
+- Forgot/reset password: the one missing piece of the auth lifecycle
+  for real (non-guest) accounts. Added an `EmailProvider` abstraction
+  (`src/lib/email/` — mock logs to the console, real via Resend's HTTP
+  API) and self-invalidating JWT reset tokens (`src/lib/auth/reset-token.ts`
+  — no DB table, no cleanup job; a token stops verifying the moment the
+  password it was issued against actually changes). Verified with a
+  real run against the live dev server: registered an account, pulled
+  the actual reset link out of the mock provider's log output, reset
+  through the real form, confirmed the old password now fails and the
+  new one works, and confirmed the same token can't be replayed.
