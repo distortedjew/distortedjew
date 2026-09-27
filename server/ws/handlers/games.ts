@@ -15,12 +15,17 @@ import type { ClientMessage } from "@/types/ws";
 
 const ROUND_REVEAL_DELAY_MS = 2500;
 
+// Lightweight cache so high-frequency draw strokes don't hit Postgres per
+// event. Populated whenever a session starts, cleared once it completes.
+const sessionParticipantsCache = new Map<string, string[]>();
+
 function broadcastGameState(
   participantIds: string[],
   sessionId: string,
   gameType: GameType,
   state: Record<string, unknown>,
 ) {
+  sessionParticipantsCache.set(sessionId, participantIds);
   for (const userId of participantIds) {
     sendTo(userId, {
       type: "game:state",
@@ -92,5 +97,28 @@ export async function handleGameAction(
         broadcastGameState(result.participantIds, msg.sessionId, advanced.gameType, advanced.state as Record<string, unknown>);
       }
     }, ROUND_REVEAL_DELAY_MS);
+  }
+
+  if (result.gameComplete) {
+    sessionParticipantsCache.delete(msg.sessionId);
+  }
+}
+
+export async function handleGameDraw(
+  meta: ConnectionMeta,
+  msg: Extract<ClientMessage, { type: "game:draw" }>,
+) {
+  let participantIds = sessionParticipantsCache.get(msg.sessionId);
+  if (!participantIds) {
+    const session = await prisma.gameSession.findUnique({ where: { id: msg.sessionId } });
+    const state = session?.state as { participantIds?: string[] } | undefined;
+    participantIds = state?.participantIds;
+    if (participantIds) sessionParticipantsCache.set(msg.sessionId, participantIds);
+  }
+  if (!participantIds || !participantIds.includes(meta.userId)) return;
+
+  for (const userId of participantIds) {
+    if (userId === meta.userId) continue;
+    sendTo(userId, { type: "game:draw", sessionId: msg.sessionId, stroke: msg.stroke });
   }
 }

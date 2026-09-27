@@ -80,7 +80,14 @@ export type ClientMessage =
   | { type: "game:invite"; matchId?: string; roomId?: string; gameType: string }
   | { type: "game:accept"; sessionId: string }
   | { type: "game:action"; sessionId: string; action: Record<string, unknown> }
+  | { type: "game:draw"; sessionId: string; stroke: DrawStroke }
   | { type: "presence:ping" };
+
+export interface DrawStroke {
+  kind: "start" | "move" | "end" | "clear";
+  x?: number;
+  y?: number;
+}
 
 // ---- Server -> Client ----
 export type ServerMessage =
@@ -105,6 +112,7 @@ export type ServerMessage =
   | { type: "room:message"; roomId: string; message: ChatMessagePayload }
   | { type: "game:invited"; sessionId: string; gameType: string; fromUserId: string }
   | { type: "game:state"; sessionId: string; state: Record<string, unknown> }
+  | { type: "game:draw"; sessionId: string; stroke: DrawStroke }
   | { type: "notification"; notification: { id: string; type: string; title: string; body?: string } }
   | { type: "error"; code: string; message: string }
   | { type: "presence:pong" };

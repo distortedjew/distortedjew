@@ -30,6 +30,7 @@ async function buildPeerInfo(
   const peer = await prisma.user.findUnique({
     where: { id: peerId },
     select: {
+      username: true,
       isGuest: true,
       trustScore: true,
       profile: { select: { displayName: true, avatarUrl: true, country: true, visibility: true } },
@@ -41,7 +42,7 @@ async function buildPeerInfo(
   return {
     matchId,
     peerId,
-    peerDisplayName: peer?.profile?.displayName || "Someone new",
+    peerDisplayName: peer?.profile?.displayName || peer?.username || "Someone new",
     peerAvatarUrl: peer?.profile?.avatarUrl ?? null,
     peerCountry: showCountry ? (peer?.profile?.country ?? null) : null,
     peerIsGuest: peer?.isGuest ?? true,

@@ -27,7 +27,12 @@ import {
   handleWebrtcMediaState,
 } from "./handlers/webrtc";
 import { handleRoomJoin, handleRoomLeave, handleRoomMessage } from "./handlers/rooms";
-import { handleGameInvite, handleGameAccept, handleGameAction } from "./handlers/games";
+import {
+  handleGameInvite,
+  handleGameAccept,
+  handleGameAction,
+  handleGameDraw,
+} from "./handlers/games";
 import type { ClientMessage } from "@/types/ws";
 
 const MAX_CONNECTIONS_PER_USER = 5;
@@ -53,7 +58,11 @@ export function createGateway() {
         return;
       }
 
-      const limit = await rateLimit(`ws:msg:${meta.userId}`, 60, 10);
+      // Draw strokes are high-frequency by nature (pointer move events) and
+      // get their own generous limiter instead of the general message cap.
+      const rateLimitKey = msg.type === "game:draw" ? `ws:draw:${meta.userId}` : `ws:msg:${meta.userId}`;
+      const rateLimitMax = msg.type === "game:draw" ? 200 : 60;
+      const limit = await rateLimit(rateLimitKey, rateLimitMax, 10);
       if (!limit.allowed) return;
 
       const connMeta = getMeta(ws);
@@ -127,6 +136,9 @@ export function createGateway() {
             break;
           case "game:action":
             await handleGameAction(connMeta, msg);
+            break;
+          case "game:draw":
+            await handleGameDraw(connMeta, msg);
             break;
           case "presence:ping":
             sendTo(connMeta.userId, { type: "presence:pong" });
