@@ -7,7 +7,7 @@ export interface SessionClaims {
   isGuest: boolean;
 }
 
-function getSecretKey() {
+export function getSecretKey() {
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
     throw new Error("AUTH_SECRET is not configured");
