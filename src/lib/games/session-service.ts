@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/client";
+import { awardXp, unlockAchievement } from "@/lib/gamification/xp";
 import { GAME_ENGINES, advanceRoundIfNeeded, roundJustEnded } from "./registry";
 import type { GameType } from "./types";
 
@@ -91,11 +92,10 @@ export async function applyGameAction(
       );
     }
     await Promise.all(
-      currentState.participantIds.map((pid) =>
-        prisma.user
-          .update({ where: { id: pid }, data: { xp: { increment: 15 } } })
-          .catch(() => undefined),
-      ),
+      currentState.participantIds.map(async (pid) => {
+        await awardXp(pid, 15).catch(() => undefined);
+        await unlockAchievement(pid, "first_game").catch(() => undefined);
+      }),
     );
   }
 

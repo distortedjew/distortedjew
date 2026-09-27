@@ -6,6 +6,7 @@ import { getMatchState, endMatch } from "@/lib/matchmaking/engine";
 import { analyzeMessage } from "@/lib/moderation/provider";
 import { cacheBlockPair } from "@/lib/matchmaking/blocklist";
 import { trackEvent } from "@/lib/analytics/track";
+import { unlockAchievement } from "@/lib/gamification/xp";
 import { sendTo } from "../registry";
 import type { ConnectionMeta } from "../registry";
 import type { ClientMessage, ChatMessagePayload } from "@/types/ws";
@@ -174,6 +175,8 @@ export async function handleConnectRequest(
   ]);
 
   trackEvent(meta.userId, "connection_created", { connectionId: connection.id });
+  unlockAchievement(meta.userId, "first_connection").catch(() => undefined);
+  unlockAchievement(context.peerId, "first_connection").catch(() => undefined);
 
   sendTo(meta.userId, {
     type: "chat:connect_mutual",

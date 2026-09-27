@@ -3,6 +3,7 @@ import { joinQueue, leaveQueue } from "@/lib/matchmaking/engine";
 import { getIceServers } from "@/lib/webrtc/ice-config";
 import { getRandomIcebreaker } from "@/lib/icebreakers";
 import { trackEvent } from "@/lib/analytics/track";
+import { touchDailyStreak, trackCountryMet, unlockAchievement } from "@/lib/gamification/xp";
 import type { ConnectionMeta } from "../registry";
 import { sendTo } from "../registry";
 import type { ClientMessage, MatchFilters, PublicPeerInfo } from "@/types/ws";
@@ -99,6 +100,13 @@ export async function handleQueueJoin(
 
   sendTo(result.userAId, { type: "queue:matched", peer: peerInfoForA, icebreaker });
   sendTo(result.userBId, { type: "queue:matched", peer: peerInfoForB, icebreaker });
+
+  touchDailyStreak(result.userAId).catch(() => undefined);
+  touchDailyStreak(result.userBId).catch(() => undefined);
+  trackCountryMet(result.userAId, peerInfoForA.peerCountry).catch(() => undefined);
+  trackCountryMet(result.userBId, peerInfoForB.peerCountry).catch(() => undefined);
+  unlockAchievement(result.userAId, "first_conversation").catch(() => undefined);
+  unlockAchievement(result.userBId, "first_conversation").catch(() => undefined);
 }
 
 export async function handleQueueLeave(meta: ConnectionMeta) {
