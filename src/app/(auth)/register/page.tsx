@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 
 const currentYear = new Date().getFullYear();
 const BIRTH_YEARS = Array.from({ length: 100 }, (_, i) => currentYear - 18 - i);
@@ -23,6 +24,7 @@ export default function RegisterPage() {
     birthYear: "",
     acceptTerms: false,
   });
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +43,7 @@ export default function RegisterPage() {
           password: form.password,
           birthYear: Number(form.birthYear),
           acceptTerms: form.acceptTerms,
+          captchaToken,
         }),
       });
       const data = await res.json();
@@ -138,6 +141,7 @@ export default function RegisterPage() {
             </Link>
             .
           </label>
+          <TurnstileWidget onToken={setCaptchaToken} />
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
           <Button type="submit" className="w-full" disabled={loading}>

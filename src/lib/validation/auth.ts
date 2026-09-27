@@ -25,6 +25,7 @@ export const registerSchema = z.object({
     .min(1900)
     .max(new Date().getFullYear()),
   acceptTerms: z.literal(true, { message: "You must accept the terms" }),
+  captchaToken: z.string().optional(),
 });
 
 export const loginSchema = z.object({

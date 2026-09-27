@@ -6,6 +6,7 @@ import { registerSchema } from "@/lib/validation/auth";
 import { rateLimit } from "@/lib/redis/rate-limit";
 import { getClientIpHash, getUserAgent } from "@/lib/request";
 import { MINIMUM_AGE } from "@/lib/constants";
+import { getCaptchaProvider } from "@/lib/captcha";
 
 export async function POST(req: NextRequest) {
   const ipHash = await getClientIpHash();
@@ -25,7 +26,12 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
-  const { username, email, password, birthYear } = parsed.data;
+  const { username, email, password, birthYear, captchaToken } = parsed.data;
+
+  const captchaOk = await getCaptchaProvider().verify(captchaToken, ipHash);
+  if (!captchaOk) {
+    return NextResponse.json({ error: "Captcha verification failed. Please try again." }, { status: 400 });
+  }
 
   const age = new Date().getFullYear() - birthYear;
   if (age < MINIMUM_AGE) {
