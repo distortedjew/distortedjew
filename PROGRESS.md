@@ -63,17 +63,50 @@ explicitly labeled "UI only".
 - Still needed: `/profile`, `/friends`, `/settings` pages, XP/achievement
   award triggers beyond games.
 
-## Phase 6 — Group rooms + mini-games ✅ (backend + in-chat games UI) / 🚧 (`/rooms`, `/games` pages)
+## Phase 6 — Group rooms + mini-games ✅
 
 - Room join/leave/message WS handlers + Redis membership set
-  (`src/lib/rooms/`).
+  (`src/lib/rooms/`), plus room-scoped WebRTC signaling (`room:webrtc_*`)
+  for a full-mesh group voice/video call and host controls (mute/remove).
+- `/rooms` (browse + create dialog) and `/rooms/[roomId]` (group chat +
+  call grid + participant list with host controls) built and verified
+  end-to-end with two real browser sessions: participant list, group text
+  chat, and bidirectional group video (pixel-checked — both sides render
+  live frames from each other, not just their own camera).
 - Mini-game engine + 4 games (Would You Rather, Trivia, Guess the Word,
   Draw & Guess) with full state machines (`src/lib/games/`), WS handlers
   for invite/accept/action, plus a live-stroke relay (`game:draw`) for the
   drawing game with its own generous rate limit.
-- In-chat `GamePanel` (invite/accept, all 4 games playable) built and
-  wired into both TextChatView and CallView.
-- Still needed: standalone `/rooms` and `/games` browse/create pages.
+- In-chat `GamePanel` (invite/accept, all 4 games playable) wired into
+  TextChatView, CallView, and now RoomExperience too (`/games` page is a
+  showcase/entry point; games are actually played inside a chat or room).
+
+### A real bug hunt, for the record
+
+Getting group video working end-to-end surfaced a chain of genuine
+concurrency bugs, all rooted in the same cause: React StrictMode's
+dev-only double effect invocation (mount → cleanup → mount) was
+triggering *real* side effects each time — a second WebSocket connect,
+a second `room:join`/`room:leave`, a second SDP offer — because the
+cleanups fired unconditionally. For matchmaking (`chat-experience.tsx`)
+that was merely wasteful; for a WebSocket connection judged by the
+server on live connection *count*, and for a room whose membership
+changes are *broadcast live to other people*, a transient churn is
+destructive: the server would see a real disconnect, end the user's
+match, drop them from their room, and tell every other participant they
+left — and their WebRTC peer connections would get torn down to match.
+Fixed by deferring each side-effecting cleanup (WS close, `room:leave`)
+by one tick and cancelling it if the effect immediately re-fires
+(`src/hooks/socket-provider.tsx`, `src/components/rooms/room-experience.tsx`,
+`src/components/chat/chat-experience.tsx`). Also fixed along the way:
+offer/ICE races when a peer connection didn't exist yet or wasn't
+claimed atomically (`src/hooks/use-webrtc.ts`,
+`src/hooks/use-room-webrtc.ts`), a `getUserMedia` race where a peer
+connection could be created and offered before local tracks were
+attached, and missing explicit `.play()` calls on remote `<video>`/
+`<audio>` elements. All verified by decoding actual video frames from
+the remote `<video>` element's pixels in a running two-browser test, not
+just checking for the absence of thrown errors.
 
 ## Phase 7 — Translation, AI moderation, music, icebreakers 🚧
 

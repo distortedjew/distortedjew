@@ -29,11 +29,17 @@ const CATEGORIES = [
 export function ReportDialog({
   onSubmit,
   trigger,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   onSubmit: (category: string, description: string) => void;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = onOpenChange ?? setUncontrolledOpen;
   const [category, setCategory] = useState<string | null>(null);
   const [description, setDescription] = useState("");
 
@@ -47,14 +53,16 @@ export function ReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button variant="outline" size="sm">
-            <Flag className="size-4" />
-            Report
-          </Button>
-        )}
-      </DialogTrigger>
+      {controlledOpen === undefined && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button variant="outline" size="sm">
+              <Flag className="size-4" />
+              Report
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Report this person</DialogTitle>

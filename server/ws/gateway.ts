@@ -2,8 +2,9 @@ import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { WebSocketServer, type WebSocket } from "ws";
 import { authenticateUpgrade } from "./auth";
-import { registerConnection, unregisterConnection, getMeta, sendTo } from "./registry";
+import { registerConnection, unregisterConnection, getMeta, sendTo, broadcastTo } from "./registry";
 import { getActiveMatchId, endMatch, leaveQueue } from "@/lib/matchmaking/engine";
+import { getRoomIdsForUser, getRoomMemberIds, leaveRoom } from "@/lib/rooms/service";
 import { getRandomIcebreaker } from "@/lib/icebreakers";
 import { rateLimit } from "@/lib/redis/rate-limit";
 import {
@@ -26,7 +27,16 @@ import {
   handleWebrtcIce,
   handleWebrtcMediaState,
 } from "./handlers/webrtc";
-import { handleRoomJoin, handleRoomLeave, handleRoomMessage } from "./handlers/rooms";
+import {
+  handleRoomJoin,
+  handleRoomLeave,
+  handleRoomMessage,
+  handleRoomWebrtcOffer,
+  handleRoomWebrtcAnswer,
+  handleRoomWebrtcIce,
+  handleRoomMute,
+  handleRoomRemove,
+} from "./handlers/rooms";
 import {
   handleGameInvite,
   handleGameAccept,
@@ -128,6 +138,21 @@ export function createGateway() {
           case "room:message":
             await handleRoomMessage(connMeta, msg);
             break;
+          case "room:webrtc_offer":
+            await handleRoomWebrtcOffer(connMeta, msg);
+            break;
+          case "room:webrtc_answer":
+            await handleRoomWebrtcAnswer(connMeta, msg);
+            break;
+          case "room:webrtc_ice":
+            await handleRoomWebrtcIce(connMeta, msg);
+            break;
+          case "room:mute":
+            await handleRoomMute(connMeta, msg);
+            break;
+          case "room:remove":
+            await handleRoomRemove(connMeta, msg);
+            break;
           case "game:invite":
             await handleGameInvite(connMeta, msg);
             break;
@@ -175,6 +200,12 @@ export function createGateway() {
               reason: "disconnect",
             });
           }
+        }
+        const roomIds = await getRoomIdsForUser(meta.userId).catch(() => []);
+        for (const roomId of roomIds) {
+          const others = (await getRoomMemberIds(roomId)).filter((id) => id !== meta.userId);
+          await leaveRoom(roomId, meta.userId).catch(() => undefined);
+          broadcastTo(others, { type: "room:participant_left", roomId, userId: meta.userId });
         }
       } else {
         connectionCountByUser.set(meta.userId, remaining);

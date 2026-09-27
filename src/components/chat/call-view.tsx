@@ -84,12 +84,21 @@ export function CallView({
   const isVideo = peer.channel === "VIDEO";
 
   useEffect(() => {
-    if (localVideoRef.current) localVideoRef.current.srcObject = localStream;
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = localStream;
+      if (localStream) localVideoRef.current.play().catch(() => undefined);
+    }
   }, [localStream]);
 
   useEffect(() => {
-    if (isVideo && remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
-    if (!isVideo && remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
+    if (isVideo && remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
+      if (remoteStream) remoteVideoRef.current.play().catch(() => undefined);
+    }
+    if (!isVideo && remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = remoteStream;
+      if (remoteStream) remoteAudioRef.current.play().catch(() => undefined);
+    }
   }, [remoteStream, isVideo]);
 
   function goFullscreen() {

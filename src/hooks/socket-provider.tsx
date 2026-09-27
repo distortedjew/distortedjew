@@ -37,9 +37,25 @@ export function SocketProvider({
   const queueRef = useRef<ClientMessage[]>([]);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  // Closing the socket is deferred by one tick so React StrictMode's
+  // dev-only double effect invocation (mount -> cleanup -> mount) can
+  // cancel it instead of tearing down and reopening a real connection.
+  // The server tracks presence/room-membership by connection count, so a
+  // transient close would look like a genuine disconnect to it — ending
+  // matches, dropping the user from rooms, and broadcasting a departure to
+  // everyone else in them, even though nothing really changed here.
+  const pendingCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
+
+    if (pendingCloseTimer.current) {
+      clearTimeout(pendingCloseTimer.current);
+      pendingCloseTimer.current = null;
+      mountedRef.current = true;
+      return scheduleClose;
+    }
+
     mountedRef.current = true;
 
     function connect() {
@@ -78,12 +94,17 @@ export function SocketProvider({
 
     connect();
 
-    return () => {
-      mountedRef.current = false;
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
-      socketRef.current?.close();
-      socketRef.current = null;
-    };
+    return scheduleClose;
+
+    function scheduleClose() {
+      pendingCloseTimer.current = setTimeout(() => {
+        pendingCloseTimer.current = null;
+        mountedRef.current = false;
+        if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+        socketRef.current?.close();
+        socketRef.current = null;
+      }, 0);
+    }
   }, [enabled]);
 
   const send = useCallback((msg: ClientMessage) => {

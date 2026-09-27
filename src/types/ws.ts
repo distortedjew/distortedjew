@@ -14,6 +14,7 @@ export type MatchMode =
   | "JUST_TALKING";
 
 export type MatchChannel = "TEXT" | "VOICE" | "VIDEO";
+export type RoomChannel = "TEXT" | "VOICE" | "VIDEO";
 
 export interface MatchFilters {
   mode: MatchMode;
@@ -77,6 +78,11 @@ export type ClientMessage =
   | { type: "room:join"; roomId: string }
   | { type: "room:leave"; roomId: string }
   | { type: "room:message"; roomId: string; body: string }
+  | { type: "room:webrtc_offer"; roomId: string; toUserId: string; sdp: string }
+  | { type: "room:webrtc_answer"; roomId: string; toUserId: string; sdp: string }
+  | { type: "room:webrtc_ice"; roomId: string; toUserId: string; candidate: unknown }
+  | { type: "room:mute"; roomId: string; targetUserId: string; muted: boolean }
+  | { type: "room:remove"; roomId: string; targetUserId: string }
   | { type: "game:invite"; matchId?: string; roomId?: string; gameType: string }
   | { type: "game:accept"; sessionId: string }
   | { type: "game:action"; sessionId: string; action: Record<string, unknown> }
@@ -110,6 +116,11 @@ export type ServerMessage =
   | { type: "room:participant_joined"; roomId: string; participant: RoomParticipantView }
   | { type: "room:participant_left"; roomId: string; userId: string }
   | { type: "room:message"; roomId: string; message: ChatMessagePayload }
+  | { type: "room:webrtc_offer"; roomId: string; fromUserId: string; sdp: string }
+  | { type: "room:webrtc_answer"; roomId: string; fromUserId: string; sdp: string }
+  | { type: "room:webrtc_ice"; roomId: string; fromUserId: string; candidate: unknown }
+  | { type: "room:muted"; roomId: string; targetUserId: string; muted: boolean }
+  | { type: "room:removed"; roomId: string; targetUserId: string }
   | { type: "game:invited"; sessionId: string; gameType: string; fromUserId: string }
   | { type: "game:state"; sessionId: string; state: Record<string, unknown> }
   | { type: "game:draw"; sessionId: string; stroke: DrawStroke }

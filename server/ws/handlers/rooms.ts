@@ -6,6 +6,11 @@ import { sendTo, broadcastTo } from "../registry";
 import type { ConnectionMeta } from "../registry";
 import type { ClientMessage, ChatMessagePayload } from "@/types/ws";
 
+async function isHost(roomId: string, userId: string): Promise<boolean> {
+  const room = await prisma.room.findUnique({ where: { id: roomId }, select: { hostId: true } });
+  return room?.hostId === userId;
+}
+
 export async function handleRoomJoin(
   meta: ConnectionMeta,
   msg: Extract<ClientMessage, { type: "room:join" }>,
@@ -86,4 +91,80 @@ export async function handleRoomMessage(
   };
 
   broadcastTo(memberIds, { type: "room:message", roomId: msg.roomId, message: payload });
+}
+
+async function assertRoomMember(roomId: string, userId: string): Promise<boolean> {
+  const memberIds = await getRoomMemberIds(roomId);
+  return memberIds.includes(userId);
+}
+
+export async function handleRoomWebrtcOffer(
+  meta: ConnectionMeta,
+  msg: Extract<ClientMessage, { type: "room:webrtc_offer" }>,
+) {
+  if (!(await assertRoomMember(msg.roomId, meta.userId))) return;
+  sendTo(msg.toUserId, {
+    type: "room:webrtc_offer",
+    roomId: msg.roomId,
+    fromUserId: meta.userId,
+    sdp: msg.sdp,
+  });
+}
+
+export async function handleRoomWebrtcAnswer(
+  meta: ConnectionMeta,
+  msg: Extract<ClientMessage, { type: "room:webrtc_answer" }>,
+) {
+  if (!(await assertRoomMember(msg.roomId, meta.userId))) return;
+  sendTo(msg.toUserId, {
+    type: "room:webrtc_answer",
+    roomId: msg.roomId,
+    fromUserId: meta.userId,
+    sdp: msg.sdp,
+  });
+}
+
+export async function handleRoomWebrtcIce(
+  meta: ConnectionMeta,
+  msg: Extract<ClientMessage, { type: "room:webrtc_ice" }>,
+) {
+  if (!(await assertRoomMember(msg.roomId, meta.userId))) return;
+  sendTo(msg.toUserId, {
+    type: "room:webrtc_ice",
+    roomId: msg.roomId,
+    fromUserId: meta.userId,
+    candidate: msg.candidate,
+  });
+}
+
+export async function handleRoomMute(
+  meta: ConnectionMeta,
+  msg: Extract<ClientMessage, { type: "room:mute" }>,
+) {
+  if (!(await isHost(msg.roomId, meta.userId))) return;
+  await prisma.roomParticipant.updateMany({
+    where: { roomId: msg.roomId, userId: msg.targetUserId, leftAt: null },
+    data: { mutedByHost: msg.muted },
+  });
+  const memberIds = await getRoomMemberIds(msg.roomId);
+  broadcastTo(memberIds, {
+    type: "room:muted",
+    roomId: msg.roomId,
+    targetUserId: msg.targetUserId,
+    muted: msg.muted,
+  });
+}
+
+export async function handleRoomRemove(
+  meta: ConnectionMeta,
+  msg: Extract<ClientMessage, { type: "room:remove" }>,
+) {
+  if (!(await isHost(msg.roomId, meta.userId)) || msg.targetUserId === meta.userId) return;
+  await leaveRoom(msg.roomId, msg.targetUserId);
+  const memberIds = await getRoomMemberIds(msg.roomId);
+  broadcastTo([...memberIds, msg.targetUserId], {
+    type: "room:removed",
+    roomId: msg.roomId,
+    targetUserId: msg.targetUserId,
+  });
 }

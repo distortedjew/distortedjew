@@ -28,6 +28,7 @@ export async function joinRoom(roomId: string, userId: string) {
     },
   });
   await redis.sadd(roomKeys.members(roomId), userId);
+  await redis.sadd(roomKeys.userRooms(userId), roomId);
 
   return { ok: true as const, room };
 }
@@ -38,6 +39,11 @@ export async function leaveRoom(roomId: string, userId: string) {
     data: { leftAt: new Date() },
   });
   await redis.srem(roomKeys.members(roomId), userId);
+  await redis.srem(roomKeys.userRooms(userId), roomId);
+}
+
+export async function getRoomIdsForUser(userId: string): Promise<string[]> {
+  return redis.smembers(roomKeys.userRooms(userId));
 }
 
 export async function getRoomParticipantViews(roomId: string): Promise<RoomParticipantView[]> {

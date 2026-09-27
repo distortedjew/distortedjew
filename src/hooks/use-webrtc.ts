@@ -33,7 +33,13 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const remoteDescSetRef = useRef(false);
+  const offerClaimedRef = useRef(false);
   const localStreamRef = useRef<MediaStream | null>(null);
+  // Resolves once the peer connection exists with local tracks attached (or
+  // never, if media/setup failed) — an incoming offer/ICE candidate that
+  // arrives while getUserMedia is still pending awaits this instead of
+  // being silently dropped by the `!pcRef.current` guard.
+  const pcReadyRef = useRef<Promise<void>>(new Promise(() => {}));
 
   const cleanup = useCallback(() => {
     pcRef.current?.close();
@@ -43,6 +49,7 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
     setLocalStream(null);
     setRemoteStream(null);
     remoteDescSetRef.current = false;
+    offerClaimedRef.current = false;
     pendingCandidatesRef.current = [];
   }, []);
 
@@ -54,6 +61,10 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
     }
 
     let cancelled = false;
+    let resolvePcReady: () => void = () => {};
+    pcReadyRef.current = new Promise((resolve) => {
+      resolvePcReady = resolve;
+    });
 
     async function start() {
       setState("requesting_media");
@@ -80,6 +91,7 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
       pcRef.current = pc;
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream!));
+      resolvePcReady();
 
       pc.ontrack = (event) => {
         setRemoteStream(event.streams[0] ?? null);
@@ -134,7 +146,14 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
   }, [active, matchId]);
 
   useSocketMessage("webrtc:offer", async (msg) => {
-    if (msg.matchId !== matchId || !pcRef.current) return;
+    if (msg.matchId !== matchId) return;
+    await pcReadyRef.current;
+    // Claim synchronously right after resuming (before any further await)
+    // so a duplicate delivery of the same offer — e.g. React StrictMode's
+    // dev-only double effect invocation — can't race in and call
+    // setRemoteDescription twice.
+    if (!pcRef.current || offerClaimedRef.current) return;
+    offerClaimedRef.current = true;
     await pcRef.current.setRemoteDescription({ type: "offer", sdp: msg.sdp });
     remoteDescSetRef.current = true;
     for (const c of pendingCandidatesRef.current) await pcRef.current.addIceCandidate(c);
@@ -153,8 +172,14 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
   });
 
   useSocketMessage("webrtc:ice", async (msg) => {
-    if (msg.matchId !== matchId || !pcRef.current) return;
+    if (msg.matchId !== matchId) return;
     const candidate = msg.candidate as RTCIceCandidateInit;
+    if (!pcRef.current) {
+      // Media (and therefore the peer connection) may still be loading;
+      // buffer until it exists rather than dropping the candidate.
+      pendingCandidatesRef.current.push(candidate);
+      return;
+    }
     if (remoteDescSetRef.current) {
       await pcRef.current.addIceCandidate(candidate).catch(() => undefined);
     } else {

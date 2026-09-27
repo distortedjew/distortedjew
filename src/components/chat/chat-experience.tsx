@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSocket, useSocketMessage } from "@/hooks/socket-provider";
@@ -34,13 +34,30 @@ export function ChatExperience({ filters, selfId }: { filters: MatchFilters; sel
     sendJoin();
   }, [sendJoin]);
 
+  const pendingLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (status !== "open") return;
-    // Initial join: state is already at its "searching" defaults, so this
-    // effect only needs to send the WS message, not reset local state.
-    sendJoin();
+
+    if (pendingLeaveTimer.current) {
+      // React StrictMode's dev-only double effect invocation just tore this
+      // down and is immediately setting it back up — cancel the deferred
+      // leave instead of re-joining. Otherwise a transient join→leave→join
+      // could pair a match during the first join and then abandon it
+      // without properly ending it when the second join fires.
+      clearTimeout(pendingLeaveTimer.current);
+      pendingLeaveTimer.current = null;
+    } else {
+      // Initial join: state is already at its "searching" defaults, so this
+      // only needs to send the WS message, not reset local state.
+      sendJoin();
+    }
+
     return () => {
-      send({ type: "queue:leave" });
+      pendingLeaveTimer.current = setTimeout(() => {
+        pendingLeaveTimer.current = null;
+        send({ type: "queue:leave" });
+      }, 0);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);

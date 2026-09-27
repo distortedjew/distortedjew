@@ -33,11 +33,13 @@ const GAME_LIST: Array<{ type: GameType; name: string; description: string }> = 
 
 export function GamePanel({
   matchId,
+  roomId,
   selfId,
   open,
   onOpenChange,
 }: {
-  matchId: string;
+  matchId?: string;
+  roomId?: string;
   selfId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -69,9 +71,9 @@ export function GamePanel({
   });
 
   function invite(type: GameType) {
-    send({ type: "game:invite", matchId, gameType: type });
+    send({ type: "game:invite", matchId, roomId, gameType: type });
     setGameType(type);
-    toast.success("Invite sent — waiting for them to accept.");
+    toast.success(roomId ? "Starting the game for everyone in the room…" : "Invite sent — waiting for them to accept.");
   }
 
   function acceptInvite() {
