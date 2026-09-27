@@ -115,6 +115,7 @@ export type ServerMessage =
   | { type: "room:joined"; roomId: string; participants: RoomParticipantView[] }
   | { type: "room:participant_joined"; roomId: string; participant: RoomParticipantView }
   | { type: "room:participant_left"; roomId: string; userId: string }
+  | { type: "room:participants"; roomId: string; participants: RoomParticipantView[] }
   | { type: "room:message"; roomId: string; message: ChatMessagePayload }
   | { type: "room:webrtc_offer"; roomId: string; fromUserId: string; sdp: string }
   | { type: "room:webrtc_answer"; roomId: string; fromUserId: string; sdp: string }

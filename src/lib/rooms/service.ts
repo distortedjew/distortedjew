@@ -34,12 +34,45 @@ export async function joinRoom(roomId: string, userId: string) {
 }
 
 export async function leaveRoom(roomId: string, userId: string) {
+  const wasHost = await prisma.roomParticipant.findUnique({
+    where: { roomId_userId: { roomId, userId } },
+    select: { role: true },
+  });
+
   await prisma.roomParticipant.updateMany({
     where: { roomId, userId, leftAt: null },
     data: { leftAt: new Date() },
   });
   await redis.srem(roomKeys.members(roomId), userId);
   await redis.srem(roomKeys.userRooms(userId), roomId);
+
+  const remaining = await redis.scard(roomKeys.members(roomId));
+
+  if (remaining === 0) {
+    // Rooms are temporary — close it rather than leaving a dead "OPEN"
+    // room lingering in the browse list and admin views forever.
+    await prisma.room.updateMany({
+      where: { id: roomId, status: "OPEN" },
+      data: { status: "CLOSED", closedAt: new Date() },
+    });
+    return;
+  }
+
+  if (wasHost?.role === "HOST") {
+    const nextHost = await prisma.roomParticipant.findFirst({
+      where: { roomId, leftAt: null },
+      orderBy: { joinedAt: "asc" },
+    });
+    if (nextHost) {
+      await prisma.$transaction([
+        prisma.room.update({ where: { id: roomId }, data: { hostId: nextHost.userId } }),
+        prisma.roomParticipant.update({
+          where: { id: nextHost.id },
+          data: { role: "HOST" },
+        }),
+      ]);
+    }
+  }
 }
 
 export async function getRoomIdsForUser(userId: string): Promise<string[]> {

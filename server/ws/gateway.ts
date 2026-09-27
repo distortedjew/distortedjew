@@ -4,7 +4,7 @@ import { WebSocketServer, type WebSocket } from "ws";
 import { authenticateUpgrade } from "./auth";
 import { registerConnection, unregisterConnection, getMeta, sendTo, broadcastTo } from "./registry";
 import { getActiveMatchId, endMatch, leaveQueue } from "@/lib/matchmaking/engine";
-import { getRoomIdsForUser, getRoomMemberIds, leaveRoom } from "@/lib/rooms/service";
+import { getRoomIdsForUser, getRoomMemberIds, getRoomParticipantViews, leaveRoom } from "@/lib/rooms/service";
 import { getRandomIcebreaker } from "@/lib/icebreakers";
 import { rateLimit } from "@/lib/redis/rate-limit";
 import {
@@ -206,6 +206,10 @@ export function createGateway() {
           const others = (await getRoomMemberIds(roomId)).filter((id) => id !== meta.userId);
           await leaveRoom(roomId, meta.userId).catch(() => undefined);
           broadcastTo(others, { type: "room:participant_left", roomId, userId: meta.userId });
+          if (others.length > 0) {
+            const refreshed = await getRoomParticipantViews(roomId).catch(() => null);
+            if (refreshed) broadcastTo(others, { type: "room:participants", roomId, participants: refreshed });
+          }
         }
       } else {
         connectionCountByUser.set(meta.userId, remaining);

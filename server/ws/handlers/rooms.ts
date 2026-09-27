@@ -42,6 +42,13 @@ export async function handleRoomLeave(
   const others = (await getRoomMemberIds(msg.roomId)).filter((id) => id !== meta.userId);
   await leaveRoom(msg.roomId, meta.userId);
   broadcastTo(others, { type: "room:participant_left", roomId: msg.roomId, userId: meta.userId });
+
+  // leaveRoom() may have promoted a new host — resync everyone's role/crown
+  // rather than requiring a refresh to see it.
+  if (others.length > 0) {
+    const refreshed = await getRoomParticipantViews(msg.roomId);
+    broadcastTo(others, { type: "room:participants", roomId: msg.roomId, participants: refreshed });
+  }
 }
 
 export async function handleRoomMessage(

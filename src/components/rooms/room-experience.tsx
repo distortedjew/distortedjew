@@ -87,6 +87,11 @@ export function RoomExperience({ room, selfId }: { room: RoomInfo; selfId: strin
     peerHelpers.current?.disconnectFromPeer(msg.userId);
   });
 
+  useSocketMessage("room:participants", (msg) => {
+    if (msg.roomId !== room.id) return;
+    setParticipants(msg.participants);
+  });
+
   useSocketMessage("room:muted", (msg) => {
     if (msg.roomId !== room.id) return;
     setParticipants((prev) =>
@@ -185,7 +190,7 @@ export function RoomExperience({ room, selfId }: { room: RoomInfo; selfId: strin
         <ParticipantList
           participants={participants}
           selfId={selfId}
-          isSelfHost={room.hostId === selfId}
+          isSelfHost={participants.find((p) => p.userId === selfId)?.role === "HOST"}
           onMute={mute}
           onRemove={remove}
           onBlock={block}
