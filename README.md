@@ -130,8 +130,3 @@ external API keys configured.
   `toPublicState`) so new games plug into the same WebSocket handler
   without touching matchmaking or chat code.
 
-## Legacy content
-
-The repository originally contained an unrelated static crypto-meme-coin
-landing page. It's preserved untouched under `legacy-static/` and is not
-part of the Wisp application.
