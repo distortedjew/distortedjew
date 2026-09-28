@@ -202,3 +202,15 @@ just checking for the absence of thrown errors.
   the actual reset link out of the mock provider's log output, reset
   through the real form, confirmed the old password now fails and the
   new one works, and confirmed the same token can't be replayed.
+- A minimal service worker (`public/sw.js`) so the app is actually
+  installable (the manifest existed but nothing registered a SW) and
+  has a branded offline fallback instead of the browser's default error
+  page. Deliberately doesn't cache pages or API/WS traffic — Wisp is
+  realtime end to end, so stale-cache strategies would cause real bugs.
+- Email verification: `User.emailVerified` existed in the schema but
+  nothing ever set it. Registration now sends a verification email in
+  the background (non-blocking — the account still works immediately)
+  using the same self-invalidating-JWT-token pattern as password reset,
+  plus a resend action and verified/unverified indicator in Settings.
+  Verified end-to-end against the live server, including idempotent
+  re-clicks of the same link.
