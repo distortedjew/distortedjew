@@ -1,0 +1,490 @@
+// Wisp — database schema
+// PostgreSQL via Prisma. Run `npm run db:migrate` to apply.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity & auth
+// ---------------------------------------------------------------------------
+
+enum AccountRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  TIMEOUT
+  SUSPENDED
+  BANNED
+  DELETED
+}
+
+model User {
+  id             String        @id @default(cuid())
+  username       String        @unique
+  email          String?       @unique
+  passwordHash   String?
+  isGuest        Boolean       @default(true)
+  emailVerified  DateTime?
+  role           AccountRole   @default(USER)
+  status         AccountStatus @default(ACTIVE)
+  statusReason   String?
+  statusUntil    DateTime?
+  trustScore     Int           @default(50)
+  xp             Int           @default(0)
+  level          Int           @default(1)
+  streakDays     Int           @default(0)
+  lastActiveAt   DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  profile              Profile?
+  settings             UserSettings?
+  sessions             AuthSession[]
+  messagesSent         Message[]           @relation("MessageSender")
+  matchesAsA           Match[]             @relation("MatchUserA")
+  matchesAsB           Match[]             @relation("MatchUserB")
+  connectionsSent      Connection[]        @relation("ConnectionRequester")
+  connectionsReceived  Connection[]        @relation("ConnectionAddressee")
+  blocksMade           Block[]             @relation("Blocker")
+  blocksReceived       Block[]             @relation("Blocked")
+  reportsMade          Report[]            @relation("Reporter")
+  reportsReceived      Report[]            @relation("ReportedUser")
+  moderationActions    ModerationAction[]  @relation("ModerationTarget")
+  moderationIssued     ModerationAction[]  @relation("ModerationIssuer")
+  achievements         UserAchievement[]
+  roomsHosted          Room[]              @relation("RoomHost")
+  roomParticipations   RoomParticipant[]
+  gameSessionsPlayed   GameParticipant[]
+  notifications        Notification[]
+  analyticsEvents      AnalyticsEvent[]
+
+  @@index([status])
+  @@index([lastActiveAt])
+}
+
+model Profile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName   String?
+  avatarUrl     String?
+  bio           String?
+  interests     String[] @default([])
+  languages     String[] @default([])
+  country       String?
+  visibility    ProfileVisibility @default(PUBLIC)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum ProfileVisibility {
+  PUBLIC
+  CONNECTIONS_ONLY
+  PRIVATE
+}
+
+model UserSettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredLanguage     String   @default("en")
+  soundEffectsEnabled   Boolean  @default(true)
+  notifyOnConnection    Boolean  @default(true)
+  notifyOnMessage       Boolean  @default(true)
+  autoTranslate         Boolean  @default(false)
+  safeModeStrict        Boolean  @default(false)
+  showCountry           Boolean  @default(true)
+  updatedAt             DateTime @updatedAt
+}
+
+// Long-lived, revocable login sessions (device/session tracking).
+// Distinct from short-lived matchmaking "chat sessions" which live in Redis.
+model AuthSession {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash     String   @unique
+  userAgent     String?
+  ipHash        String?
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Matching & messaging
+// ---------------------------------------------------------------------------
+
+enum MatchMode {
+  RANDOM
+  INTERESTS
+  SAME_LANGUAGE
+  LANGUAGE_EXCHANGE
+  SAME_COUNTRY
+  WORLDWIDE
+  GAMING
+  MUSIC
+  JUST_TALKING
+}
+
+enum MatchChannel {
+  TEXT
+  VOICE
+  VIDEO
+}
+
+enum MatchEndReason {
+  NEXT
+  DISCONNECT
+  REPORTED
+  TIMEOUT
+  ERROR
+}
+
+model Match {
+  id             String         @id @default(cuid())
+  userAId        String
+  userA          User           @relation("MatchUserA", fields: [userAId], references: [id])
+  userBId        String
+  userB          User           @relation("MatchUserB", fields: [userBId], references: [id])
+  mode           MatchMode
+  channel        MatchChannel
+  sharedInterests String[]      @default([])
+  startedAt      DateTime       @default(now())
+  endedAt        DateTime?
+  endReason      MatchEndReason?
+  endedByUserId  String?
+  messages       Message[]
+
+  @@index([userAId])
+  @@index([userBId])
+  @@index([startedAt])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  matchId     String?
+  match       Match?   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  roomId      String?
+  room        Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation("MessageSender", fields: [senderId], references: [id])
+  body        String
+  originalLang String?
+  translatedBody String?
+  translatedLang String?
+  kind        MessageKind @default(TEXT)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([matchId])
+  @@index([roomId])
+  @@index([createdAt])
+}
+
+enum MessageKind {
+  TEXT
+  SYSTEM
+  REACTION
+  GIF
+  IMAGE
+  GAME_EVENT
+  MUSIC_SHARE
+}
+
+// ---------------------------------------------------------------------------
+// Connections, blocks, reports, moderation
+// ---------------------------------------------------------------------------
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model Connection {
+  id            String           @id @default(cuid())
+  requesterId   String
+  requester     User             @relation("ConnectionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId   String
+  addressee     User             @relation("ConnectionAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status        ConnectionStatus @default(PENDING)
+  sourceMatchId String?
+  createdAt     DateTime         @default(now())
+  respondedAt   DateTime?
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId])
+}
+
+model Block {
+  id          String   @id @default(cuid())
+  blockerId   String
+  blocker     User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId   String
+  blocked     User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+enum ReportCategory {
+  HARASSMENT
+  SPAM
+  SEXUAL_CONTENT
+  HATE_ABUSE
+  THREATS
+  SCAM
+  IMPERSONATION
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  ACTIONED
+  DISMISSED
+}
+
+model Report {
+  id           String         @id @default(cuid())
+  reporterId   String
+  reporter     User           @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedId   String
+  reported     User           @relation("ReportedUser", fields: [reportedId], references: [id], onDelete: Cascade)
+  category     ReportCategory
+  description  String?
+  matchId      String?
+  roomId       String?
+  evidence     Json?
+  aiRiskScore  Float?
+  status       ReportStatus   @default(PENDING)
+  createdAt    DateTime       @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+
+  @@index([reportedId])
+  @@index([status])
+}
+
+enum ModerationActionType {
+  WARNING
+  TIMEOUT
+  SUSPENSION
+  BAN
+  UNBAN
+  NOTE
+}
+
+model ModerationAction {
+  id          String                @id @default(cuid())
+  targetId    String
+  target      User                  @relation("ModerationTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  issuerId    String?
+  issuer      User?                 @relation("ModerationIssuer", fields: [issuerId], references: [id])
+  type        ModerationActionType
+  reason      String
+  reportId    String?
+  automated   Boolean               @default(false)
+  expiresAt   DateTime?
+  createdAt   DateTime              @default(now())
+
+  @@index([targetId])
+}
+
+// ---------------------------------------------------------------------------
+// Rooms
+// ---------------------------------------------------------------------------
+
+enum RoomChannel {
+  TEXT
+  VOICE
+  VIDEO
+}
+
+enum RoomStatus {
+  OPEN
+  CLOSED
+}
+
+model Room {
+  id           String        @id @default(cuid())
+  title        String
+  topic        String?
+  interests    String[]      @default([])
+  rules        String?
+  channel      RoomChannel   @default(TEXT)
+  maxParticipants Int        @default(8)
+  isPrivate    Boolean       @default(false)
+  inviteCode   String?       @unique
+  hostId       String
+  host         User          @relation("RoomHost", fields: [hostId], references: [id])
+  status       RoomStatus    @default(OPEN)
+  createdAt    DateTime      @default(now())
+  closedAt     DateTime?
+
+  participants RoomParticipant[]
+  messages     Message[]
+  gameSessions GameSession[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum RoomRole {
+  HOST
+  MODERATOR
+  MEMBER
+}
+
+model RoomParticipant {
+  id        String    @id @default(cuid())
+  roomId    String
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      RoomRole  @default(MEMBER)
+  mutedByHost Boolean @default(false)
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+
+  @@unique([roomId, userId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Mini-games
+// ---------------------------------------------------------------------------
+
+enum GameType {
+  WOULD_YOU_RATHER
+  TRIVIA
+  GUESS_THE_WORD
+  DRAWING_GUESS
+}
+
+model Game {
+  id          String   @id @default(cuid())
+  type        GameType @unique
+  name        String
+  description String
+  minPlayers  Int      @default(2)
+  maxPlayers  Int      @default(8)
+  enabled     Boolean  @default(true)
+
+  sessions GameSession[]
+}
+
+enum GameSessionStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  ABORTED
+}
+
+model GameSession {
+  id          String            @id @default(cuid())
+  gameId      String
+  game        Game              @relation(fields: [gameId], references: [id])
+  matchId     String?
+  roomId      String?
+  room        Room?             @relation(fields: [roomId], references: [id])
+  status      GameSessionStatus @default(WAITING)
+  state       Json              @default("{}")
+  startedAt   DateTime          @default(now())
+  endedAt     DateTime?
+
+  participants GameParticipant[]
+
+  @@index([matchId])
+  @@index([roomId])
+}
+
+model GameParticipant {
+  id            String      @id @default(cuid())
+  gameSessionId String
+  gameSession   GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score         Int         @default(0)
+  joinedAt      DateTime    @default(now())
+
+  @@unique([gameSessionId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Gamification
+// ---------------------------------------------------------------------------
+
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String
+  icon        String
+  xpReward    Int      @default(0)
+
+  users UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+// ---------------------------------------------------------------------------
+// Notifications & analytics
+// ---------------------------------------------------------------------------
+
+enum NotificationType {
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  SYSTEM
+  MODERATION
+  ACHIEVEMENT
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String?
+  metadata  Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name      String
+  properties Json?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+}
