@@ -2,7 +2,6 @@ import { ImageResponse } from "next/og";
 import { APP_NAME } from "@/lib/constants";
 import { TAGLINE, SUBLINE } from "@/lib/brand";
 
-export const runtime = "edge";
 export const alt = `${APP_NAME} — ${TAGLINE}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
