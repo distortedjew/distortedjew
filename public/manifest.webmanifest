@@ -1,7 +1,7 @@
 {
   "name": "Wisp — Meet someone you've never met",
   "short_name": "Wisp",
-  "description": "Random text, voice, and video chat matched by interests, language, and vibe.",
+  "description": "Real people. Real conversations. One click away.",
   "start_url": "/discover",
   "display": "standalone",
   "background_color": "#FCFBFF",

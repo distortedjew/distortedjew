@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { APP_NAME } from "@/lib/constants";
+import { TAGLINE, DESCRIPTION } from "@/lib/brand";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,16 +19,30 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const APP_URL = process.env.APP_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: {
-    default: `${APP_NAME} — Meet someone you've never met`,
+    default: `${APP_NAME} — ${TAGLINE}`,
     template: `%s · ${APP_NAME}`,
   },
-  description:
-    "Wisp is a modern social discovery platform for random text, voice, and video chat — matched by interests, language, and vibe.",
+  description: DESCRIPTION,
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/icon.svg",
+  },
+  openGraph: {
+    title: `${APP_NAME} — ${TAGLINE}`,
+    description: DESCRIPTION,
+    url: APP_URL,
+    siteName: APP_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP_NAME} — ${TAGLINE}`,
+    description: DESCRIPTION,
   },
 };
 

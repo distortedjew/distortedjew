@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Logo } from "@/components/brand/logo";
 import { APP_NAME, MINIMUM_AGE } from "@/lib/constants";
 
 const currentYear = new Date().getFullYear();
@@ -46,9 +47,7 @@ export function GuestGate() {
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-16">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <span className="mb-2 flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-            <Sparkles className="size-5" />
-          </span>
+          <Logo size="size-11" iconSize="size-5" className="mb-2" />
           <CardTitle className="text-xl">One more thing</CardTitle>
           <CardDescription>
             {APP_NAME} connects you with real strangers over video, voice, and

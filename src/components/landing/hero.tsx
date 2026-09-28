@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Compass, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SUBLINE } from "@/lib/brand";
 
 export function Hero() {
   return (
@@ -40,8 +41,8 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.12 }}
           className="mt-6 max-w-xl text-balance text-lg text-muted-foreground"
         >
-          Talk. Play. Connect. Wisp matches you instantly with real people around
-          the world over text, voice, or video — by interest, language, or pure
+          {SUBLINE} Wisp matches you instantly with real people around the
+          world over text, voice, or video — by interest, language, or pure
           chance.
         </motion.p>
 

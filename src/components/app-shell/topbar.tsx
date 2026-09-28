@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Sparkles,
   LogOut,
   Settings,
   User as UserIcon,
@@ -20,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/app-shell/notification-bell";
+import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 
@@ -58,9 +58,7 @@ export function Topbar({ user }: { user: AppUser }) {
             href="/discover"
             className="flex items-center gap-2 font-display text-lg font-semibold"
           >
-            <span className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-              <Sparkles className="size-4" />
-            </span>
+            <Logo size="size-8" iconSize="size-4" />
             <span className="hidden sm:inline">{APP_NAME}</span>
           </Link>
 
