@@ -119,7 +119,7 @@ export function DiscoverForm({
                 )}
               >
                 <div className="font-medium text-foreground">{m.label}</div>
-                <div className="mt-0.5 line-clamp-1 text-[11px] opacity-80">{m.description}</div>
+                <div className="mt-0.5 line-clamp-2 text-[11px] opacity-80">{m.description}</div>
               </button>
             );
           })}

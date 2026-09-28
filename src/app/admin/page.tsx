@@ -5,6 +5,8 @@ import { redis } from "@/lib/redis/client";
 import { mmKeys } from "@/lib/matchmaking/keys";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PartyPopper } from "lucide-react";
 
 export const metadata: Metadata = { title: "Admin Overview" };
 
@@ -73,7 +75,7 @@ export default async function AdminOverviewPage() {
         </CardHeader>
         <CardContent>
           {recentReports.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nothing pending. Nice.</p>
+            <EmptyState icon={PartyPopper} message="Nothing pending. Nice." className="py-6" />
           ) : (
             <div className="flex flex-col gap-2">
               {recentReports.map((r) => (

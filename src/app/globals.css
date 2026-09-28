@@ -21,6 +21,7 @@
   --destructive: #DC2626;
   --destructive-foreground: #FEF2F2;
   --success: #BBF7D0;
+  --success-foreground: #14532D;
   --border: #E9E5F2;
   --input: #E9E5F2;
   --ring: #A78BFA;
@@ -68,6 +69,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Radio, Users } from "lucide-react";
 
 export const metadata: Metadata = { title: "Admin · Sessions" };
 
@@ -41,7 +43,7 @@ export default async function AdminSessionsPage() {
           <CardTitle>Active matches ({activeMatches.length})</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          {activeMatches.length === 0 && <p className="text-sm text-muted-foreground">None right now.</p>}
+          {activeMatches.length === 0 && <EmptyState icon={Radio} message="No active matches right now." />}
           {activeMatches.map((m) => (
             <div key={m.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2.5 text-sm">
               <span>
@@ -64,7 +66,7 @@ export default async function AdminSessionsPage() {
           <CardTitle>Open rooms ({openRooms.length})</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          {openRooms.length === 0 && <p className="text-sm text-muted-foreground">None right now.</p>}
+          {openRooms.length === 0 && <EmptyState icon={Users} message="No open rooms right now." />}
           {openRooms.map((r) => (
             <div key={r.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2.5 text-sm">
               <span>{r.title} — hosted by @{r.host.username}</span>
@@ -84,6 +86,7 @@ export default async function AdminSessionsPage() {
           <CardTitle>Recently ended matches</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
+          {recentMatches.length === 0 && <EmptyState icon={Radio} message="No ended matches yet." />}
           {recentMatches.map((m) => (
             <div key={m.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2.5 text-sm">
               <span>

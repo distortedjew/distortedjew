@@ -50,7 +50,7 @@ export default function VerifyEmailPage() {
         )}
         {status === "success" && (
           <>
-            <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-success/15 text-success">
+            <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-success/15 text-success-foreground dark:text-success">
               <CheckCircle2 className="size-6" />
             </span>
             <CardTitle>Email verified</CardTitle>

@@ -26,7 +26,7 @@ export function MobileTabbar() {
               href={tab.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 rounded-xl px-4 py-1.5 text-[11px] font-medium",
-                active ? "text-primary" : "text-muted-foreground",
+                active ? "text-primary-foreground dark:text-primary" : "text-muted-foreground",
               )}
             >
               <tab.icon className="size-5" />

@@ -183,7 +183,7 @@ export function GuessWordGame({
       )}
 
       {state.solvedBy && (
-        <div className="text-center text-sm text-success">
+        <div className="text-center text-sm font-medium text-success-foreground dark:text-success">
           {state.solvedBy === selfId ? "You got it! 🎉" : "Solved!"}
         </div>
       )}

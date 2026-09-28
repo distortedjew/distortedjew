@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = { title: "Admin · Moderation log" };
 
@@ -35,7 +37,13 @@ export default async function AdminModerationPage() {
       </div>
 
       <div className="flex flex-col gap-2">
-        {actions.length === 0 && <p className="text-sm text-muted-foreground">No actions yet.</p>}
+        {actions.length === 0 && (
+          <Card>
+            <CardContent>
+              <EmptyState icon={ShieldCheck} message="No moderation actions yet." />
+            </CardContent>
+          </Card>
+        )}
         {actions.map((a) => (
           <Card key={a.id}>
             <CardContent className="flex flex-col gap-1 py-4">

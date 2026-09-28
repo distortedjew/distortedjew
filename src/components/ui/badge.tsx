@@ -7,10 +7,15 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary/15 text-primary border-primary/20",
-        secondary: "bg-secondary/20 text-secondary border-secondary/25",
+        // primary/secondary/success are light pastels: the tinted badge
+        // background stays close to the page background in light mode (so
+        // the accent color itself is unreadable as text) but composites
+        // much darker in dark mode (so the accent color reads fine there,
+        // same as before) — hence the dark: overrides rather than one color.
+        default: "bg-primary/15 text-primary-foreground border-primary/20 dark:text-primary",
+        secondary: "bg-secondary/20 text-secondary-foreground border-secondary/25 dark:text-secondary",
         outline: "border-border text-foreground bg-transparent",
-        success: "bg-success/15 text-success border-success/25",
+        success: "bg-success/15 text-success-foreground border-success/25 dark:text-success",
         destructive: "bg-destructive/15 text-destructive border-destructive/25",
         muted: "bg-muted text-muted-foreground border-transparent",
       },

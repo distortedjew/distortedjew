@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { BarChart3 } from "lucide-react";
 
 export const metadata: Metadata = { title: "Admin · Analytics" };
 
@@ -77,12 +79,17 @@ export default async function AdminAnalyticsPage() {
         <CardContent>
           <div className="flex h-40 items-end gap-3">
             {dailyMatches.map((d) => (
-              <div key={d.label} className="flex flex-1 flex-col items-center gap-2">
-                <div className="flex h-32 w-full items-end">
+              <div key={d.label} className="flex flex-1 flex-col items-center gap-1.5">
+                <span className="text-xs font-medium text-muted-foreground">{d.count || ""}</span>
+                <div className="flex h-28 w-full items-end rounded-md bg-muted/60">
                   <div
-                    className="w-full rounded-t-md bg-primary"
-                    style={{ height: `${Math.max(4, (d.count / maxDaily) * 100)}%` }}
-                    title={`${d.count} matches`}
+                    className={
+                      d.count > 0
+                        ? "w-full rounded-md bg-primary transition-[height]"
+                        : "w-full rounded-md bg-border transition-[height]"
+                    }
+                    style={{ height: d.count > 0 ? `${Math.max(8, (d.count / maxDaily) * 100)}%` : "3px" }}
+                    title={`${d.count} match${d.count === 1 ? "" : "es"}`}
                   />
                 </div>
                 <span className="text-xs text-muted-foreground">{d.label}</span>
@@ -97,7 +104,7 @@ export default async function AdminAnalyticsPage() {
           <CardTitle>Top events</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {eventCounts.length === 0 && <p className="text-sm text-muted-foreground">No events yet.</p>}
+          {eventCounts.length === 0 && <EmptyState icon={BarChart3} message="No events tracked yet." className="py-6" />}
           {eventCounts.map((e) => (
             <div key={e.name} className="flex items-center gap-3">
               <span className="w-40 shrink-0 truncate text-sm">{e.name}</span>

@@ -128,7 +128,7 @@ export function SettingsForm({
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">{account.email}</p>
               {account.emailVerified ? (
-                <span className="flex items-center gap-1 text-xs font-medium text-success">
+                <span className="flex items-center gap-1 text-xs font-medium text-success-foreground dark:text-success">
                   <BadgeCheck className="size-3.5" />
                   Verified
                 </span>

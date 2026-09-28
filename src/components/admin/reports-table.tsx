@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -91,7 +92,11 @@ export function ReportsTable({ reports: initial }: { reports: ReportRow[] }) {
     <>
       <div className="flex flex-col gap-2">
         {reports.length === 0 && (
-          <p className="text-sm text-muted-foreground">No reports yet.</p>
+          <Card>
+            <CardContent>
+              <EmptyState icon={Flag} message="No reports yet." />
+            </CardContent>
+          </Card>
         )}
         {reports.map((r) => (
           <Card key={r.id}>
