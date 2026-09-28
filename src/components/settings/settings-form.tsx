@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, BadgeCheck, MailWarning } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -40,7 +40,7 @@ export function SettingsForm({
   settings: initialSettings,
   languageOptions,
 }: {
-  account: { username: string; email: string | null; isGuest: boolean };
+  account: { username: string; email: string | null; isGuest: boolean; emailVerified: boolean };
   settings: SettingsState;
   languageOptions: readonly { code: string; label: string }[];
 }) {
@@ -48,6 +48,24 @@ export function SettingsForm({
   const [settings, setSettings] = useState(initialSettings);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [justResent, setJustResent] = useState(false);
+
+  async function resendVerification() {
+    setResending(true);
+    try {
+      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Could not send verification email.");
+        return;
+      }
+      setJustResent(true);
+      toast.success("Verification email sent — check your inbox.");
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function persist(patch: Partial<SettingsState>) {
     const next = { ...settings, ...patch };
@@ -105,13 +123,38 @@ export function SettingsForm({
           <CardTitle>Account</CardTitle>
           <CardDescription>@{account.username}{account.isGuest && " · Guest session"}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-2">
           {account.email ? (
-            <p className="text-sm text-muted-foreground">{account.email}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">{account.email}</p>
+              {account.emailVerified ? (
+                <span className="flex items-center gap-1 text-xs font-medium text-success">
+                  <BadgeCheck className="size-3.5" />
+                  Verified
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <MailWarning className="size-3.5" />
+                  Not verified
+                </span>
+              )}
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">
               {account.isGuest ? "Guest accounts don't have an email on file." : "No email on file."}
             </p>
+          )}
+          {account.email && !account.emailVerified && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              onClick={resendVerification}
+              disabled={resending || justResent}
+            >
+              {resending && <Loader2 className="size-3.5 animate-spin" />}
+              {justResent ? "Verification email sent" : "Resend verification email"}
+            </Button>
           )}
         </CardContent>
       </Card>

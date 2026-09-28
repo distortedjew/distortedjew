@@ -7,6 +7,7 @@ import { rateLimit } from "@/lib/redis/rate-limit";
 import { getClientIpHash, getUserAgent } from "@/lib/request";
 import { MINIMUM_AGE } from "@/lib/constants";
 import { getCaptchaProvider } from "@/lib/captcha";
+import { sendVerificationEmail } from "@/lib/auth/send-verification-email";
 
 export async function POST(req: NextRequest) {
   const ipHash = await getClientIpHash();
@@ -69,6 +70,12 @@ export async function POST(req: NextRequest) {
     { id: user.id, username: user.username, role: user.role, isGuest: false },
     { userAgent, ipHash },
   );
+
+  // Verification is non-blocking — the account already works. Don't let a
+  // slow/failed email provider affect the registration response.
+  sendVerificationEmail(user.id, user.email!).catch((err) => {
+    console.error("[register] failed to send verification email", err);
+  });
 
   return NextResponse.json({
     user: { id: user.id, username: user.username, isGuest: false },

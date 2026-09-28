@@ -14,7 +14,7 @@ export default async function SettingsPage() {
   const [user, settings] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.sub },
-      select: { username: true, email: true, isGuest: true },
+      select: { username: true, email: true, isGuest: true, emailVerified: true },
     }),
     prisma.userSettings.findUnique({ where: { userId: session.sub } }),
   ]);
@@ -23,7 +23,12 @@ export default async function SettingsPage() {
 
   return (
     <SettingsForm
-      account={{ username: user.username, email: user.email, isGuest: user.isGuest }}
+      account={{
+        username: user.username,
+        email: user.email,
+        isGuest: user.isGuest,
+        emailVerified: !!user.emailVerified,
+      }}
       settings={{
         preferredLanguage: settings.preferredLanguage,
         soundEffectsEnabled: settings.soundEffectsEnabled,
