@@ -1,103 +1,93 @@
 import type { Metadata } from "next";
-import { ShieldCheck, Flag, UserX, Bot, Lock, Heart } from "lucide-react";
 import { MINIMUM_AGE, APP_NAME } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Safety Center" };
+export const metadata: Metadata = { title: "Safety" };
 
-const PILLARS = [
+const PROTECTIONS = [
   {
-    icon: Bot,
-    title: "AI-assisted moderation",
-    body: "Every message passes through an automated safety filter before it's delivered. High-risk messages are blocked outright; borderline ones are queued for human review.",
+    title: "Messages are screened as they're sent",
+    body: "An automated filter checks every message before it's delivered. High-risk messages are blocked. Borderline ones are sent to a moderator for review.",
   },
   {
-    icon: Flag,
-    title: "Report anything, anytime",
-    body: "Every chat, room, and profile has a one-tap report button with clear categories — harassment, spam, sexual content, hate, threats, scams, impersonation.",
+    title: "Report anyone, any time",
+    body: "Every chat and room has a report button. Reporting ends the conversation for both of you right away.",
   },
   {
-    icon: UserX,
-    title: "Instant blocking",
-    body: "Blocking someone ends the conversation immediately and guarantees you'll never be matched with them again.",
+    title: "Blocking is permanent",
+    body: "Blocking ends the chat immediately, and you'll never be matched with that person again.",
   },
   {
-    icon: Lock,
-    title: "Minimal data, by design",
-    body: "We don't require ID or a phone number to chat. We never show your email or raw IP to anyone, ever.",
+    title: "You share as little as you want",
+    body: "You don't need ID or a phone number to chat. Your email and IP address are never shown to anyone.",
   },
   {
-    icon: ShieldCheck,
-    title: "Trust signals",
-    body: "Accounts build a private trust score from account age, verification, and history. We never let anyone buy their way to a better standing.",
+    title: "Accounts earn trust over time",
+    body: "Each account has a private trust score based on its age, verification and history. It can't be bought.",
   },
   {
-    icon: Heart,
-    title: "You're in control",
-    body: "Next, Connect, Report, and Block are always one tap away — nothing forces you to stay in a conversation you don't want.",
+    title: "You can always leave",
+    body: "Next, Report, Block and Leave are one tap away in every conversation.",
   },
 ];
 
 const CATEGORIES = [
-  "Harassment", "Spam", "Sexual content", "Hate or abusive content",
-  "Threats", "Scam", "Impersonation", "Other",
+  "harassment", "spam", "sexual content", "hate or abusive content",
+  "threats", "scams", "impersonation", "anything else",
+];
+
+const AFTER_REPORT = [
+  { title: "You're separated right away.", body: "The conversation ends the moment you report." },
+  { title: "The report is sorted automatically.", body: "It gets a category and a risk score." },
+  { title: "A moderator reviews serious cases.", body: "Nobody is permanently banned by an automated score alone." },
+  { title: "Action is taken.", body: "Depending on severity: a warning, a timeout, a suspension or a ban." },
 ];
 
 export default function SafetyPage() {
   return (
-    <div className="mx-auto max-w-4xl px-6 py-20">
-      <div className="mx-auto max-w-xl text-center">
-        <h1 className="font-display text-4xl font-semibold tracking-tight">Safety Center</h1>
-        <p className="mt-3 text-muted-foreground">
-          {APP_NAME} is built for adults {MINIMUM_AGE}+ having real
-          conversations. Here&apos;s exactly how we keep it that way.
-        </p>
-      </div>
+    <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8 sm:py-20">
+      <h1 className="type-poster text-5xl sm:text-7xl">Safety</h1>
+      <p className="mt-5 max-w-[48ch] text-lg leading-relaxed text-muted-foreground">
+        {APP_NAME} is for adults {MINIMUM_AGE} and older. This is how conversations with strangers
+        stay safe here, and what happens when someone crosses a line.
+      </p>
 
-      <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {PILLARS.map((pillar) => (
-          <div key={pillar.title} className="rounded-2xl border border-border/60 bg-card/60 p-6">
-            <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 text-primary">
-              <pillar.icon className="size-5" />
+      <section className="mt-14">
+        <h2 className="font-display text-2xl font-bold tracking-tight">How you&apos;re protected</h2>
+        <dl className="mt-6 border-t border-border">
+          {PROTECTIONS.map((item) => (
+            <div key={item.title} className="grid gap-1 border-b border-border py-5 sm:grid-cols-[1fr_1.3fr] sm:gap-8">
+              <dt className="font-display text-lg font-semibold">{item.title}</dt>
+              <dd className="leading-relaxed text-muted-foreground">{item.body}</dd>
             </div>
-            <h3 className="font-display text-base font-semibold">{pillar.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{pillar.body}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-16 rounded-2xl border border-border/60 bg-card/60 p-8">
-        <h2 className="font-display text-xl font-semibold">Report categories</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Every report is reviewed against these categories so our moderation
-          team — and our automated systems — can act quickly and consistently.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => (
-            <span
-              key={c}
-              className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground"
-            >
-              {c}
-            </span>
           ))}
-        </div>
-      </div>
+        </dl>
+      </section>
 
-      <div className="mt-16 rounded-2xl border border-border/60 bg-card/60 p-8">
-        <h2 className="font-display text-xl font-semibold">What happens after you report someone</h2>
-        <ol className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground">
-          <li><strong className="text-foreground">1. Immediate separation.</strong> Reporting ends your current conversation right away — you&apos;re never stuck.</li>
-          <li><strong className="text-foreground">2. Automated triage.</strong> Our AI moderation layer assigns a risk score and category to the report.</li>
-          <li><strong className="text-foreground">3. Human review when needed.</strong> Higher-risk reports are queued for a human moderator — no one is permanently banned from an automated score alone.</li>
-          <li><strong className="text-foreground">4. Action.</strong> Depending on severity: a warning, a temporary timeout, a suspension, or a ban.</li>
+      <section className="mt-14">
+        <h2 className="font-display text-2xl font-bold tracking-tight">What happens after you report someone</h2>
+        <ol className="mt-6 flex flex-col gap-5">
+          {AFTER_REPORT.map((step, i) => (
+            <li key={step.title} className="flex gap-4">
+              <span className="type-poster w-8 shrink-0 text-3xl text-primary" aria-hidden>
+                {i + 1}
+              </span>
+              <p className="leading-relaxed">
+                <strong className="font-semibold">{step.title}</strong>{" "}
+                <span className="text-muted-foreground">{step.body}</span>
+              </p>
+            </li>
+          ))}
         </ol>
-      </div>
+        <p className="mt-8 leading-relaxed text-muted-foreground">
+          You can report {CATEGORIES.slice(0, -1).join(", ")}, or {CATEGORIES.at(-1)}.
+        </p>
+      </section>
 
-      <div className="mt-16 text-center text-sm text-muted-foreground">
-        If you or someone else is in immediate danger, please contact local
-        emergency services. {APP_NAME}&apos;s moderation team handles
-        platform safety, not emergencies.
-      </div>
+      <p className="mt-14 border-l-4 border-destructive pl-5 leading-relaxed">
+        If you or someone else is in immediate danger, contact local emergency services.{" "}
+        {APP_NAME}&apos;s moderators handle safety on the platform and can&apos;t respond to
+        emergencies.
+      </p>
     </div>
   );
 }

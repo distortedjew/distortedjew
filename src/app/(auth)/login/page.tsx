@@ -52,7 +52,7 @@ function LoginForm() {
       router.push(searchParams.get("next") || "/discover");
       router.refresh();
     } catch {
-      toast.error("Network error. Please try again.");
+      toast.error("Couldn't reach Wisp. Check your connection and try again.");
     } finally {
       setLoading(false);
     }

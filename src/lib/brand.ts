@@ -1,20 +1,19 @@
-/** Central brand copy — single source of truth so taglines stay consistent across the landing page, page metadata, manifest, and share cards. */
+/** Central brand copy, shared by the landing page, page metadata and share cards. */
 
 export const TAGLINE = "Meet someone you've never met.";
-export const SUBLINE = "Talk. Play. Connect.";
 
-/** ~150-160 chars, tuned for meta/OG description length. */
+/** Meta/OG description: what it is, plainly, in under 160 characters. */
 export const DESCRIPTION =
-  "Wisp is where strangers become stories — instant text, voice, and video chat with real people, matched by interest, language, or pure chance.";
+  "Talk to someone new over text, voice or video. Matched at random or by interest and language. Free, no download, 18+.";
 
-/** Compact pitch for tight spaces (manifest short description, share previews). */
-export const SHORT_PITCH = "Real people. Real conversations. One click away.";
-
-/** Rotating flavor lines shown while matching — pure delight, no functional meaning. */
-export const SEARCHING_HOOKS = [
-  "New person, new story.",
-  "Say hi to someone new.",
-  "No feeds. No profiles. Just people.",
-  "Every wisp leads somewhere new.",
-  "The next conversation is one click away.",
+/**
+ * Shown while matching. Each one is a practical tip for getting a better
+ * conversation, so the wait teaches something instead of filling space.
+ */
+export const SEARCHING_TIPS = [
+  "Adding a few interests matches you with people who share them.",
+  "Tap the heart during a chat to keep someone as a connection.",
+  "Stuck for words? Start a mini-game from the chat header.",
+  "Someone rude? Report or block them. They won't be matched with you again.",
+  "Language exchange pairs you with someone whose language is different from yours.",
 ] as const;

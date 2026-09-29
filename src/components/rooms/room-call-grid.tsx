@@ -45,7 +45,7 @@ function Tile({
         <audio ref={audioRef} autoPlay />
       )}
       {(!isVideo || !stream) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-background/80 to-muted/80">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-muted/90">
           <Avatar className="size-10">
             <AvatarImage src={avatarUrl ?? undefined} />
             <AvatarFallback>{displayName.slice(0, 1).toUpperCase()}</AvatarFallback>

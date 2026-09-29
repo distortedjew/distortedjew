@@ -35,9 +35,9 @@ export default function PrivacyPage() {
         Messages are analyzed by an automated safety filter at send time, and
         flagged messages may be retained longer for human review. Reports you
         file, and reports filed against you, are stored to support the
-        moderation process described in our{" "}
+        moderation process described on our{" "}
         <a href="/safety" className="underline">
-          Safety Center
+          safety page
         </a>
         .
       </p>

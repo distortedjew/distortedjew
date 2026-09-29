@@ -44,7 +44,7 @@ export function AchievementGrid({ achievements }: { achievements: AchievementVie
                     : "border-border/60 bg-card/40 opacity-50 grayscale",
                 )}
               >
-                <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 text-primary">
+                <div className="flex size-10 items-center justify-center rounded-full bg-accent text-primary">
                   <Icon className="size-5" />
                 </div>
                 <div className="text-xs font-medium">{a.name}</div>

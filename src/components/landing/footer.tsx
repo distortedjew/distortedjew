@@ -15,7 +15,7 @@ const COLUMNS = [
   {
     title: "Trust",
     links: [
-      { href: "/safety", label: "Safety center" },
+      { href: "/safety", label: "Safety" },
       { href: "/terms", label: "Terms of service" },
       { href: "/privacy", label: "Privacy policy" },
     ],
@@ -24,23 +24,23 @@ const COLUMNS = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/60 bg-background">
-      <div className="mx-auto max-w-6xl px-6 py-14">
+    <footer className="border-t border-border bg-background px-5 sm:px-8">
+      <div className="mx-auto max-w-6xl py-14">
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
           <div className="md:col-span-2">
-            <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold">
-              <Logo size="size-8" iconSize="size-4" />
+            <Link href="/" className="flex items-center gap-2.5 font-display text-lg font-bold tracking-tight">
+              <Logo size="size-8" iconSize="size-5" />
               {APP_NAME}
             </Link>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-              A modern social discovery platform for meeting new people through
-              text, voice, and video — matched by interests, language, and vibe.
+              Text, voice and video chat with people you haven&apos;t met yet,
+              matched at random or by interest and language.
             </p>
           </div>
 
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <div className="mb-3 text-sm font-medium text-foreground">{col.title}</div>
+              <h2 className="mb-3 font-display text-sm font-semibold">{col.title}</h2>
               <ul className="flex flex-col gap-2.5">
                 {col.links.map((link) => (
                   <li key={link.href}>
@@ -54,9 +54,9 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row">
-          <span>© {new Date().getFullYear()} {APP_NAME}. All rights reserved.</span>
-          <span>{APP_NAME} is for adults 18+. Be kind. Report anything that isn&apos;t.</span>
+        <div className="mt-12 flex flex-col items-start justify-between gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
+          <span>© {new Date().getFullYear()} {APP_NAME}</span>
+          <span>For adults 18+. Be kind, and report anyone who isn&apos;t.</span>
         </div>
       </div>
     </footer>

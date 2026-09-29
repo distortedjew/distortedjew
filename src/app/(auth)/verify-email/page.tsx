@@ -54,7 +54,7 @@ function VerifyEmailForm() {
       })
       .catch(() => {
         setStatus("error");
-        setError("Network error. Please try again.");
+        setError("Couldn't reach Wisp. Check your connection and try again.");
       });
   }, [token]);
 

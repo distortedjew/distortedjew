@@ -48,7 +48,7 @@ export function AdminSidebar({ role }: { role: string }) {
               className={cn(
                 "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-colors md:gap-2.5",
                 active
-                  ? "bg-primary/10 text-primary-foreground dark:text-primary"
+                  ? "bg-accent text-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >

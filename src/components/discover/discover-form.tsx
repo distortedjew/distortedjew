@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { MessageCircle, Mic, Video, ArrowRight } from "lucide-react";
+import { MessageCircle, Mic, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -20,9 +18,9 @@ import { COUNTRIES } from "@/lib/countries";
 import type { MatchChannel, MatchMode } from "@/types/ws";
 
 const CHANNELS: Array<{ value: MatchChannel; label: string; icon: typeof MessageCircle; description: string }> = [
-  { value: "TEXT", label: "Text", icon: MessageCircle, description: "Type your way into a conversation." },
-  { value: "VOICE", label: "Voice", icon: Mic, description: "Talk it out, no camera needed." },
-  { value: "VIDEO", label: "Video", icon: Video, description: "Face to face, worldwide." },
+  { value: "TEXT", label: "Text", icon: MessageCircle, description: "Type messages. Nobody hears or sees you." },
+  { value: "VOICE", label: "Voice", icon: Mic, description: "Talk out loud. Your camera stays off." },
+  { value: "VIDEO", label: "Video", icon: Video, description: "See each other. Uses your camera and mic." },
 ];
 
 export function DiscoverForm({
@@ -65,19 +63,14 @@ export function DiscoverForm({
     (needsCountry && !country);
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-4 py-12">
-      <div className="text-center">
-        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-          Find your next conversation
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Pick how you want to connect — we&apos;ll handle the rest.
-        </p>
-      </div>
+    <div className="mx-auto flex max-w-2xl flex-col gap-10 px-5 pt-8 sm:pt-12">
+      <h1 className="type-poster text-5xl sm:text-6xl">Start a chat</h1>
 
-      <section>
-        <h2 className="mb-3 text-sm font-medium text-muted-foreground">How do you want to talk?</h2>
-        <div className="grid grid-cols-3 gap-3">
+      <section aria-labelledby="channel-heading">
+        <h2 id="channel-heading" className="mb-3 font-display text-lg font-semibold">
+          Talk by
+        </h2>
+        <div className="grid grid-cols-3 gap-1 rounded-full bg-secondary p-1">
           {CHANNELS.map((c) => {
             const active = channel === c.value;
             return (
@@ -87,43 +80,50 @@ export function DiscoverForm({
                 aria-pressed={active}
                 onClick={() => setChannel(c.value)}
                 className={cn(
-                  "flex flex-col items-center gap-2 rounded-2xl border p-4 text-center transition-all",
-                  active
-                    ? "border-primary/50 bg-primary/10 shadow-[0_0_0_1px] shadow-primary/30"
-                    : "border-border/60 bg-card/60 hover:border-border",
+                  "flex items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                  active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <c.icon className={cn("size-5", active ? "text-primary" : "text-muted-foreground")} />
-                <span className="text-sm font-medium">{c.label}</span>
+                <c.icon className="size-4" />
+                {c.label}
               </button>
             );
           })}
         </div>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
+        <p className="mt-2.5 text-sm text-muted-foreground">
           {CHANNELS.find((c) => c.value === channel)?.description}
         </p>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-sm font-medium text-muted-foreground">What kind of match?</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <section aria-labelledby="mode-heading">
+        <h2 id="mode-heading" className="mb-1 font-display text-lg font-semibold">
+          Match me with
+        </h2>
+        <div role="radiogroup" aria-labelledby="mode-heading" className="grid sm:grid-cols-2 sm:gap-x-6">
           {MODE_OPTIONS.map((m) => {
             const active = mode === m.value;
             return (
               <button
                 key={m.value}
                 type="button"
-                aria-pressed={active}
+                role="radio"
+                aria-checked={active}
                 onClick={() => setMode(m.value)}
-                className={cn(
-                  "rounded-xl border px-3 py-2.5 text-left text-xs transition-all",
-                  active
-                    ? "border-primary/50 bg-primary/10 text-foreground"
-                    : "border-border/60 bg-card/40 text-muted-foreground hover:border-border",
-                )}
+                className="group flex items-start gap-3 border-b border-border py-3 text-left focus-visible:outline-none"
               >
-                <div className="font-medium text-foreground">{m.label}</div>
-                <div className="mt-0.5 line-clamp-2 text-[11px] opacity-80">{m.description}</div>
+                <span
+                  className={cn(
+                    "mt-1 flex size-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors group-focus-visible:ring-2 group-focus-visible:ring-ring/50",
+                    active ? "border-primary" : "border-input",
+                  )}
+                  aria-hidden
+                >
+                  {active && <span className="size-2 rounded-full bg-primary" />}
+                </span>
+                <span>
+                  <span className="block font-medium">{m.label}</span>
+                  <span className="block text-sm text-muted-foreground">{m.description}</span>
+                </span>
               </button>
             );
           })}
@@ -131,9 +131,12 @@ export function DiscoverForm({
       </section>
 
       {needsInterests && (
-        <section>
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">
-            Pick a few interests {interests.length > 0 && `(${interests.length} selected)`}
+        <section aria-labelledby="interests-heading">
+          <h2 id="interests-heading" className="mb-3 font-display text-lg font-semibold">
+            Interests{" "}
+            <span className="font-sans text-sm font-normal text-muted-foreground">
+              {interests.length > 0 ? `${interests.length} picked` : "pick at least one"}
+            </span>
           </h2>
           <div className="flex flex-wrap gap-2">
             {INTEREST_OPTIONS.map((interest) => {
@@ -144,11 +147,14 @@ export function DiscoverForm({
                   type="button"
                   aria-pressed={active}
                   onClick={() => toggleInterest(interest)}
-                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  className={cn(
+                    "rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input hover:border-foreground/40",
+                  )}
                 >
-                  <Badge variant={active ? "default" : "outline"} className="cursor-pointer px-3 py-1.5">
-                    {interest}
-                  </Badge>
+                  {interest}
                 </button>
               );
             })}
@@ -157,10 +163,12 @@ export function DiscoverForm({
       )}
 
       {needsLanguage && (
-        <section>
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">Language</h2>
+        <section aria-labelledby="language-heading">
+          <h2 id="language-heading" className="mb-3 font-display text-lg font-semibold">
+            {mode === "LANGUAGE_EXCHANGE" ? "Your language" : "Language"}
+          </h2>
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger aria-label="Language">
+            <SelectTrigger aria-labelledby="language-heading">
               <SelectValue placeholder="Choose a language" />
             </SelectTrigger>
             <SelectContent>
@@ -175,10 +183,12 @@ export function DiscoverForm({
       )}
 
       {needsCountry && (
-        <section>
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">Country</h2>
+        <section aria-labelledby="country-heading">
+          <h2 id="country-heading" className="mb-3 font-display text-lg font-semibold">
+            Your country
+          </h2>
           <Select value={country} onValueChange={setCountry}>
-            <SelectTrigger aria-label="Country">
+            <SelectTrigger aria-labelledby="country-heading">
               <SelectValue placeholder="Choose a country" />
             </SelectTrigger>
             <SelectContent className="max-h-64">
@@ -192,12 +202,11 @@ export function DiscoverForm({
         </section>
       )}
 
-      <motion.div whileTap={{ scale: 0.98 }}>
-        <Button size="lg" className="w-full group" disabled={disabled} onClick={startMatching}>
+      <div className="sticky bottom-16 -mx-5 border-t border-border bg-background/95 px-5 py-3 backdrop-blur md:bottom-0 md:border-t-0 md:pb-6">
+        <Button size="lg" className="w-full" disabled={disabled} onClick={startMatching}>
           Start matching
-          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
         </Button>
-      </motion.div>
+      </div>
     </div>
   );
 }

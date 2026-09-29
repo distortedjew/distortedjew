@@ -84,7 +84,7 @@ export function RoomChatPanel({
           onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
           placeholder="Message the room…"
           maxLength={2000}
-          className="h-10 flex-1 rounded-full border border-input bg-input/30 px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="h-10 flex-1 rounded-full border border-input bg-card px-4 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         />
         <Button size="icon-sm" onClick={sendMessage} disabled={!draft.trim()} aria-label="Send message">
           <Send className="size-4" />

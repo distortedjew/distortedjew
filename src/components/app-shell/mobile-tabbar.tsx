@@ -32,7 +32,7 @@ export function MobileTabbar() {
               className={cn(
                 "flex min-w-0 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] font-medium transition-colors",
                 active
-                  ? "bg-primary/10 text-primary-foreground dark:text-primary"
+                  ? "bg-accent text-primary"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >

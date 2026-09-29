@@ -1,11 +1,11 @@
 {
   "name": "Wisp — Meet someone you've never met",
   "short_name": "Wisp",
-  "description": "Real people. Real conversations. One click away.",
+  "description": "Talk to someone new over text, voice or video.",
   "start_url": "/discover",
   "display": "standalone",
-  "background_color": "#FCFBFF",
-  "theme_color": "#A78BFA",
+  "background_color": "#F4F3F9",
+  "theme_color": "#6B4EFF",
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]

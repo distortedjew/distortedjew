@@ -73,7 +73,7 @@ export function GamePanel({
   function invite(type: GameType) {
     send({ type: "game:invite", matchId, roomId, gameType: type });
     setGameType(type);
-    toast.success(roomId ? "Starting the game for everyone in the room…" : "Invite sent — waiting for them to accept.");
+    toast.success(roomId ? "Starting the game for everyone in the room…" : "Invite sent. Waiting for them to accept.");
   }
 
   function acceptInvite() {
