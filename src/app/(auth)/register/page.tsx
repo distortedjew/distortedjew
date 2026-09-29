@@ -101,8 +101,13 @@ export default function RegisterPage() {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               placeholder="At least 8 characters"
+              aria-describedby="password-hint"
+              minLength={8}
               required
             />
+            <p id="password-hint" className="text-xs text-muted-foreground">
+              8+ characters with an uppercase letter, a lowercase letter, and a number.
+            </p>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="birthYear">Birth year</Label>
@@ -127,19 +132,21 @@ export default function RegisterPage() {
           <label className="flex items-start gap-2 text-xs text-muted-foreground">
             <input
               type="checkbox"
-              className="mt-0.5 size-4 rounded border-input"
+              className="mt-0.5 size-4 shrink-0 rounded border-input accent-primary"
               checked={form.acceptTerms}
               onChange={(e) => setForm({ ...form, acceptTerms: e.target.checked })}
             />
-            I agree to the{" "}
-            <Link href="/terms" className="underline hover:text-foreground">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="underline hover:text-foreground">
-              Privacy Policy
-            </Link>
-            .
+            <span>
+              I agree to the{" "}
+              <Link href="/terms" className="underline hover:text-foreground">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="underline hover:text-foreground">
+                Privacy Policy
+              </Link>
+              .
+            </span>
           </label>
           <TurnstileWidget onToken={setCaptchaToken} />
         </CardContent>

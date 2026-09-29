@@ -134,9 +134,9 @@ export function RoomsBrowser({ rooms }: { rooms: RoomSummary[] }) {
                 />
               </div>
               <div>
-                <Label>Channel</Label>
+                <Label htmlFor="room-channel">Channel</Label>
                 <Select value={form.channel} onValueChange={(v) => setForm({ ...form, channel: v as typeof form.channel })}>
-                  <SelectTrigger className="mt-1.5">
+                  <SelectTrigger id="room-channel" className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -146,18 +146,24 @@ export function RoomsBrowser({ rooms }: { rooms: RoomSummary[] }) {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Interests</Label>
+              <fieldset>
+                <legend className="text-sm font-medium">Interests</legend>
                 <div className="mt-1.5 flex flex-wrap gap-2">
                   {INTEREST_OPTIONS.slice(0, 12).map((interest) => (
-                    <button key={interest} onClick={() => toggleInterest(interest)}>
+                    <button
+                      key={interest}
+                      type="button"
+                      aria-pressed={form.interests.includes(interest)}
+                      onClick={() => toggleInterest(interest)}
+                      className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                    >
                       <Badge variant={form.interests.includes(interest) ? "default" : "outline"} className="cursor-pointer px-2.5 py-1">
                         {interest}
                       </Badge>
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
             </div>
 
             <DialogFooter>

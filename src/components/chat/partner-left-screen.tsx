@@ -21,7 +21,7 @@ export function PartnerLeftScreen({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-6 px-4 text-center"
+      className="flex min-h-app flex-col items-center justify-center gap-6 px-4 text-center"
     >
       <div className="flex size-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
         <UserX className="size-6" />

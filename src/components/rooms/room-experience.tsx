@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { LogOut } from "lucide-react";
+import { LogOut, Users2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSocket, useSocketMessage } from "@/hooks/socket-provider";
@@ -12,6 +12,7 @@ import { ParticipantList } from "./participant-list";
 import { RoomCallGrid } from "./room-call-grid";
 import { GamePanel } from "@/components/chat/game-panel";
 import { ReportDialog } from "@/components/chat/report-dialog";
+import { cn } from "@/lib/utils";
 import type { RoomChannel, RoomParticipantView } from "@/types/ws";
 
 interface RoomInfo {
@@ -30,6 +31,7 @@ export function RoomExperience({ room, selfId }: { room: RoomInfo; selfId: strin
   const [participants, setParticipants] = useState<RoomParticipantView[]>([]);
   const [gamesOpen, setGamesOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<string | null>(null);
+  const [peopleOpen, setPeopleOpen] = useState(false);
   const peerHelpers = useRef<{
     connectToPeer: (id: string) => void;
     disconnectFromPeer: (id: string) => void;
@@ -118,6 +120,8 @@ export function RoomExperience({ room, selfId }: { room: RoomInfo; selfId: strin
     if (msg.code === "ROOM_JOIN_FAILED") router.push("/rooms");
   });
 
+  const isSelfHost = participants.find((p) => p.userId === selfId)?.role === "HOST";
+
   function leaveRoom() {
     send({ type: "room:leave", roomId: room.id });
     router.push("/rooms");
@@ -152,20 +156,51 @@ export function RoomExperience({ room, selfId }: { room: RoomInfo; selfId: strin
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-5xl flex-col md:flex-row">
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-          <div>
+    <div className="mx-auto flex h-app max-w-5xl flex-col md:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-3">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-base font-semibold">{room.title}</h1>
-              <Badge variant="secondary">{room.channel}</Badge>
+              <h1 className="truncate font-display text-base font-semibold">{room.title}</h1>
+              <Badge variant="secondary" className="shrink-0">{room.channel}</Badge>
             </div>
-            {room.topic && <p className="text-xs text-muted-foreground">{room.topic}</p>}
+            {room.topic && <p className="truncate text-xs text-muted-foreground">{room.topic}</p>}
           </div>
-          <Button variant="outline" size="sm" onClick={leaveRoom}>
-            <LogOut className="size-4" />
-            Leave
-          </Button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setPeopleOpen((o) => !o)}
+              aria-expanded={peopleOpen}
+              aria-controls="room-participants"
+            >
+              <Users2 className="size-4" />
+              {participants.length}
+            </Button>
+            <Button variant="outline" size="sm" onClick={leaveRoom}>
+              <LogOut className="size-4" />
+              Leave
+            </Button>
+          </div>
+        </div>
+
+        <div
+          id="room-participants"
+          className={cn(
+            "scrollbar-thin max-h-56 overflow-y-auto border-b border-border/60 md:hidden",
+            !peopleOpen && "hidden",
+          )}
+        >
+          <ParticipantList
+            participants={participants}
+            selfId={selfId}
+            isSelfHost={isSelfHost}
+            onMute={mute}
+            onRemove={remove}
+            onBlock={block}
+            onReport={(userId) => setReportTarget(userId)}
+          />
         </div>
 
         {room.channel !== "TEXT" && (
@@ -181,16 +216,16 @@ export function RoomExperience({ room, selfId }: { room: RoomInfo; selfId: strin
           />
         )}
 
-        <div className="flex-1 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <RoomChatPanel roomId={room.id} selfId={selfId} onOpenGames={() => setGamesOpen(true)} />
         </div>
       </div>
 
-      <div className="w-full border-t border-border/60 md:w-64 md:border-l md:border-t-0">
+      <div className="scrollbar-thin hidden w-64 shrink-0 overflow-y-auto border-l border-border/60 md:block">
         <ParticipantList
           participants={participants}
           selfId={selfId}
-          isSelfHost={participants.find((p) => p.userId === selfId)?.role === "HOST"}
+          isSelfHost={isSelfHost}
           onMute={mute}
           onRemove={remove}
           onBlock={block}

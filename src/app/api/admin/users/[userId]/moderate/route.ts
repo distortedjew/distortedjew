@@ -16,7 +16,7 @@ export async function POST(
   const { userId } = await params;
   const parsed = moderateUserSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input", issues: parsed.error.issues }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input", issues: parsed.error.issues }, { status: 400 });
   }
 
   const target = await prisma.user.findUnique({ where: { id: userId } });

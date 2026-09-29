@@ -138,3 +138,26 @@ body {
   background: color-mix(in oklch, var(--color-foreground) 20%, transparent);
   border-radius: 999px;
 }
+
+/*
+ * Full-height app screens (chat, calls, rooms): the visible viewport minus the
+ * 4rem top bar and, below md, the 5rem bottom tab bar reserved by <main>.
+ * dvh tracks mobile browser chrome so controls never slide under the URL bar.
+ */
+@utility h-app {
+  height: calc(100vh - 9rem);
+  height: calc(100dvh - 9rem);
+  @media (width >= 48rem) {
+    height: calc(100vh - 4rem);
+    height: calc(100dvh - 4rem);
+  }
+}
+
+@utility min-h-app {
+  min-height: calc(100vh - 9rem);
+  min-height: calc(100dvh - 9rem);
+  @media (width >= 48rem) {
+    min-height: calc(100vh - 4rem);
+    min-height: calc(100dvh - 4rem);
+  }
+}

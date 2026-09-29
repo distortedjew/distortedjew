@@ -169,7 +169,7 @@ export function SettingsForm({
             value={settings.preferredLanguage}
             onValueChange={(v) => persist({ preferredLanguage: v })}
           >
-            <SelectTrigger className="max-w-xs">
+            <SelectTrigger className="max-w-xs" aria-label="Preferred language">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -192,11 +192,15 @@ export function SettingsForm({
             <div key={t.key}>
               {i > 0 && <Separator className="mb-4" />}
               <div className="flex items-center justify-between gap-4">
-                <div>
+                <label htmlFor={`setting-${t.key}`} className="cursor-pointer">
                   <div className="text-sm font-medium">{t.label}</div>
-                  <div className="text-xs text-muted-foreground">{t.description}</div>
-                </div>
+                  <div id={`setting-${t.key}-desc`} className="text-xs text-muted-foreground">
+                    {t.description}
+                  </div>
+                </label>
                 <Switch
+                  id={`setting-${t.key}`}
+                  aria-describedby={`setting-${t.key}-desc`}
                   checked={settings[t.key] as boolean}
                   onCheckedChange={(checked) => persist({ [t.key]: checked })}
                 />

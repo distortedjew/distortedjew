@@ -45,11 +45,11 @@ export default async function AdminSessionsPage() {
         <CardContent className="flex flex-col gap-2">
           {activeMatches.length === 0 && <EmptyState icon={Radio} message="No active matches right now." />}
           {activeMatches.map((m) => (
-            <div key={m.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2.5 text-sm">
-              <span>
+            <div key={m.id} className="flex flex-col gap-1.5 rounded-xl border border-border/60 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <span className="min-w-0 break-words">
                 @{m.userA.username} ↔ @{m.userB.username}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{m.channel}</Badge>
                 <Badge variant="muted">{m.mode}</Badge>
                 <span className="text-xs text-muted-foreground">
@@ -68,9 +68,9 @@ export default async function AdminSessionsPage() {
         <CardContent className="flex flex-col gap-2">
           {openRooms.length === 0 && <EmptyState icon={Users} message="No open rooms right now." />}
           {openRooms.map((r) => (
-            <div key={r.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2.5 text-sm">
-              <span>{r.title} — hosted by @{r.host.username}</span>
-              <div className="flex items-center gap-2">
+            <div key={r.id} className="flex flex-col gap-1.5 rounded-xl border border-border/60 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <span className="min-w-0 break-words">{r.title} — hosted by @{r.host.username}</span>
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{r.channel}</Badge>
                 <span className="text-xs text-muted-foreground">
                   {r._count.participants}/{r.maxParticipants}
@@ -88,11 +88,11 @@ export default async function AdminSessionsPage() {
         <CardContent className="flex flex-col gap-2">
           {recentMatches.length === 0 && <EmptyState icon={Radio} message="No ended matches yet." />}
           {recentMatches.map((m) => (
-            <div key={m.id} className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2.5 text-sm">
-              <span>
+            <div key={m.id} className="flex flex-col gap-1.5 rounded-xl border border-border/60 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <span className="min-w-0 break-words">
                 @{m.userA.username} ↔ @{m.userB.username}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="muted">{m.endReason}</Badge>
                 <span className="text-xs text-muted-foreground">
                   {m.endedAt && new Date(m.endedAt).toLocaleTimeString()}

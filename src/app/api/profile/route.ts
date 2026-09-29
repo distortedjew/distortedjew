@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest) {
   const json = await req.json().catch(() => null);
   const parsed = updateProfileSchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input", issues: parsed.error.issues }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input", issues: parsed.error.issues }, { status: 400 });
   }
 
   const profile = await prisma.profile.update({

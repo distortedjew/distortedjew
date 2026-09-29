@@ -83,6 +83,8 @@ export function DiscoverForm({
             return (
               <button
                 key={c.value}
+                type="button"
+                aria-pressed={active}
                 onClick={() => setChannel(c.value)}
                 className={cn(
                   "flex flex-col items-center gap-2 rounded-2xl border p-4 text-center transition-all",
@@ -110,6 +112,8 @@ export function DiscoverForm({
             return (
               <button
                 key={m.value}
+                type="button"
+                aria-pressed={active}
                 onClick={() => setMode(m.value)}
                 className={cn(
                   "rounded-xl border px-3 py-2.5 text-left text-xs transition-all",
@@ -135,7 +139,13 @@ export function DiscoverForm({
             {INTEREST_OPTIONS.map((interest) => {
               const active = interests.includes(interest);
               return (
-                <button key={interest} onClick={() => toggleInterest(interest)}>
+                <button
+                  key={interest}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => toggleInterest(interest)}
+                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                >
                   <Badge variant={active ? "default" : "outline"} className="cursor-pointer px-3 py-1.5">
                     {interest}
                   </Badge>
@@ -150,7 +160,7 @@ export function DiscoverForm({
         <section>
           <h2 className="mb-3 text-sm font-medium text-muted-foreground">Language</h2>
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger>
+            <SelectTrigger aria-label="Language">
               <SelectValue placeholder="Choose a language" />
             </SelectTrigger>
             <SelectContent>
@@ -168,7 +178,7 @@ export function DiscoverForm({
         <section>
           <h2 className="mb-3 text-sm font-medium text-muted-foreground">Country</h2>
           <Select value={country} onValueChange={setCountry}>
-            <SelectTrigger>
+            <SelectTrigger aria-label="Country">
               <SelectValue placeholder="Choose a country" />
             </SelectTrigger>
             <SelectContent className="max-h-64">

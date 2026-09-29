@@ -82,12 +82,12 @@ export default async function AdminOverviewPage() {
                 <Link
                   key={r.id}
                   href="/admin/reports"
-                  className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3 text-sm hover:bg-accent"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-4 py-3 text-sm hover:bg-accent"
                 >
-                  <span>
+                  <span className="min-w-0 break-words">
                     <strong>@{r.reported.username}</strong> reported by @{r.reporter.username}
                   </span>
-                  <Badge variant="destructive">{r.category}</Badge>
+                  <Badge variant="destructive" className="shrink-0">{r.category}</Badge>
                 </Link>
               ))}
             </div>

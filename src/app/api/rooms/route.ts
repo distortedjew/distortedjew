@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = createRoomSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input", issues: parsed.error.issues }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input", issues: parsed.error.issues }, { status: 400 });
   }
 
   const room = await prisma.room.create({

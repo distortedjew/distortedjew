@@ -100,9 +100,9 @@ export function ReportsTable({ reports: initial }: { reports: ReportRow[] }) {
         )}
         {reports.map((r) => (
           <Card key={r.id}>
-            <CardContent className="flex flex-col gap-2 pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-sm">
+            <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                   <strong>@{r.reportedUsername}</strong>
                   <span className="text-muted-foreground">reported by @{r.reporterUsername}</span>
                   <Badge variant={STATUS_VARIANT[r.status]}>{r.status}</Badge>
@@ -112,7 +112,7 @@ export function ReportsTable({ reports: initial }: { reports: ReportRow[] }) {
                   )}
                 </div>
                 {r.description && (
-                  <p className="mt-1 max-w-xl text-sm text-muted-foreground">{r.description}</p>
+                  <p className="mt-1 max-w-xl break-words text-sm text-muted-foreground">{r.description}</p>
                 )}
                 <p className="mt-1 text-xs text-muted-foreground">
                   {new Date(r.createdAt).toLocaleString()} · trust score {r.reportedTrustScore}
@@ -120,7 +120,7 @@ export function ReportsTable({ reports: initial }: { reports: ReportRow[] }) {
                 </p>
               </div>
               {r.status === "PENDING" || r.status === "REVIEWING" ? (
-                <Button size="sm" onClick={() => setActive(r)}>
+                <Button size="sm" className="shrink-0" onClick={() => setActive(r)}>
                   Review
                 </Button>
               ) : (
@@ -142,7 +142,7 @@ export function ReportsTable({ reports: initial }: { reports: ReportRow[] }) {
 
           <div className="flex flex-col gap-3">
             <Select value={action} onValueChange={setAction}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Resolution">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

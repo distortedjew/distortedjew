@@ -164,26 +164,26 @@ export function TextChatView({
   const initial = peer.peerDisplayName.slice(0, 1).toUpperCase();
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-2xl flex-col px-4">
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 py-3">
-        <div className="flex items-center gap-3">
-          <Avatar>
+    <div className="mx-auto flex h-app max-w-2xl flex-col px-4">
+      <div className="flex items-center justify-between gap-2 border-b border-border/60 py-2.5 sm:gap-3 sm:py-3">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+          <Avatar className="shrink-0">
             <AvatarImage src={peer.peerAvatarUrl ?? undefined} />
             <AvatarFallback>{initial}</AvatarFallback>
           </Avatar>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-sm font-medium">
-              {peer.peerDisplayName}
+              <span className="truncate">{peer.peerDisplayName}</span>
               {peer.peerTrusted && <Badge variant="success">Trusted</Badge>}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="truncate text-xs text-muted-foreground">
               {peer.peerCountry ? peer.peerCountry : "Location hidden"} ·{" "}
               {peer.peerIsGuest ? "Guest" : "Member"}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Button variant="ghost" size="icon-sm" onClick={onOpenGames} title="Play a game">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
+          <Button variant="ghost" size="icon-sm" onClick={onOpenGames} title="Play a game" aria-label="Play a game">
             <Gamepad2 className="size-4" />
           </Button>
           <MusicShareDialog onShare={shareMusic} />
@@ -192,19 +192,20 @@ export function TextChatView({
             size="icon-sm"
             onClick={onConnect}
             disabled={connectState === "mutual"}
-            title="Connect"
+            title={connectState === "mutual" ? "Connected" : "Connect"}
+            aria-label={connectState === "mutual" ? "Connected" : "Connect"}
           >
             <Heart className={cn("size-4", connectState === "mutual" && "fill-current")} />
           </Button>
           <ReportDialog
             onSubmit={onReport}
             trigger={
-              <Button variant="ghost" size="icon-sm" title="Report">
+              <Button variant="ghost" size="icon-sm" title="Report" aria-label="Report">
                 <Shield className="size-4" />
               </Button>
             }
           />
-          <Button variant="ghost" size="icon-sm" onClick={onBlock} title="Block">
+          <Button variant="ghost" size="icon-sm" onClick={onBlock} title="Block" aria-label="Block">
             <Ban className="size-4" />
           </Button>
         </div>
@@ -217,7 +218,7 @@ export function TextChatView({
         </div>
       )}
 
-      <div ref={scrollRef} className="scrollbar-thin flex-1 overflow-y-auto py-4">
+      <div ref={scrollRef} className="scrollbar-thin min-h-0 flex-1 overflow-y-auto py-4">
         <div className="mb-4 rounded-2xl border border-border/60 bg-card/60 p-4 text-center text-sm text-muted-foreground">
           💬 {icebreaker}
         </div>
@@ -257,6 +258,7 @@ export function TextChatView({
                 )}
                 {!m.self && !m.translatedBody && (
                   <button
+                    type="button"
                     onClick={() => translateMessage(m)}
                     disabled={translatingId === m.id}
                     className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-50"
@@ -284,36 +286,39 @@ export function TextChatView({
         </div>
       </div>
 
-      <div className="flex items-center gap-1 border-t border-border/60 py-2">
+      <div className="flex items-center gap-1 border-t border-border/60 py-1.5 sm:py-2">
         {QUICK_REACTIONS.map((emoji) => (
           <button
             key={emoji}
+            type="button"
+            aria-label={`React with ${emoji}`}
             onClick={() => sendReaction(emoji)}
-            className="rounded-full p-1.5 text-lg hover:bg-accent"
+            className="rounded-full p-1.5 text-lg transition-transform hover:bg-accent active:scale-90"
           >
             {emoji}
           </button>
         ))}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-border/60 py-3">
+      <div className="flex items-center gap-2 border-t border-border/60 py-2 sm:py-3">
         <div className="relative flex-1">
           <input
+            aria-label="Message"
             value={draft}
             onChange={(e) => onDraftChange(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
             placeholder="Type a message…"
             maxLength={2000}
             className="h-11 w-full rounded-full border border-input bg-input/30 px-4 pr-10 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           />
-          <Smile className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Smile aria-hidden className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         </div>
-        <Button size="icon" onClick={sendMessage} disabled={!draft.trim()}>
+        <Button size="icon" onClick={sendMessage} disabled={!draft.trim()} aria-label="Send message">
           <Send className="size-4" />
         </Button>
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-border/60 py-3">
+      <div className="flex items-center justify-between gap-2 border-t border-border/60 py-2 sm:py-3">
         <Button variant="outline" size="sm" onClick={onLeave}>
           Leave
         </Button>

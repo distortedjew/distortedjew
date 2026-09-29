@@ -69,6 +69,7 @@ export function Topbar({ user }: { user: AppUser }) {
                 <Link
                   key={link.href}
                   href={link.href}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
                     active
@@ -86,7 +87,10 @@ export function Topbar({ user }: { user: AppUser }) {
         <div className="flex items-center gap-1">
           <NotificationBell />
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-1 pr-1 outline-none hover:bg-accent">
+            <DropdownMenuTrigger
+              aria-label="Account menu"
+              className="flex items-center gap-2 rounded-full p-1 pr-1 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
               <Avatar className="size-8">
                 <AvatarImage
                   src={user.avatarUrl ?? undefined}

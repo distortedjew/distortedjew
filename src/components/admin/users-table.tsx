@@ -100,20 +100,20 @@ export function UsersTable({ users, initialQuery }: { users: UserRow[]; initialQ
       <div className="mt-4 flex flex-col gap-2">
         {users.map((u) => (
           <Card key={u.id}>
-            <CardContent className="flex flex-col gap-2 pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-sm">
+            <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                   <strong>@{u.username}</strong>
                   {u.isGuest && <Badge variant="muted">Guest</Badge>}
                   {u.role !== "USER" && <Badge variant="outline">{u.role}</Badge>}
                   <Badge variant={STATUS_VARIANT[u.status] ?? "outline"}>{u.status}</Badge>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 break-words text-xs text-muted-foreground">
                   {u.email ?? "no email"} · trust {u.trustScore} · {u.reportsReceivedCount} reports received ·
                   joined {new Date(u.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <Button size="sm" variant="outline" onClick={() => setActive(u)}>
+              <Button size="sm" variant="outline" className="shrink-0" onClick={() => setActive(u)}>
                 Moderate
               </Button>
             </CardContent>
@@ -130,7 +130,7 @@ export function UsersTable({ users, initialQuery }: { users: UserRow[]; initialQ
 
           <div className="flex flex-col gap-3">
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Moderation action">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

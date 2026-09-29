@@ -22,7 +22,7 @@ export function Navbar({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <header className="sticky top-0 z-40 w-full">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-        <div className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-background/70 px-4 py-2.5 shadow-lg backdrop-blur-xl">
+        <div className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/70 px-4 py-2.5 shadow-lg backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold">
             <Logo size="size-8" iconSize="size-4" />
             {APP_NAME}
@@ -73,7 +73,7 @@ export function Navbar({ isAuthenticated }: { isAuthenticated: boolean }) {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="mx-4 mt-1 flex flex-col gap-1 rounded-2xl border border-white/10 bg-background/95 p-3 shadow-lg backdrop-blur-xl md:hidden"
+            className="mx-4 mt-1 flex flex-col gap-1 rounded-2xl border border-border/70 bg-background/95 p-3 shadow-lg backdrop-blur-xl md:hidden"
           >
             {LINKS.map((link) => (
               <Link

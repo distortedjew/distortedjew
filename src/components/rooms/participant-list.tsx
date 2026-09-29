@@ -46,7 +46,7 @@ export function ParticipantList({
           {p.userId !== selfId && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" className="size-6">
+                <Button variant="ghost" size="icon-sm" className="size-7" aria-label={`Actions for ${p.displayName}`}>
                   <MoreVertical className="size-3.5" />
                 </Button>
               </DropdownMenuTrigger>

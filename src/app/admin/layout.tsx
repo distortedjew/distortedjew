@@ -5,9 +5,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await requireAdmin();
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background md:flex-row">
       <AdminSidebar role={user.role} />
-      <main className="flex-1 overflow-y-auto p-8">{children}</main>
+      <main className="min-w-0 flex-1 p-4 sm:p-6 md:p-8">{children}</main>
     </div>
   );
 }

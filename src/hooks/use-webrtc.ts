@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSocket, useSocketMessage } from "./socket-provider";
 import type { MatchChannel, PublicPeerInfo } from "@/types/ws";
+import { mediaErrorKind, requestUserMedia, type MediaErrorKind } from "@/lib/media";
 
 export type PeerConnectionState =
   | "idle"
@@ -29,6 +30,7 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
   const [cameraOn, setCameraOn] = useState(channel === "VIDEO");
   const [micOn, setMicOn] = useState(true);
   const [peerMediaState, setPeerMediaState] = useState({ camera: true, mic: true });
+  const [mediaError, setMediaError] = useState<MediaErrorKind | null>(null);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
@@ -68,15 +70,19 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
 
     async function start() {
       setState("requesting_media");
+      setMediaError(null);
       let stream: MediaStream | null = null;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        stream = await requestUserMedia({
           audio: true,
           video: channel === "VIDEO" ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
         });
       } catch (err) {
-        console.error("[webrtc] failed to get local media", err);
-        if (!cancelled) setState("failed");
+        console.warn("[webrtc] failed to get local media", err);
+        if (!cancelled) {
+          setMediaError(mediaErrorKind(err));
+          setState("failed");
+        }
         return;
       }
       if (cancelled) {
@@ -217,6 +223,7 @@ export function useWebRtc({ matchId, channel, isInitiator, iceServers, active }:
     cameraOn,
     micOn,
     peerMediaState,
+    mediaError,
     toggleCamera,
     toggleMic,
   };
