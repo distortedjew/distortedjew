@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Users2, MessageCircle, Mic, Video, Loader2 } from "lucide-react";
+import { Plus, MessageCircle, Mic, Video, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -81,19 +81,19 @@ export function RoomsBrowser({ rooms }: { rooms: RoomSummary[] }) {
       }
       router.push(`/rooms/${data.room.id}`);
     } catch {
-      toast.error("Network error.");
+      toast.error("Couldn't reach Wisp. Check your connection and try again.");
     } finally {
       setCreating(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-2xl font-semibold">Group rooms</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Join a temporary group conversation, or start your own.
+          <h1 className="type-poster text-5xl sm:text-6xl">Group rooms</h1>
+          <p className="mt-3 text-muted-foreground">
+            Temporary rooms for 2 to 8 people. They close when everyone leaves.
           </p>
         </div>
 
@@ -177,12 +177,11 @@ export function RoomsBrowser({ rooms }: { rooms: RoomSummary[] }) {
       </div>
 
       {rooms.length === 0 ? (
-        <Card className="mt-8">
-          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-            <Users2 className="size-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No rooms open right now. Start one!</p>
-          </CardContent>
-        </Card>
+        <div className="mt-10 border-t border-border pt-8">
+          <p className="max-w-[40ch] text-lg leading-relaxed">
+            No rooms are open right now. Create one and others can join from this page.
+          </p>
+        </div>
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {rooms.map((room) => {

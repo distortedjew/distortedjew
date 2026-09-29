@@ -166,7 +166,7 @@ export function GuessWordGame({
               }
             }}
             placeholder="Type your guess…"
-            className="h-10 flex-1 rounded-full border border-input bg-input/30 px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            className="h-10 flex-1 rounded-full border border-input bg-card px-4 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           />
           <Button
             size="sm"

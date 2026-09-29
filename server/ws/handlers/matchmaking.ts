@@ -7,18 +7,7 @@ import { touchDailyStreak, trackCountryMet, unlockAchievement } from "@/lib/gami
 import type { ConnectionMeta } from "../registry";
 import { sendTo } from "../registry";
 import type { ClientMessage, MatchFilters, PublicPeerInfo } from "@/types/ws";
-
-const MAX_INTERESTS = 8;
-
-function sanitizeFilters(input: MatchFilters): MatchFilters {
-  return {
-    mode: input.mode,
-    channel: input.channel,
-    interests: Array.isArray(input.interests) ? input.interests.slice(0, MAX_INTERESTS) : [],
-    language: input.language || null,
-    country: input.country || null,
-  };
-}
+import { sanitizeMatchFilters } from "@/lib/chat/sanitize";
 
 async function buildPeerInfo(
   matchId: string,
@@ -51,7 +40,7 @@ async function buildPeerInfo(
     sharedInterests,
     channel,
     isInitiator,
-    iceServers: getIceServers(),
+    iceServers: getIceServers(selfId),
   };
 }
 
@@ -59,7 +48,7 @@ export async function handleQueueJoin(
   meta: ConnectionMeta,
   msg: Extract<ClientMessage, { type: "queue:join" }>,
 ) {
-  const filters = sanitizeFilters(msg.filters);
+  const filters = sanitizeMatchFilters(msg.filters);
 
   const result = await joinQueue(meta.userId, filters);
 

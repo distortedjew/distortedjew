@@ -1,79 +1,47 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowRight, Compass, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { SUBLINE } from "@/lib/brand";
+import { TAGLINE } from "@/lib/brand";
+import { HeroConversation } from "./hero-conversation";
 
-export function Hero() {
+/** Below this, a live count reads as "empty room" rather than "busy", so it's hidden. */
+const MIN_ONLINE_TO_SHOW = 5;
+
+export function Hero({ onlineNow }: { onlineNow: number }) {
   return (
-    <section className="relative overflow-hidden px-6 pb-20 pt-16 sm:pt-24">
-      <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Badge variant="secondary" className="mb-6 px-3 py-1">
-            <Globe2 className="size-3.5" />
-            Live worldwide, right now
-          </Badge>
-        </motion.div>
+    <section className="px-5 pb-16 pt-10 sm:px-8 sm:pt-16 lg:pb-24">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+        <div>
+          <h1 className="type-poster text-[3.25rem] sm:text-7xl lg:text-[5.4rem]">{TAGLINE}</h1>
+          <p className="mt-6 max-w-[34ch] text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            Text, voice or video with a stranger, picked at random or by what you&apos;re into. No
+            download, no phone number.
+          </p>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.05 }}
-          className="text-balance font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl"
-        >
-          Meet someone
-          <br />
-          <span className="bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
-            you&apos;ve never met.
-          </span>
-        </motion.h1>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Button asChild size="lg">
+              <Link href="/discover">Start chatting</Link>
+            </Button>
+            <Button asChild size="lg" variant="ghost">
+              <Link href="/login">Log in</Link>
+            </Button>
+          </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.12 }}
-          className="mt-6 max-w-xl text-balance text-lg text-muted-foreground"
-        >
-          {SUBLINE} Wisp matches you instantly with real people around the
-          world over text, voice, or video — by interest, language, or pure
-          chance.
-        </motion.p>
+          <p className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
+            {onlineNow >= MIN_ONLINE_TO_SHOW ? (
+              <>
+                <span className="relative flex size-2.5" aria-hidden>
+                  <span className="absolute inset-0 animate-ping rounded-full bg-glow opacity-60 motion-reduce:hidden" />
+                  <span className="relative size-2.5 rounded-full bg-glow" />
+                </span>
+                {onlineNow.toLocaleString("en-US")} people online now. 18+ only.
+              </>
+            ) : (
+              "Free, and 18+ only."
+            )}
+          </p>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.18 }}
-          className="mt-9 flex flex-col items-center gap-3 sm:flex-row"
-        >
-          <Button asChild size="lg" className="group">
-            <Link href="/discover">
-              Start Random Chat
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="glass">
-            <Link href="/rooms">
-              <Compass className="size-4" />
-              Explore
-            </Link>
-          </Button>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-8 text-xs text-muted-foreground"
-        >
-          No download. No phone number. 18+ only, with real moderation.
-        </motion.div>
+        <HeroConversation />
       </div>
     </section>
   );

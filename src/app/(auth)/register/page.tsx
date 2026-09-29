@@ -55,7 +55,7 @@ export default function RegisterPage() {
       router.push("/discover");
       router.refresh();
     } catch {
-      toast.error("Network error. Please try again.");
+      toast.error("Couldn't reach Wisp. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function RegisterPage() {
               required
               value={form.birthYear}
               onChange={(e) => setForm({ ...form, birthYear: e.target.value })}
-              className="h-11 rounded-xl border border-input bg-input/30 px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="h-11 rounded-lg border border-input bg-card px-3.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <option value="" disabled>
                 Select year

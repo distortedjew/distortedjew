@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { disconnectUser } from "@/lib/realtime/user-events";
 import { prisma } from "@/lib/db/client";
 import { decodeResetToken, matchesCurrentPassword } from "@/lib/auth/reset-token";
 import { hashPassword } from "@/lib/auth/password";
@@ -47,6 +48,8 @@ export async function POST(req: NextRequest) {
       data: { revokedAt: new Date() },
     }),
   ]);
+
+  await disconnectUser(user.id, "Your password was changed. Log in again to keep chatting.");
 
   return NextResponse.json({ ok: true });
 }

@@ -140,7 +140,7 @@ export function CallView({
               className={cn("h-full w-full object-cover", !peerMediaState.camera && "opacity-0")}
             />
             {!peerMediaState.camera && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-background to-muted">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted">
                 <Avatar className="size-20">
                   <AvatarImage src={peer.peerAvatarUrl ?? undefined} />
                   <AvatarFallback className="text-2xl">{initial}</AvatarFallback>

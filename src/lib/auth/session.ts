@@ -1,17 +1,15 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
-import { createHash } from "node:crypto";
 import { prisma } from "@/lib/db/client";
-import { signSessionToken, verifySessionToken, type SessionClaims } from "./jwt";
+import { signSessionToken } from "./jwt";
+import { hashSessionToken, resolveSession, type ResolvedSession } from "./resolve-session";
 
 export const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "wisp_session";
 const SESSION_TTL_DAYS = Number(process.env.AUTH_SESSION_TTL_DAYS ?? 30);
 
-export type CurrentUser = SessionClaims;
+export type CurrentUser = ResolvedSession;
 
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
+const hashToken = hashSessionToken;
 
 /**
  * Browsers silently drop `Secure` cookies set over plain http (only
@@ -81,13 +79,16 @@ export async function destroySession() {
   cookieStore.delete(AUTH_COOKIE_NAME);
 }
 
-/** Reads and verifies the current request's session cookie (server components / route handlers). */
+/**
+ * The signed-in user for this request, or null. Checks the session is still
+ * live and reads role/status from the database (see resolveSession), so a
+ * logout, ban, password reset or demotion takes effect immediately.
+ */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
   if (!token) return null;
-  const claims = await verifySessionToken(token);
-  return claims;
+  return resolveSession(token);
 }
 
 export async function requireCurrentUser(): Promise<CurrentUser> {

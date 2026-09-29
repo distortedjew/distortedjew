@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getIceServers } from "./ice-config";
+import { createHmac } from "node:crypto";
+import { getIceServers, TURN_CREDENTIAL_TTL_SECONDS } from "./ice-config";
 
-const ENV_KEYS = ["STUN_SERVERS", "TURN_SERVER", "TURN_USERNAME", "TURN_PASSWORD"] as const;
+const ENV_KEYS = ["STUN_SERVERS", "TURN_SERVER", "TURN_USERNAME", "TURN_PASSWORD", "TURN_SECRET"] as const;
 const originalEnv: Record<string, string | undefined> = {};
 for (const key of ENV_KEYS) originalEnv[key] = process.env[key];
 
@@ -56,5 +57,30 @@ describe("getIceServers", () => {
     for (const key of ENV_KEYS) delete process.env[key];
     const servers = getIceServers();
     expect(JSON.stringify(servers)).not.toMatch(/secret|password/i);
+  });
+
+  it("gives each user a short-lived TURN login when TURN_SECRET is set", () => {
+    process.env.STUN_SERVERS = "stun:a.example.com:3478";
+    process.env.TURN_SERVER = "turn:relay.example.com:3478";
+    process.env.TURN_SECRET = "shared-secret";
+    process.env.TURN_USERNAME = "static";
+    process.env.TURN_PASSWORD = "static-password";
+
+    const before = Math.floor(Date.now() / 1000);
+    const turn = getIceServers("user-1").find((s) => s.username)!;
+    const [expiry, userId] = turn.username!.split(":");
+
+    expect(userId).toBe("user-1");
+    expect(Number(expiry)).toBeGreaterThanOrEqual(before + TURN_CREDENTIAL_TTL_SECONDS);
+    expect(turn.credential).toBe(createHmac("sha1", "shared-secret").update(turn.username!).digest("base64"));
+    // The static login is never handed out once a secret is configured.
+    expect(JSON.stringify(turn)).not.toContain("static-password");
+    expect(getIceServers("user-2").find((s) => s.username)!.credential).not.toBe(turn.credential);
+  });
+
+  it("omits TURN when a secret is set but there's no user to issue a login for", () => {
+    process.env.TURN_SERVER = "turn:relay.example.com:3478";
+    process.env.TURN_SECRET = "shared-secret";
+    expect(getIceServers().some((s) => s.username)).toBe(false);
   });
 });

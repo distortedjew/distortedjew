@@ -56,9 +56,9 @@ export function Topbar({ user }: { user: AppUser }) {
         <div className="flex items-center gap-6">
           <Link
             href="/discover"
-            className="flex items-center gap-2 font-display text-lg font-semibold"
+            className="flex items-center gap-2.5 font-display text-xl font-bold tracking-tight"
           >
-            <Logo size="size-8" iconSize="size-4" />
+            <Logo size="size-8" iconSize="size-5" />
             <span className="hidden sm:inline">{APP_NAME}</span>
           </Link>
 

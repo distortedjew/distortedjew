@@ -84,6 +84,20 @@ handshake auth (valid/expired/banned/suspended sessions). Bring up
 Postgres and Redis (`docker compose up -d` or local services) before
 running it; each integration test creates and cleans up its own rows/keys.
 
+## Deploying to production
+
+`docker-compose.prod.yml` runs the full stack on one server: the app,
+PostgreSQL, Redis, Caddy (automatic HTTPS), coturn (TURN relay for calls) and
+daily database backups.
+
+```bash
+cp .env.production.example .env   # fill in DOMAIN, PUBLIC_IP, secrets
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Step-by-step walkthrough (server, DNS, firewall, admin account, backups,
+updates): **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
 ## Environment variables
 
 See `.env.example` for the full list with inline documentation. Highlights:

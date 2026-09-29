@@ -12,11 +12,11 @@ const badgeVariants = cva(
         // the accent color itself is unreadable as text) but composites
         // much darker in dark mode (so the accent color reads fine there,
         // same as before) — hence the dark: overrides rather than one color.
-        default: "bg-primary/15 text-primary-foreground border-primary/20 dark:text-primary",
-        secondary: "bg-secondary/20 text-secondary-foreground border-secondary/25 dark:text-secondary",
+        default: "bg-accent text-accent-foreground border-transparent",
+        secondary: "bg-secondary text-secondary-foreground border-transparent",
         outline: "border-border text-foreground bg-transparent",
-        success: "bg-success/15 text-success-foreground border-success/25 dark:text-success",
-        destructive: "bg-destructive/15 text-destructive border-destructive/25",
+        success: "bg-glow/20 text-success-foreground border-transparent",
+        destructive: "bg-destructive/12 text-destructive border-transparent",
         muted: "bg-muted text-muted-foreground border-transparent",
       },
     },

@@ -14,8 +14,9 @@ export class LocalStorageProvider implements StorageProvider {
   name = "local";
 
   async upload({ key, buffer }: { key: string; buffer: Buffer; contentType: string }): Promise<UploadResult> {
-    await mkdir(UPLOAD_DIR, { recursive: true });
     const filePath = path.join(UPLOAD_DIR, key);
+    // Keys can include folders ("avatars/…"), which won't exist on a fresh install.
+    await mkdir(path.dirname(filePath), { recursive: true });
     await writeFile(filePath, buffer);
     return { url: `/uploads/${key}`, key };
   }

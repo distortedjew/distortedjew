@@ -1,0 +1,13 @@
+# Caddy terminates HTTPS (certificates from Let's Encrypt are requested and
+# renewed automatically) and proxies everything, WebSockets included, to
+# the app. It also sets X-Forwarded-Proto/-For, which the app relies on for
+# secure cookies and per-IP rate limits.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy app:3000
+}

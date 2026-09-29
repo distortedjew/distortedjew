@@ -10,6 +10,7 @@ import { unlockAchievement } from "@/lib/gamification/xp";
 import { sendTo } from "../registry";
 import type { ConnectionMeta } from "../registry";
 import type { ClientMessage, ChatMessagePayload } from "@/types/ws";
+import { clientMessageKind, isAllowedReaction, sanitizeMessageMetadata } from "@/lib/chat/sanitize";
 
 const MAX_MESSAGE_LENGTH = 2000;
 const MESSAGES_PER_WINDOW = Number(process.env.RATE_LIMIT_MESSAGES_PER_10S ?? 15);
@@ -26,8 +27,10 @@ export async function handleChatMessage(
   meta: ConnectionMeta,
   msg: Extract<ClientMessage, { type: "chat:message" }>,
 ) {
-  const body = (msg.body ?? "").trim().slice(0, MAX_MESSAGE_LENGTH);
+  const body = (typeof msg.body === "string" ? msg.body : "").trim().slice(0, MAX_MESSAGE_LENGTH);
   if (!body) return;
+  const kind = clientMessageKind(msg.kind);
+  const metadata = sanitizeMessageMetadata(kind, msg.metadata);
 
   const context = await otherParty(msg.matchId, meta.userId);
   if (!context) {
@@ -60,9 +63,9 @@ export async function handleChatMessage(
       matchId: msg.matchId,
       senderId: meta.userId,
       body,
-      kind: msg.kind ?? "TEXT",
+      kind,
       metadata: {
-        ...(msg.metadata ?? {}),
+        ...(metadata ?? {}),
         moderation: {
           riskScore: moderation.riskScore,
           flagged: moderation.shouldFlagForReview,
@@ -78,6 +81,8 @@ export async function handleChatMessage(
     senderName: meta.username,
     body,
     kind: saved.kind,
+    // Only the sanitized fields; the moderation scores stay server-side.
+    ...(metadata ? { metadata: { ...metadata } } : {}),
     createdAt: saved.createdAt.toISOString(),
   };
 
@@ -103,6 +108,8 @@ export async function handleChatReaction(
   meta: ConnectionMeta,
   msg: Extract<ClientMessage, { type: "chat:reaction" }>,
 ) {
+  // Free text here would skip the message filter; only the offered emoji pass.
+  if (!isAllowedReaction(msg.emoji)) return;
   const context = await otherParty(msg.matchId, meta.userId);
   if (!context) return;
   sendTo(context.peerId, {
@@ -202,7 +209,7 @@ export async function handleReport(
       reporterId: meta.userId,
       reportedId: context.peerId,
       category: msg.category as never,
-      description: msg.description?.slice(0, 1000),
+      description: typeof msg.description === "string" ? msg.description.slice(0, 1000) : undefined,
       matchId: msg.matchId,
     },
   });

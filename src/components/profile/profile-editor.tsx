@@ -76,7 +76,7 @@ export function ProfileEditor({ user, profile, achievements }: ProfileEditorProp
       setAvatarUrl(data.avatarUrl);
       toast.success("Avatar updated.");
     } catch {
-      toast.error("Network error.");
+      toast.error("Couldn't reach Wisp. Check your connection and try again.");
     } finally {
       setUploading(false);
     }
@@ -115,7 +115,7 @@ export function ProfileEditor({ user, profile, achievements }: ProfileEditorProp
       toast.success("Profile saved.");
       router.refresh();
     } catch {
-      toast.error("Network error.");
+      toast.error("Couldn't reach Wisp. Check your connection and try again.");
     } finally {
       setSaving(false);
     }

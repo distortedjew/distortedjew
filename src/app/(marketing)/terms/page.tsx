@@ -38,9 +38,9 @@ export default function TermsPage() {
       </ul>
       <p>
         Violations may result in a warning, timeout, suspension, or permanent
-        ban, at our discretion, following the process described in our{" "}
+        ban, at our discretion, following the process described on our{" "}
         <a href="/safety" className="underline">
-          Safety Center
+          safety page
         </a>
         .
       </p>

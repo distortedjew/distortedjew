@@ -1,7 +1,8 @@
 import { Hero } from "@/components/landing/hero";
-import { StatsBar } from "@/components/landing/stats-bar";
-import { FeatureGrid } from "@/components/landing/feature-grid";
-import { CtaBand } from "@/components/landing/cta-band";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { SafetyNote } from "@/components/landing/safety-note";
+import { MoreOnWisp } from "@/components/landing/more-on-wisp";
+import { ClosingCta } from "@/components/landing/closing-cta";
 import { getLandingStats } from "@/lib/analytics/landing-stats";
 
 export default async function LandingPage() {
@@ -9,10 +10,11 @@ export default async function LandingPage() {
 
   return (
     <>
-      <Hero />
-      <StatsBar stats={stats} />
-      <FeatureGrid />
-      <CtaBand />
+      <Hero onlineNow={stats.onlineNow} />
+      <HowItWorks />
+      <SafetyNote />
+      <MoreOnWisp />
+      <ClosingCta />
     </>
   );
 }

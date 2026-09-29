@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
-import { Users2, UserX, Ban } from "lucide-react";
+import { UserX, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,21 +47,22 @@ export function FriendsList({ friends: initialFriends }: { friends: Friend[] }) 
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="font-display text-2xl font-semibold">Friends</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        People you&apos;ve mutually connected with during a conversation.
+    <div className="mx-auto max-w-2xl px-5 py-10">
+      <h1 className="type-poster text-5xl sm:text-6xl">Friends</h1>
+      <p className="mt-3 text-muted-foreground">
+        People who tapped the heart in a chat with you, and you with them.
       </p>
 
       {friends.length === 0 ? (
-        <Card className="mt-8">
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Users2 className="size-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              No connections yet. Hit the ❤️ button during a chat to connect with someone.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="mt-10 border-t border-border pt-8">
+          <p className="max-w-[40ch] text-lg leading-relaxed">
+            No friends yet. During a chat, tap the heart at the top. If they tap it too, you&apos;ll
+            find each other here.
+          </p>
+          <Button asChild className="mt-6">
+            <Link href="/discover">Start a chat</Link>
+          </Button>
+        </div>
       ) : (
         <div className="mt-6 flex flex-col gap-3">
           {friends.map((friend) => (
@@ -73,8 +75,8 @@ export function FriendsList({ friends: initialFriends }: { friends: Friend[] }) 
                 <div className="flex-1">
                   <div className="text-sm font-medium">{friend.displayName}</div>
                   <div className="text-xs text-muted-foreground">
-                    {countryName(friend.country) ?? "Location hidden"}
-                    {friend.interests.length > 0 && ` · ${friend.interests.slice(0, 2).join(", ")}`}
+                    {[countryName(friend.country), ...friend.interests.slice(0, 2)].filter(Boolean).join(", ") ||
+                      "Location hidden"}
                   </div>
                 </div>
                 <Button variant="ghost" size="icon-sm" onClick={() => remove(friend.connectionId)} title="Remove">

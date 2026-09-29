@@ -21,7 +21,7 @@ vi.mock("next/navigation", () => ({
 const { requireAdmin, requireFullAdmin } = await import("./require-admin");
 
 function userWithRole(role: CurrentUser["role"]): CurrentUser {
-  return { sub: "u1", username: "mod", role, isGuest: false };
+  return { sub: "u1", username: "mod", role, isGuest: false, timedOut: false, timedOutUntil: null };
 }
 
 afterEach(() => {

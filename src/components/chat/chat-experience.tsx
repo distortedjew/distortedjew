@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSocket, useSocketMessage } from "@/hooks/socket-provider";
 import { SearchingScreen } from "./searching-screen";
-import { PartnerLeftScreen } from "./partner-left-screen";
+import { PartnerLeftScreen, type EndReason } from "./partner-left-screen";
 import { TextChatView } from "./text-chat-view";
 import { CallView } from "./call-view";
 import { GamePanel } from "./game-panel";
@@ -29,7 +29,7 @@ export function ChatExperience({
   const [phase, setPhase] = useState<Phase>("searching");
   const [peer, setPeer] = useState<PublicPeerInfo | null>(null);
   const [icebreaker, setIcebreaker] = useState("");
-  const [endReason, setEndReason] = useState<"next" | "disconnect" | "reported" | null>(null);
+  const [endReason, setEndReason] = useState<EndReason | null>(null);
   const [connectState, setConnectState] = useState<"idle" | "pending" | "mutual">("idle");
   const [gamesOpen, setGamesOpen] = useState(false);
 
@@ -113,15 +113,15 @@ export function ChatExperience({
     send({ type: "chat:report", matchId: peer.matchId, category, description });
     setEndReason("reported");
     setPhase("ended");
-    toast.success("Report submitted. Thank you for keeping Wisp safe.");
+    toast.success("Report sent.");
   }
 
   function handleBlock() {
     if (!peer) return;
     send({ type: "chat:block", matchId: peer.matchId });
-    setEndReason("disconnect");
+    setEndReason("blocked");
     setPhase("ended");
-    toast.success("Blocked. You won't be matched with them again.");
+    toast.success("Blocked.");
   }
 
   function handleConnect() {

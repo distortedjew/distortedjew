@@ -10,9 +10,9 @@ import { ReportDialog } from "./report-dialog";
 import { MusicShareDialog, NowPlayingCard, type MusicShare } from "./music-share-dialog";
 import { useSocket, useSocketMessage } from "@/hooks/socket-provider";
 import { cn } from "@/lib/utils";
+import { QUICK_REACTIONS } from "@/lib/chat/sanitize";
 import type { ChatMessagePayload, PublicPeerInfo } from "@/types/ws";
 
-const QUICK_REACTIONS = ["👍", "😂", "❤️", "😮", "😢", "🔥"];
 
 interface LocalMessage extends ChatMessagePayload {
   self: boolean;
@@ -177,8 +177,8 @@ export function TextChatView({
               {peer.peerTrusted && <Badge variant="success">Trusted</Badge>}
             </div>
             <div className="truncate text-xs text-muted-foreground">
-              {peer.peerCountry ? peer.peerCountry : "Location hidden"} ·{" "}
-              {peer.peerIsGuest ? "Guest" : "Member"}
+              {peer.peerCountry ?? "Location hidden"}
+              {peer.peerIsGuest && ", guest"}
             </div>
           </div>
         </div>
@@ -214,14 +214,15 @@ export function TextChatView({
       {peer.sharedInterests.length > 0 && (
         <div className="border-b border-border/60 py-2 text-center text-xs text-muted-foreground">
           You both like {peer.sharedInterests.slice(0, 3).join(", ")}
-          {peer.sharedInterests.length <= 3 ? " 🎉" : ""}
         </div>
       )}
 
       <div ref={scrollRef} className="scrollbar-thin min-h-0 flex-1 overflow-y-auto py-4">
-        <div className="mb-4 rounded-2xl border border-border/60 bg-card/60 p-4 text-center text-sm text-muted-foreground">
-          💬 {icebreaker}
-        </div>
+        {icebreaker && (
+          <p className="mx-auto mb-5 max-w-[40ch] text-center text-sm leading-relaxed text-muted-foreground">
+            Not sure how to start? Try: <span className="text-foreground">{icebreaker}</span>
+          </p>
+        )}
 
         <div className="flex flex-col gap-2">
           {messages.map((m) =>
@@ -243,10 +244,10 @@ export function TextChatView({
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                  "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm",
+                  "max-w-[80%] px-4 py-2.5 text-[0.95rem] leading-snug",
                   m.self
-                    ? "self-end bg-primary text-primary-foreground"
-                    : "self-start bg-card border border-border/60",
+                    ? "self-end rounded-[1.25rem] rounded-br-[0.375rem] bg-primary text-primary-foreground"
+                    : "self-start rounded-[1.25rem] rounded-bl-[0.375rem] bg-glow/30 text-foreground dark:bg-glow/20",
                 )}
               >
                 {m.body}
@@ -275,7 +276,7 @@ export function TextChatView({
             ),
           )}
           {peerTyping && (
-            <div className="self-start rounded-2xl border border-border/60 bg-card px-4 py-2.5 text-sm text-muted-foreground">
+            <div className="self-start rounded-[1.25rem] rounded-bl-[0.375rem] bg-glow/30 px-4 py-3 text-foreground/70 dark:bg-glow/20" aria-label="Typing">
               <span className="inline-flex gap-1">
                 <span className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
                 <span className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
@@ -309,7 +310,7 @@ export function TextChatView({
             onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
             placeholder="Type a message…"
             maxLength={2000}
-            className="h-11 w-full rounded-full border border-input bg-input/30 px-4 pr-10 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            className="h-11 w-full rounded-full border border-input bg-card px-4 pr-10 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           />
           <Smile aria-hidden className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         </div>

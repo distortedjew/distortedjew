@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import type { IncomingMessage } from "node:http";
 import { prisma } from "@/lib/db/client";
 import { signSessionToken } from "@/lib/auth/jwt";
+import { hashSessionToken } from "@/lib/auth/resolve-session";
 import { authenticateUpgrade } from "./auth";
 
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "wisp_session";
@@ -15,13 +16,23 @@ afterEach(async () => {
   }
 });
 
-async function makeUser(overrides: Partial<{ status: "ACTIVE" | "SUSPENDED" | "BANNED"; role: "USER" | "MODERATOR" | "ADMIN" }> = {}) {
+/** Signs a token the way login does: a JWT plus its AuthSession row. */
+async function issueToken(user: { id: string; username: string; role: "USER" | "MODERATOR" | "ADMIN"; isGuest: boolean }) {
+  const token = await signSessionToken({ sub: user.id, username: user.username, role: user.role, isGuest: user.isGuest });
+  await prisma.authSession.create({
+    data: { userId: user.id, tokenHash: hashSessionToken(token), expiresAt: new Date(Date.now() + 60_000) },
+  });
+  return token;
+}
+
+async function makeUser(overrides: Partial<{ status: "ACTIVE" | "SUSPENDED" | "BANNED" | "TIMEOUT"; role: "USER" | "MODERATOR" | "ADMIN"; statusUntil: Date }> = {}) {
   const user = await prisma.user.create({
     data: {
       username: `ws-auth-${nanoid(6)}`,
       isGuest: true,
       role: overrides.role ?? "USER",
       status: overrides.status ?? "ACTIVE",
+      statusUntil: overrides.statusUntil,
     },
   });
   createdUserIds.push(user.id);
@@ -45,12 +56,7 @@ describe("authenticateUpgrade (WS handshake auth)", () => {
 
   it("authenticates a valid session for an active user", async () => {
     const user = await makeUser();
-    const token = await signSessionToken({
-      sub: user.id,
-      username: user.username,
-      role: user.role,
-      isGuest: user.isGuest,
-    });
+    const token = await issueToken(user);
 
     const result = await authenticateUpgrade(fakeUpgradeRequest(`${AUTH_COOKIE_NAME}=${token}`));
     expect(result).toEqual({
@@ -63,12 +69,7 @@ describe("authenticateUpgrade (WS handshake auth)", () => {
 
   it("rejects a valid token belonging to a banned user", async () => {
     const user = await makeUser({ status: "BANNED" });
-    const token = await signSessionToken({
-      sub: user.id,
-      username: user.username,
-      role: user.role,
-      isGuest: user.isGuest,
-    });
+    const token = await issueToken(user);
 
     const result = await authenticateUpgrade(fakeUpgradeRequest(`${AUTH_COOKIE_NAME}=${token}`));
     expect(result).toBeNull();
@@ -76,12 +77,7 @@ describe("authenticateUpgrade (WS handshake auth)", () => {
 
   it("rejects a valid token belonging to a suspended user", async () => {
     const user = await makeUser({ status: "SUSPENDED" });
-    const token = await signSessionToken({
-      sub: user.id,
-      username: user.username,
-      role: user.role,
-      isGuest: user.isGuest,
-    });
+    const token = await issueToken(user);
 
     const result = await authenticateUpgrade(fakeUpgradeRequest(`${AUTH_COOKIE_NAME}=${token}`));
     expect(result).toBeNull();
@@ -100,12 +96,7 @@ describe("authenticateUpgrade (WS handshake auth)", () => {
 
   it("parses cookies correctly among multiple cookie pairs", async () => {
     const user = await makeUser({ role: "ADMIN" });
-    const token = await signSessionToken({
-      sub: user.id,
-      username: user.username,
-      role: user.role,
-      isGuest: user.isGuest,
-    });
+    const token = await issueToken(user);
     const header = `other=1; ${AUTH_COOKIE_NAME}=${token}; another=2`;
     const result = await authenticateUpgrade(fakeUpgradeRequest(header));
     expect(result?.role).toBe("ADMIN");

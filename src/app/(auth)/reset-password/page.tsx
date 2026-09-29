@@ -75,7 +75,7 @@ function ResetPasswordForm() {
       toast.success("Password updated. Log in with your new password.");
       router.push("/login");
     } catch {
-      toast.error("Network error. Please try again.");
+      toast.error("Couldn't reach Wisp. Check your connection and try again.");
     } finally {
       setLoading(false);
     }

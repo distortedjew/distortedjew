@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { disconnectUser } from "@/lib/realtime/user-events";
 import { nanoid } from "nanoid";
 import { getCurrentUser, destroySession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
@@ -43,6 +44,7 @@ export async function DELETE() {
   ]);
 
   await destroySession();
+  await disconnectUser(session.sub, "Your account has been deleted.");
 
   return NextResponse.json({ ok: true });
 }

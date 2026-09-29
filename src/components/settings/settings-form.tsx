@@ -61,7 +61,7 @@ export function SettingsForm({
         return;
       }
       setJustResent(true);
-      toast.success("Verification email sent — check your inbox.");
+      toast.success("Verification email sent. Check your inbox.");
     } finally {
       setResending(false);
     }
@@ -79,7 +79,7 @@ export function SettingsForm({
       });
       if (!res.ok) toast.error("Could not save setting.");
     } catch {
-      toast.error("Network error.");
+      toast.error("Couldn't reach Wisp. Check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -112,7 +112,7 @@ export function SettingsForm({
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Settings</h1>
+        <h1 className="type-poster text-5xl sm:text-6xl">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {saving ? "Saving…" : "Changes save automatically."}
         </p>
@@ -121,7 +121,7 @@ export function SettingsForm({
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>
-          <CardDescription>@{account.username}{account.isGuest && " · Guest session"}</CardDescription>
+          <CardDescription>@{account.username}{account.isGuest && ", guest account"}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {account.email ? (

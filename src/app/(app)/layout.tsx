@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db/client";
 import { SocketProvider } from "@/hooks/socket-provider";
 import { Topbar } from "@/components/app-shell/topbar";
 import { MobileTabbar } from "@/components/app-shell/mobile-tabbar";
-import { AmbientBackground } from "@/components/landing/ambient-background";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getCurrentUser();
@@ -11,7 +10,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session) {
     return (
       <div className="relative flex min-h-screen flex-col">
-        <AmbientBackground />
         <main className="flex-1">{children}</main>
       </div>
     );
@@ -31,7 +29,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <SocketProvider enabled>
       <div className="relative flex min-h-screen flex-col">
-        <AmbientBackground />
         {user && (
           <Topbar
             user={{
