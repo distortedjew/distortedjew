@@ -1,6 +1,5 @@
 import type { IncomingMessage } from "node:http";
-import { verifySessionToken } from "@/lib/auth/jwt";
-import { prisma } from "@/lib/db/client";
+import { resolveSession } from "@/lib/auth/resolve-session";
 import type { ConnectionMeta } from "./registry";
 
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "wisp_session";
@@ -25,21 +24,15 @@ export async function authenticateUpgrade(
   const token = cookies[AUTH_COOKIE_NAME];
   if (!token) return null;
 
-  const claims = await verifySessionToken(token);
-  if (!claims) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { id: claims.sub },
-    select: { id: true, username: true, isGuest: true, role: true, status: true },
-  });
-  if (!user || user.status === "BANNED" || user.status === "SUSPENDED") {
-    return null;
-  }
+  // Same check as HTTP requests: a revoked session or a banned/suspended
+  // account can't connect. Timed-out accounts can browse but not chat.
+  const session = await resolveSession(token);
+  if (!session || session.timedOut) return null;
 
   return {
-    userId: user.id,
-    username: user.username,
-    isGuest: user.isGuest,
-    role: user.role,
+    userId: session.sub,
+    username: session.username,
+    isGuest: session.isGuest,
+    role: session.role,
   };
 }

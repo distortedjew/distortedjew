@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/db/client";
 import type { ModerationActionType } from "@prisma/client";
+import { disconnectUser } from "@/lib/realtime/user-events";
+
+const DEFAULT_TIMEOUT_MINUTES = 60 * 24;
 
 export interface ApplyModerationActionInput {
   targetId: string;
@@ -18,9 +21,10 @@ export interface ApplyModerationActionInput {
  * silently.
  */
 export async function applyModerationAction(input: ApplyModerationActionInput) {
+  // A timeout always ends; if no length was picked, it lasts a day.
   const expiresAt =
-    input.type === "TIMEOUT" && input.timeoutMinutes
-      ? new Date(Date.now() + input.timeoutMinutes * 60 * 1000)
+    input.type === "TIMEOUT"
+      ? new Date(Date.now() + (input.timeoutMinutes ?? DEFAULT_TIMEOUT_MINUTES) * 60 * 1000)
       : undefined;
 
   const action = await prisma.moderationAction.create({
@@ -72,6 +76,18 @@ export async function applyModerationAction(input: ApplyModerationActionInput) {
       where: { userId: input.targetId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+  }
+
+  // Sessions are checked on every request, but open chat connections were
+  // authenticated when they connected — close them so the action applies now.
+  if (input.type === "TIMEOUT" || input.type === "SUSPENSION" || input.type === "BAN") {
+    const message =
+      input.type === "TIMEOUT"
+        ? "A moderator has paused your account from chatting for a while."
+        : input.type === "SUSPENSION"
+          ? "Your account has been suspended."
+          : "Your account has been banned.";
+    await disconnectUser(input.targetId, message);
   }
 
   if (input.type === "WARNING" || input.type === "SUSPENSION" || input.type === "BAN") {

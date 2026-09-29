@@ -55,7 +55,7 @@ export async function handleRoomMessage(
   meta: ConnectionMeta,
   msg: Extract<ClientMessage, { type: "room:message" }>,
 ) {
-  const body = (msg.body ?? "").trim().slice(0, 2000);
+  const body = (typeof msg.body === "string" ? msg.body : "").trim().slice(0, 2000);
   if (!body) return;
 
   const memberIds = await getRoomMemberIds(msg.roomId);

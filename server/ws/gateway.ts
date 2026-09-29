@@ -2,7 +2,9 @@ import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { WebSocketServer, type WebSocket } from "ws";
 import { authenticateUpgrade } from "./auth";
-import { registerConnection, unregisterConnection, getMeta, sendTo, broadcastTo } from "./registry";
+import { registerConnection, unregisterConnection, getMeta, sendTo, broadcastTo, closeUserConnections } from "./registry";
+import { redisSub } from "@/lib/redis/client";
+import { USER_EVENTS_CHANNEL, type UserEvent } from "@/lib/realtime/user-events";
 import { getActiveMatchId, endMatch, leaveQueue } from "@/lib/matchmaking/engine";
 import { getRoomIdsForUser, getRoomMemberIds, getRoomParticipantViews, leaveRoom } from "@/lib/rooms/service";
 import { getRandomIcebreaker } from "@/lib/icebreakers";
@@ -48,8 +50,32 @@ import type { ClientMessage } from "@/types/ws";
 const MAX_CONNECTIONS_PER_USER = 5;
 const connectionCountByUser = new Map<string, number>();
 
+// Largest legitimate frame is an SDP offer (a few KB). The ws default is
+// 100 MiB, which let any signed-in guest make the server buffer and parse
+// huge messages.
+const MAX_PAYLOAD_BYTES = 64 * 1024;
+
+function listenForUserEvents() {
+  redisSub.subscribe(USER_EVENTS_CHANNEL).catch((err) => {
+    console.error("[ws] failed to subscribe to user events", err);
+  });
+  redisSub.on("message", (channel, raw) => {
+    if (channel !== USER_EVENTS_CHANNEL) return;
+    let event: UserEvent;
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (event.type === "disconnect" && typeof event.userId === "string") {
+      closeUserConnections(event.userId, event.reason);
+    }
+  });
+}
+
 export function createGateway() {
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_PAYLOAD_BYTES });
+  listenForUserEvents();
 
   wss.on("connection", (ws: WebSocket, meta: Awaited<ReturnType<typeof authenticateUpgrade>>) => {
     if (!meta) {

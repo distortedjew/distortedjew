@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { signSessionToken, verifySessionToken, type SessionClaims } from "./jwt";
+import { authSecretProblem, signSessionToken, verifySessionToken, type SessionClaims } from "./jwt";
 
 const claims: SessionClaims = {
   sub: "user_123",
@@ -31,5 +31,29 @@ describe("session JWT", () => {
     const result = await verifySessionToken(adminToken);
     expect(result?.role).toBe("ADMIN");
     expect(result?.isGuest).toBe(true);
+  });
+});
+
+describe("authSecretProblem", () => {
+  it("accepts a generated secret", () => {
+    expect(authSecretProblem("G3Z041gBw4bKHmIgOhTtTH/VGzkUWeuLzURoWR9Sg0M=")).toBeNull();
+  });
+
+  it.each([
+    [undefined, /not set/],
+    ["", /not set/],
+    ["short-secret", /at least 32/],
+    ["replace-with-a-random-32-byte-base64-secret", /example value/],
+    ["changeme-changeme-changeme-changeme-12", /example value/],
+  ])("rejects %s", (secret, message) => {
+    expect(authSecretProblem(secret as string | undefined)).toMatch(message);
+  });
+});
+
+describe("signSessionToken uniqueness", () => {
+  it("issues a different token for each login, even within the same second", async () => {
+    const claims: SessionClaims = { sub: "u1", username: "a", role: "USER", isGuest: false };
+    const [a, b] = await Promise.all([signSessionToken(claims), signSessionToken(claims)]);
+    expect(a).not.toBe(b);
   });
 });

@@ -10,9 +10,9 @@ import { ReportDialog } from "./report-dialog";
 import { MusicShareDialog, NowPlayingCard, type MusicShare } from "./music-share-dialog";
 import { useSocket, useSocketMessage } from "@/hooks/socket-provider";
 import { cn } from "@/lib/utils";
+import { QUICK_REACTIONS } from "@/lib/chat/sanitize";
 import type { ChatMessagePayload, PublicPeerInfo } from "@/types/ws";
 
-const QUICK_REACTIONS = ["👍", "😂", "❤️", "😮", "😢", "🔥"];
 
 interface LocalMessage extends ChatMessagePayload {
   self: boolean;

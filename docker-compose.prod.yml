@@ -27,8 +27,8 @@ services:
       REDIS_URL: redis://redis:6379
       STUN_SERVERS: stun:${DOMAIN}:3478
       TURN_SERVER: turn:${DOMAIN}:3478?transport=udp,turn:${DOMAIN}:3478?transport=tcp
-      TURN_USERNAME: ${TURN_USERNAME:?set TURN_USERNAME in .env}
-      TURN_PASSWORD: ${TURN_PASSWORD:?set TURN_PASSWORD in .env}
+      # Shared with coturn; the app derives a short-lived login per user from it.
+      TURN_SECRET: ${TURN_SECRET:?set TURN_SECRET in .env}
     volumes:
       # Avatars when STORAGE_PROVIDER isn't s3 — kept across rebuilds.
       - uploads:/app/public/uploads
@@ -96,8 +96,8 @@ services:
       - --max-port=${TURN_MAX_PORT:-49660}
       - --realm=${DOMAIN}
       - --fingerprint
-      - --lt-cred-mech
-      - --user=${TURN_USERNAME}:${TURN_PASSWORD}
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET}
       - --no-cli
       - --no-tls
       - --no-dtls

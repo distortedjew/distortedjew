@@ -3,6 +3,8 @@ import { createServer } from "node:http";
 import next from "next";
 import { createGateway } from "./ws/gateway";
 import { serveUpload } from "./uploads";
+import { normalizeForwardedHeaders } from "./client-ip";
+import { authSecretProblem } from "@/lib/auth/jwt";
 import { warmBlocklistCache } from "@/lib/matchmaking/blocklist";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -12,12 +14,19 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 
 async function main() {
+  const secretProblem = authSecretProblem(process.env.AUTH_SECRET);
+  if (secretProblem) {
+    console.error(`> ${secretProblem} Generate one with: openssl rand -base64 32, put it in .env, and restart.`);
+    process.exit(1);
+  }
+
   await app.prepare();
   await warmBlocklistCache().catch((err) => {
     console.error("[boot] failed to warm blocklist cache", err);
   });
 
   const server = createServer(async (req, res) => {
+    normalizeForwardedHeaders(req);
     if (await serveUpload(req, res)) return;
     handle(req, res);
   });

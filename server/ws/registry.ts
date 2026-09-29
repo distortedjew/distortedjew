@@ -37,6 +37,21 @@ export function unregisterConnection(ws: WebSocket) {
   }
 }
 
+/**
+ * Closes all of a user's sockets (code 4003) after telling them why. The
+ * normal close handler then ends their match and removes them from rooms.
+ */
+export function closeUserConnections(userId: string, reason: string) {
+  const set = socketsByUser.get(userId);
+  if (!set) return 0;
+  const notice = JSON.stringify({ type: "error", code: "ACCOUNT_RESTRICTED", message: reason });
+  for (const socket of [...set]) {
+    if (socket.readyState === socket.OPEN) socket.send(notice);
+    socket.close(4003, "account restricted");
+  }
+  return set.size;
+}
+
 export function getMeta(ws: WebSocket): ConnectionMeta | undefined {
   return metaBySocket.get(ws);
 }

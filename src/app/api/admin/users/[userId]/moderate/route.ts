@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { moderateUserSchema } from "@/lib/validation/admin";
 import { applyModerationAction } from "@/lib/moderation/actions";
+import { moderationDenial } from "@/lib/moderation/permissions";
 
 export async function POST(
   req: NextRequest,
@@ -22,10 +23,8 @@ export async function POST(
   const target = await prisma.user.findUnique({ where: { id: userId } });
   if (!target) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Moderators can warn/timeout/suspend; only full admins can ban or unban.
-  if ((parsed.data.type === "BAN" || parsed.data.type === "UNBAN") && session.role !== "ADMIN") {
-    return NextResponse.json({ error: "Only admins can ban or unban accounts." }, { status: 403 });
-  }
+  const denial = moderationDenial({ id: session.sub, role: session.role }, target, parsed.data.type);
+  if (denial) return NextResponse.json({ error: denial }, { status: 403 });
 
   const action = await applyModerationAction({
     targetId: userId,

@@ -80,7 +80,7 @@ Generate the secrets:
 ```bash
 echo "AUTH_SECRET=$(openssl rand -base64 32)"
 echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)"
-echo "TURN_PASSWORD=$(openssl rand -hex 24)"
+echo "TURN_SECRET=$(openssl rand -hex 32)"
 curl -4 -s ifconfig.me; echo   # your PUBLIC_IP
 ```
 
@@ -89,7 +89,7 @@ Edit `.env` (`nano .env`) and fill in:
 - `DOMAIN`: e.g. `wisp.chat` (no `https://`)
 - `PUBLIC_IP`: the IP printed above
 - `ACME_EMAIL`: your email
-- `AUTH_SECRET`, `POSTGRES_PASSWORD`, `TURN_PASSWORD`: the generated values
+- `AUTH_SECRET`, `POSTGRES_PASSWORD`, `TURN_SECRET`: the generated values
 
 Everything else can stay as is for now.
 

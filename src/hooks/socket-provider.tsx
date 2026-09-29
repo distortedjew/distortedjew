@@ -80,8 +80,12 @@ export function SocketProvider({
         }
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         setStatus("closed");
+        // 4003: the server closed us because the account was restricted
+        // (ban, suspension, timeout, password change). Reconnecting would
+        // just be refused again; the page explains what happened.
+        if (event.code === 4003) return;
         if (mountedRef.current) {
           reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY_MS);
         }
