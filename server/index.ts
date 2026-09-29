@@ -2,6 +2,7 @@ import "dotenv/config";
 import { createServer } from "node:http";
 import next from "next";
 import { createGateway } from "./ws/gateway";
+import { serveUpload } from "./uploads";
 import { warmBlocklistCache } from "@/lib/matchmaking/blocklist";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -16,7 +17,8 @@ async function main() {
     console.error("[boot] failed to warm blocklist cache", err);
   });
 
-  const server = createServer((req, res) => {
+  const server = createServer(async (req, res) => {
+    if (await serveUpload(req, res)) return;
     handle(req, res);
   });
 
@@ -30,6 +32,21 @@ async function main() {
       nextUpgradeHandler(req, socket, head);
     }
   });
+
+  // Docker (and most process managers) stop containers with SIGTERM: stop
+  // accepting connections and exit, so clients reconnect to the new instance
+  // instead of hanging until the hard kill.
+  let shuttingDown = false;
+  const shutdown = (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`> ${signal} received, shutting down`);
+    server.close(() => process.exit(0));
+    server.closeAllConnections();
+    setTimeout(() => process.exit(0), 8000).unref();
+  };
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 
   server.listen(port, () => {
     const appUrl = process.env.APP_URL || `http://localhost:${port}`;
