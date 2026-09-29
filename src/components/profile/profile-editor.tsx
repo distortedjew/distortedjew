@@ -7,6 +7,8 @@ import { Camera, Loader2, Save, Flame, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -172,20 +174,21 @@ export function ProfileEditor({ user, profile, achievements }: ProfileEditorProp
 
       <Card>
         <CardContent className="flex flex-col gap-5 pt-6">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Display name</label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="profile-display-name">Display name</Label>
+            <Input
+              id="profile-display-name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               maxLength={40}
               placeholder={user.username}
-              className="h-11 w-full rounded-xl border border-input bg-input/30 px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Bio</label>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="profile-bio">Bio</Label>
             <Textarea
+              id="profile-bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               maxLength={280}
@@ -193,37 +196,49 @@ export function ProfileEditor({ user, profile, achievements }: ProfileEditorProp
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Interests ({interests.length}/12)</label>
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="mb-1.5 text-sm font-medium">Interests ({interests.length}/12)</legend>
             <div className="flex flex-wrap gap-2">
               {INTEREST_OPTIONS.map((interest) => (
-                <button key={interest} onClick={() => toggleInterest(interest)}>
+                <button
+                  key={interest}
+                  type="button"
+                  aria-pressed={interests.includes(interest)}
+                  onClick={() => toggleInterest(interest)}
+                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                >
                   <Badge variant={interests.includes(interest) ? "default" : "outline"} className="cursor-pointer px-3 py-1.5">
                     {interest}
                   </Badge>
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Languages ({languages.length}/6)</label>
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="mb-1.5 text-sm font-medium">Languages ({languages.length}/6)</legend>
             <div className="flex flex-wrap gap-2">
               {LANGUAGE_OPTIONS.map((l) => (
-                <button key={l.code} onClick={() => toggleLanguage(l.code)}>
+                <button
+                  key={l.code}
+                  type="button"
+                  aria-pressed={languages.includes(l.code)}
+                  onClick={() => toggleLanguage(l.code)}
+                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                >
                   <Badge variant={languages.includes(l.code) ? "default" : "outline"} className="cursor-pointer px-3 py-1.5">
                     {l.label}
                   </Badge>
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">Country</label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="profile-country">Country</Label>
               <Select value={country} onValueChange={setCountry}>
-                <SelectTrigger>
+                <SelectTrigger id="profile-country">
                   <SelectValue placeholder="Not set" />
                 </SelectTrigger>
                 <SelectContent className="max-h-64">
@@ -236,10 +251,10 @@ export function ProfileEditor({ user, profile, achievements }: ProfileEditorProp
               </Select>
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">Profile visibility</label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="profile-visibility">Profile visibility</Label>
               <Select value={visibility} onValueChange={(v) => setVisibility(v as typeof visibility)}>
-                <SelectTrigger>
+                <SelectTrigger id="profile-visibility">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

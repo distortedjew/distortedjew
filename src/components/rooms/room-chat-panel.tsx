@@ -48,12 +48,12 @@ export function RoomChatPanel({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
         <span className="text-sm font-medium">Room chat</span>
-        <Button variant="ghost" size="icon-sm" onClick={onOpenGames} title="Play a game">
+        <Button variant="ghost" size="icon-sm" onClick={onOpenGames} title="Play a game" aria-label="Play a game">
           <Gamepad2 className="size-4" />
         </Button>
       </div>
 
-      <div ref={scrollRef} className="scrollbar-thin flex-1 overflow-y-auto p-4">
+      <div ref={scrollRef} className="scrollbar-thin min-h-0 flex-1 overflow-y-auto p-4">
         <div className="flex flex-col gap-2">
           {messages.map((m) => (
             <div key={m.id} className={cn("flex flex-col", m.self ? "items-end" : "items-start")}>
@@ -78,14 +78,15 @@ export function RoomChatPanel({
 
       <div className="flex items-center gap-2 border-t border-border/60 p-3">
         <input
+          aria-label="Message the room"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
           placeholder="Message the room…"
           maxLength={2000}
           className="h-10 flex-1 rounded-full border border-input bg-input/30 px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         />
-        <Button size="icon-sm" onClick={sendMessage} disabled={!draft.trim()}>
+        <Button size="icon-sm" onClick={sendMessage} disabled={!draft.trim()} aria-label="Send message">
           <Send className="size-4" />
         </Button>
       </div>

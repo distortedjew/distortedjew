@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export function CtaBand() {
   return (
     <section className="px-6 pb-24">
-      <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-primary/20 via-card to-secondary/10 px-8 py-16 text-center">
+      <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-primary/20 via-card to-secondary/10 px-8 py-16 text-center">
         <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
           One click. A completely new conversation.
         </h2>

@@ -1,5 +1,5 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/db/client";
 import { signSessionToken, verifySessionToken, type SessionClaims } from "./jwt";
@@ -11,6 +11,19 @@ export type CurrentUser = SessionClaims;
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
+}
+
+/**
+ * Browsers silently drop `Secure` cookies set over plain http (only
+ * localhost is exempt), so keying this off NODE_ENV made login a no-op for
+ * anyone running production over http://<ip>. Mark the cookie Secure only
+ * when the request actually arrived over HTTPS (directly or via a proxy).
+ */
+async function isHttpsRequest(): Promise<boolean> {
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  if (proto) return proto === "https";
+  return (process.env.APP_URL ?? "").startsWith("https://");
 }
 
 /**
@@ -45,7 +58,7 @@ export async function createSessionForUser(user: {
   const cookieStore = await cookies();
   cookieStore.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: await isHttpsRequest(),
     sameSite: "lax",
     path: "/",
     expires: expiresAt,

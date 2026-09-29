@@ -13,6 +13,7 @@ import {
   Maximize,
   Loader2,
   WifiOff,
+  CameraOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import { ReportDialog } from "./report-dialog";
 import { useWebRtc } from "@/hooks/use-webrtc";
 import { useAudioLevel } from "@/hooks/use-audio-level";
 import { cn } from "@/lib/utils";
+import { MEDIA_ERROR_COPY } from "@/lib/media";
 import type { PublicPeerInfo } from "@/types/ws";
 
 function ConnectionBadge({ state }: { state: string }) {
@@ -65,6 +67,7 @@ export function CallView({
     cameraOn,
     micOn,
     peerMediaState,
+    mediaError,
     toggleCamera,
     toggleMic,
   } = useWebRtc({
@@ -106,10 +109,10 @@ export function CallView({
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-3xl flex-col px-4 py-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{peer.peerDisplayName}</span>
+    <div className="mx-auto flex h-app max-w-3xl flex-col px-3 py-3 sm:px-4 sm:py-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-medium">{peer.peerDisplayName}</span>
           {peer.peerTrusted && <Badge variant="success">Trusted</Badge>}
         </div>
         <ConnectionBadge state={state} />
@@ -117,8 +120,17 @@ export function CallView({
 
       <div
         ref={stageRef}
-        className="relative flex-1 overflow-hidden rounded-3xl border border-border/60 bg-black"
+        className="relative min-h-0 flex-1 overflow-hidden rounded-3xl border border-border/60 bg-black"
       >
+        {mediaError && (
+          <div className="absolute inset-x-3 top-3 z-10 flex items-start gap-3 rounded-2xl border border-white/10 bg-black/70 p-3 text-left text-white backdrop-blur sm:inset-x-auto sm:left-1/2 sm:w-[26rem] sm:-translate-x-1/2">
+            <CameraOff className="mt-0.5 size-4 shrink-0 text-destructive" />
+            <div>
+              <div className="text-sm font-medium">{MEDIA_ERROR_COPY[mediaError].title}</div>
+              <p className="mt-0.5 text-xs text-white/70">{MEDIA_ERROR_COPY[mediaError].body}</p>
+            </div>
+          </div>
+        )}
         {isVideo ? (
           <>
             <video
@@ -137,7 +149,12 @@ export function CallView({
               </div>
             )}
 
-            <div className="absolute bottom-4 right-4 aspect-video w-32 overflow-hidden rounded-xl border border-white/20 shadow-lg sm:w-44">
+            <div
+              className={cn(
+                "absolute bottom-3 right-3 aspect-[3/4] w-24 overflow-hidden rounded-xl border border-white/20 shadow-lg sm:bottom-4 sm:right-4 sm:aspect-video sm:w-44",
+                mediaError && "hidden",
+              )}
+            >
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -179,21 +196,29 @@ export function CallView({
 
         {isVideo && (
           <button
+            type="button"
             onClick={goFullscreen}
-            className="absolute left-4 top-4 rounded-full bg-black/40 p-2 text-white backdrop-blur hover:bg-black/60"
+            aria-label="Full screen"
+            title="Full screen"
+            className={cn(
+              "absolute left-4 top-4 rounded-full bg-black/40 p-2 text-white backdrop-blur hover:bg-black/60",
+              mediaError && "hidden",
+            )}
           >
             <Maximize className="size-4" />
           </button>
         )}
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="mt-3 flex flex-col gap-2 sm:mt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-center gap-2">
           <Button
             variant={micOn ? "secondary" : "destructive"}
             size="icon"
             onClick={toggleMic}
+            disabled={!localStream}
             title={micOn ? "Mute" : "Unmute"}
+            aria-label={micOn ? "Mute" : "Unmute"}
           >
             {micOn ? <Mic className="size-4" /> : <MicOff className="size-4" />}
           </Button>
@@ -202,7 +227,9 @@ export function CallView({
               variant={cameraOn ? "secondary" : "destructive"}
               size="icon"
               onClick={toggleCamera}
+              disabled={!localStream}
               title={cameraOn ? "Turn camera off" : "Turn camera on"}
+              aria-label={cameraOn ? "Turn camera off" : "Turn camera on"}
             >
               {cameraOn ? <Video className="size-4" /> : <VideoOff className="size-4" />}
             </Button>
@@ -212,24 +239,25 @@ export function CallView({
             size="icon"
             onClick={onConnect}
             disabled={connectState === "mutual"}
-            title="Connect"
+            title={connectState === "mutual" ? "Connected" : "Connect"}
+            aria-label={connectState === "mutual" ? "Connected" : "Connect"}
           >
             <Heart className={cn("size-4", connectState === "mutual" && "fill-current")} />
           </Button>
           <ReportDialog
             onSubmit={onReport}
             trigger={
-              <Button variant="ghost" size="icon" title="Report">
+              <Button variant="ghost" size="icon" title="Report" aria-label="Report">
                 <Shield className="size-4" />
               </Button>
             }
           />
-          <Button variant="ghost" size="icon" onClick={onBlock} title="Block">
+          <Button variant="ghost" size="icon" onClick={onBlock} title="Block" aria-label="Block">
             <Ban className="size-4" />
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
           <Button variant="outline" onClick={onLeave}>
             Leave
           </Button>

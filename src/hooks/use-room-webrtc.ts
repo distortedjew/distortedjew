@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSocket, useSocketMessage } from "./socket-provider";
 import type { RoomChannel, RTCIceServerConfig } from "@/types/ws";
+import { mediaErrorKind, requestUserMedia, type MediaErrorKind } from "@/lib/media";
 
 const FALLBACK_ICE_SERVERS: RTCIceServerConfig[] = [{ urls: ["stun:stun.l.google.com:19302"] }];
 
@@ -31,6 +32,7 @@ export function useRoomWebRtc({
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const [cameraOn, setCameraOn] = useState(channel === "VIDEO");
   const [micOn, setMicOn] = useState(true);
+  const [mediaError, setMediaError] = useState<MediaErrorKind | null>(null);
 
   const peersRef = useRef<Map<string, PeerConn>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -54,8 +56,7 @@ export function useRoomWebRtc({
       })
       .catch(() => undefined);
 
-    localStreamReadyRef.current = navigator.mediaDevices
-      .getUserMedia({ audio: true, video: channel === "VIDEO" })
+    localStreamReadyRef.current = requestUserMedia({ audio: true, video: channel === "VIDEO" })
       .then((stream) => {
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
@@ -66,7 +67,8 @@ export function useRoomWebRtc({
         return stream;
       })
       .catch((err) => {
-        console.error("[room-webrtc] getUserMedia failed", err);
+        console.warn("[room-webrtc] getUserMedia failed", err);
+        if (!cancelled) setMediaError(mediaErrorKind(err));
         return null;
       });
 
@@ -78,6 +80,7 @@ export function useRoomWebRtc({
       peers.clear();
       setRemoteStreams({});
       setLocalStream(null);
+      setMediaError(null);
     };
   }, [active, channel]);
 
@@ -212,6 +215,7 @@ export function useRoomWebRtc({
     remoteStreams,
     cameraOn,
     micOn,
+    mediaError,
     toggleCamera,
     toggleMic,
     connectToPeer,

@@ -32,7 +32,15 @@ async function main() {
   });
 
   server.listen(port, () => {
-    console.log(`> Wisp is running on http://localhost:${port} (${dev ? "development" : "production"})`);
+    const appUrl = process.env.APP_URL || `http://localhost:${port}`;
+    console.log(`> Wisp is running on ${appUrl} (${dev ? "development" : "production"})`);
+    if (/\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(appUrl)) {
+      console.log(
+        "> Opening it from another machine (e.g. http://<server-ip>:" +
+          port +
+          ")? Set APP_URL to that address in .env and restart, or the page will load but nothing will be clickable.",
+      );
+    }
   });
 }
 

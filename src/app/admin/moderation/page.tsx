@@ -47,14 +47,14 @@ export default async function AdminModerationPage() {
         {actions.map((a) => (
           <Card key={a.id}>
             <CardContent className="flex flex-col gap-1 py-4">
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                 <Badge variant={TYPE_VARIANT[a.type] ?? "outline"}>{a.type}</Badge>
                 <strong>@{a.target.username}</strong>
                 <span className="text-xs text-muted-foreground">
                   {a.automated ? "automated" : a.issuer ? `by @${a.issuer.username}` : "system"}
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground">{a.reason}</p>
+              <p className="break-words text-sm text-muted-foreground">{a.reason}</p>
               <p className="text-xs text-muted-foreground">
                 {new Date(a.createdAt).toLocaleString()}
                 {a.expiresAt && ` · expires ${new Date(a.expiresAt).toLocaleString()}`}

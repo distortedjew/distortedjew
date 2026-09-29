@@ -29,7 +29,29 @@ const CSP = [
   "form-action 'self'",
 ].join("; ");
 
+// Next's dev server refuses its HMR/dev connections from any origin but
+// localhost, and without them the page never hydrates — every button is
+// dead. Allow the host the app is actually served on (APP_URL), plus any
+// extras listed in ALLOWED_DEV_ORIGINS, e.g. when developing on a remote box.
+function devOrigins(): string[] {
+  const hosts = new Set<string>();
+  try {
+    if (process.env.APP_URL) hosts.add(new URL(process.env.APP_URL).hostname);
+  } catch {
+    // malformed APP_URL — ignore here, the server logs it at startup
+  }
+  for (const h of (process.env.ALLOWED_DEV_ORIGINS ?? "").split(",")) {
+    if (h.trim()) hosts.add(h.trim());
+  }
+  return [...hosts];
+}
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins: devOrigins(),
+  // The floating dev badge sits in the bottom-left corner, directly on top of
+  // the mobile tab bar's Discover tab, and swallows taps in `npm run dev`.
+  // Build/runtime errors still open the full-screen overlay without it.
+  devIndicators: false,
   async headers() {
     return [
       {

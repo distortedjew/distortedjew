@@ -29,7 +29,9 @@ export function SearchingScreen({
   mode: MatchMode;
   onCancel: () => void;
 }) {
-  const [hookIndex, setHookIndex] = useState(() => Math.floor(Math.random() * SEARCHING_HOOKS.length));
+  // Always start at the first hook: a random initial index would render
+  // different text on the server and client and break hydration.
+  const [hookIndex, setHookIndex] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -39,7 +41,7 @@ export function SearchingScreen({
   }, []);
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-6 px-4 text-center">
+    <div className="flex min-h-app flex-col items-center justify-center gap-6 px-4 text-center">
       <div className="relative flex size-28 items-center justify-center">
         <span className="absolute inset-0 rounded-full border border-primary/30 animate-pulse-ring" />
         <span className="absolute inset-0 rounded-full border border-primary/30 animate-pulse-ring [animation-delay:0.6s]" />

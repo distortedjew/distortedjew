@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const json = await req.json().catch(() => null);
   const parsed = loginSchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   }
   const { identifier, password } = parsed.data;
 
