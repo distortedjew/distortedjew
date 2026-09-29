@@ -1,9 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SEARCHING_HOOKS } from "@/lib/brand";
 import type { MatchChannel, MatchMode } from "@/types/ws";
 
 const MODE_LABELS: Record<MatchMode, string> = {
@@ -27,6 +29,15 @@ export function SearchingScreen({
   mode: MatchMode;
   onCancel: () => void;
 }) {
+  const [hookIndex, setHookIndex] = useState(() => Math.floor(Math.random() * SEARCHING_HOOKS.length));
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHookIndex((i) => (i + 1) % SEARCHING_HOOKS.length);
+    }, 3500);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-6 px-4 text-center">
       <div className="relative flex size-28 items-center justify-center">
@@ -53,6 +64,19 @@ export function SearchingScreen({
       </div>
 
       <Badge variant="secondary">{MODE_LABELS[mode]}</Badge>
+
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={hookIndex}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.4 }}
+          className="text-sm text-muted-foreground"
+        >
+          {SEARCHING_HOOKS[hookIndex]}
+        </motion.p>
+      </AnimatePresence>
 
       <Button variant="outline" onClick={onCancel}>
         <X className="size-4" />

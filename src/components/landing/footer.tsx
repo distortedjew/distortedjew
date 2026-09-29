@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
 import { APP_NAME } from "@/lib/constants";
 
 const COLUMNS = [
@@ -29,9 +29,7 @@ export function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
           <div className="md:col-span-2">
             <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold">
-              <span className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-                <Sparkles className="size-4" />
-              </span>
+              <Logo size="size-8" iconSize="size-4" />
               {APP_NAME}
             </Link>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">

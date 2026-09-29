@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 
@@ -23,9 +24,7 @@ export function Navbar({ isAuthenticated }: { isAuthenticated: boolean }) {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <div className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-background/70 px-4 py-2.5 shadow-lg backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold">
-            <span className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-              <Sparkles className="size-4" />
-            </span>
+            <Logo size="size-8" iconSize="size-4" />
             {APP_NAME}
           </Link>
 
