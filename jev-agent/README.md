@@ -24,9 +24,20 @@ npm start                       # MODEL=mock FEED=sim: no key, no network needed
 # real data, real Jev:          MODEL=jev TYPESAFE_AI_API_KEY=... FEED=binance npm start
 ```
 
-## Always on (VPS)
+## Install on a VPS from GitHub
 
-`sudo bash deploy/install.sh` installs a systemd unit (`Restart=always`, unprivileged user). Watch it with `journalctl -u jev-agent -f`.
+Needs Node.js 22+ (Ubuntu: `curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash - && sudo apt install -y nodejs git`).
+
+```bash
+git clone -b claude/jev-trading-agent https://github.com/distortedjew/distortedjew.git
+cd distortedjew/jev-agent
+sudo bash deploy/install.sh          # copies to /opt/jev-agent, creates a systemd service
+sudo nano /opt/jev-agent/.env        # paste TYPESAFE_AI_API_KEY, Alpaca keys, MODEL=jev
+sudo systemctl restart jev-agent
+journalctl -u jev-agent -f           # live logs
+```
+
+The service restarts automatically on crash or reboot. Update later with `git pull && sudo bash deploy/install.sh && sudo systemctl restart jev-agent` (your `.env` is kept).
 
 ## Honest limits
 

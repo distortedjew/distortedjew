@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 WorkingDirectory=/opt/jev-agent
 EnvironmentFile=/opt/jev-agent/.env
-ExecStart=/usr/bin/npm start
+ExecStart=/opt/jev-agent/node_modules/.bin/tsx src/index.ts
 Restart=always
 RestartSec=3
 # Unprivileged, read-only system: it only needs to write logs/.
