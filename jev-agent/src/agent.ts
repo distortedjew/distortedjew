@@ -1,4 +1,6 @@
-import { appendFileSync, mkdirSync } from "node:fs";
+import { appendFileSync, mkdirSync, renameSync, statSync } from "node:fs";
+
+const MAX_LOG_BYTES = 50 * 1024 * 1024; // keeps at most ~100 MB on disk (current + .1)
 import type { Config } from "./config.js";
 import { Risk } from "./risk.js";
 import { SymbolBook } from "./state.js";
@@ -40,7 +42,14 @@ export class Agent {
 
   get modelName() { return this.model.name; }
 
-  private log(rec: object) { appendFileSync(this.logPath, JSON.stringify({ t: new Date().toISOString(), ...rec }) + "\n"); }
+  private logWrites = 0;
+  private log(rec: object) {
+    // Always-on process: rotate instead of filling the VPS disk.
+    if (++this.logWrites % 1000 === 0) {
+      try { if (statSync(this.logPath).size > MAX_LOG_BYTES) renameSync(this.logPath, this.logPath + ".1"); } catch {}
+    }
+    appendFileSync(this.logPath, JSON.stringify({ t: new Date().toISOString(), ...rec }) + "\n");
+  }
   private equity() { return this.broker.equity(this.marks); }
   private avg(symbol: string) { return this.broker.avgPrice?.(symbol) ?? this.avgPx.get(symbol) ?? 0; }
 

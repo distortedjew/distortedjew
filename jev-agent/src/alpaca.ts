@@ -64,6 +64,7 @@ export class AlpacaBroker implements Broker {
   private eq = 0; private cashUsd = 0;
   private pos = new Map<string, Pos>();
   private marketOpen = false;
+  private orderSeq = 0; // bumped on every order; a refresh that started before an order is discarded
   lastError = "";
   /** `toAlpaca` maps the feed's symbols to Alpaca's (identity when the feed is Alpaca's own). */
   constructor(private keyId: string, private secret: string, private toAlpaca: (s: string) => string = (s) => s) {}
@@ -80,7 +81,9 @@ export class AlpacaBroker implements Broker {
   }
 
   async refresh() {
+    const seq = this.orderSeq;
     const [acct, positions] = await Promise.all([this.api("GET", "/v2/account"), this.api("GET", "/v2/positions")]);
+    if (seq !== this.orderSeq) return; // an order went out meanwhile; this snapshot may predate it
     this.eq = +acct.equity; this.cashUsd = +acct.cash;
     this.pos.clear();
     for (const p of positions) this.pos.set(p.symbol, { qty: +p.qty, avg: +p.avg_entry_price });
@@ -102,6 +105,7 @@ export class AlpacaBroker implements Broker {
     const key = norm(symbol);
     const held = this.pos.get(key);
     const px = side === "buy" ? q.ask : q.bid;
+    this.orderSeq++;
     try {
       let qty = usd / px;
       if (side === "sell" && held && usd >= held.qty * px * 0.98) {
@@ -118,6 +122,7 @@ export class AlpacaBroker implements Broker {
       return { symbol: feedSymbol, side, qty, price: px, fee: 0, ts: Date.now() };
     } catch (e) {
       this.lastError = (e as Error).message;
+      this.orderSeq++;
       // Our view of the position may be stale (that's how a sub-$10 exit happens); resync before the next decision.
       await this.refresh().catch(() => {});
       throw e;

@@ -26,7 +26,9 @@ export class JevModel implements Model {
 
   async decide(state: MarketState): Promise<Decision> {
     const t0 = performance.now();
-    const r = await experimental_evaluate({ model: this.model, state: state as any, questions: QUESTIONS, maxRetries: 0 });
+    const r = await experimental_evaluate({ model: this.model, state: state as any, questions: QUESTIONS, maxRetries: 0,
+      // A hung call would freeze this symbol; anything this slow is discarded as stale anyway.
+      abortSignal: AbortSignal.timeout(config.maxLatencyMs * 2) });
     const a = r.answers.direction;
     const p = a.probabilities ?? { buy: 0, sell: 0, [a.choice]: 1 };
     const buy = p.buy ?? 0, sell = p.sell ?? 0;

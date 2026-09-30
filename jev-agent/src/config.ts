@@ -1,5 +1,10 @@
-const env = (k: string, d: string) => process.env[k] ?? d;
-const num = (k: string, d: number) => Number(env(k, String(d)));
+// systemd's EnvironmentFile keeps inline "# comments" as part of the value, so strip them here.
+const env = (k: string, d: string) => (process.env[k] ?? "").replace(/\s+#.*$/, "").trim() || d;
+const num = (k: string, d: number) => {
+  const v = Number(env(k, String(d)));
+  if (!Number.isFinite(v)) throw new Error(`${k} must be a number, got "${process.env[k]}"`);
+  return v;
+};
 
 export const config = {
   model: env("MODEL", "mock") as "mock" | "jev",
