@@ -67,6 +67,15 @@ canvas{width:100%;display:block}
 .ev em{font-style:normal;color:var(--mut);margin-right:6px}
 .empty{color:var(--mut);font-size:13px;padding:18px 0;text-align:center}
 .foot{color:var(--mut);font-size:11px;margin-top:18px;text-align:center}
+.strat{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;align-items:baseline}
+.strat dt{color:var(--mut);font-size:12px}.strat dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.note{margin-top:10px;font-size:13px;line-height:1.45;color:var(--text)}
+.err{color:var(--down);font-size:12px;margin-top:8px;overflow-wrap:anywhere}
+.plan{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12px}
+.plan .why{color:var(--mut);margin-top:6px;line-height:1.4;overflow-wrap:anywhere}
+.tag.long{background:color-mix(in srgb,var(--up) 20%,transparent);color:var(--up)}
+.tag.flat{background:color-mix(in srgb,var(--mut) 20%,transparent);color:var(--mut)}
+.tag.stale{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
 .lim{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:12px;color:var(--mut)}
 .lim b{display:block;color:var(--text);font-size:14px;font-variant-numeric:tabular-nums}
 </style>
@@ -89,12 +98,15 @@ canvas{width:100%;display:block}
     <div class="card"><div class="k-l">P&amp;L</div><div class="k-v" id="k-pnl">–</div><div class="k-s" id="k-pnl-s"></div></div>
     <div class="card"><div class="k-l">Exposure</div><div class="k-v" id="k-exp">–</div><div class="k-s" id="k-exp-s"></div></div>
     <div class="card"><div class="k-l">Decision latency</div><div class="k-v" id="k-lat">–</div><div class="k-s" id="k-lat-s"></div></div>
+    <div class="card"><div class="k-l">Jev accuracy</div><div class="k-v" id="k-acc">–</div><div class="k-s" id="k-acc-s"></div></div>
     <div class="card"><div class="k-l">Orders</div><div class="k-v" id="k-ord">–</div><div class="k-s" id="k-ord-s"></div></div>
   </section>
 
   <section class="grid main">
     <div class="card"><h2>Equity <span id="eq-range"></span></h2><canvas id="eq" role="img" aria-label="Equity over time"></canvas></div>
     <div class="grid" style="align-content:start">
+      <div class="card" id="strat-card" hidden><h2>Strategist <span id="strat-next"></span></h2>
+        <dl class="strat" id="strat"></dl><div class="note" id="strat-note"></div><div class="err" id="strat-err"></div></div>
       <div class="card"><h2>Activity</h2><div class="feed" id="feed"><div class="empty">Waiting for the first decision…</div></div></div>
     </div>
   </section>
@@ -176,6 +188,21 @@ function render(s) {
   $("k-exp-s").textContent = `of ${usd(s.config.maxTotalExposureUsd, 0)} max`;
   $("k-lat").textContent = s.latency.p50 ? Math.round(s.latency.p50) + " ms" : "–";
   $("k-lat-s").textContent = s.latency.p95 ? `p95 ${Math.round(s.latency.p95)} ms · ${s.stats.late} stale` : "no decisions yet";
+  const sc = s.score;
+  $("k-acc").textContent = sc.hitRate == null ? "–" : (sc.hitRate * 100).toFixed(1) + "%";
+  $("k-acc-s").textContent = sc.n ? `${sc.n} calls checked · confident ${sc.confHitRate == null ? "–" : (sc.confHitRate * 100).toFixed(1) + "%"} · 50% = coin flip` : "checked after each horizon";
+  const st = s.strategist; $("strat-card").hidden = !st;
+  if (st) {
+    const ago = (t) => (t ? dur(Math.max(0, Math.round((s.now - t) / 1000))) + " ago" : "never");
+    const D = $("strat"); D.textContent = "";
+    for (const [k, v] of [["Model", st.model], ["Last plan", ago(st.lastOk) + (st.latencyMs ? ` (${(st.latencyMs / 1000).toFixed(1)} s)` : "")], ["Runs", `${st.runs} · ${st.failures} failed`], ["Trades closed", `${sc.wins} won · ${sc.losses} lost · ${(sc.realizedUsd >= 0 ? "+" : "") + usd(sc.realizedUsd)}`]]) {
+      D.append(el("dt", "", k), el("dd", "", String(v)));
+    }
+    const next = st.lastRun ? Math.max(0, Math.round((st.lastRun + st.everyMin * 60000 - s.now) / 1000)) : 0;
+    $("strat-next").textContent = st.lastRun ? "next in " + dur(next) : "starting…";
+    $("strat-note").textContent = st.marketNote || "";
+    $("strat-err").textContent = st.lastError ? "Last error: " + st.lastError : "";
+  }
   $("k-ord").textContent = s.stats.orders;
   $("k-ord-s").textContent = `${s.stats.decisions} decisions · ${s.stats.blocked} blocked · ${s.stats.errors} errors`;
 
@@ -194,7 +221,10 @@ function render(s) {
         <div class="bar"><i></i></div><div class="bar-l"><span class="bl"></span><span class="br"></span></div>
         <div class="row"><span>Latest call</span><b class="call"></b></div>
         <div class="row"><span>Position</span><b class="pos"></b></div>
-        <div class="row"><span>Unrealized</span><b class="upl"></b></div>`;
+        <div class="row"><span>Unrealized</span><b class="upl"></b></div>
+        <div class="row"><span>Jev hit rate</span><b class="acc"></b></div>
+        <div class="plan" hidden><div class="row" style="margin-top:0"><span>Strategist</span><b class="pl"></b></div>
+          <div class="row"><span>Stop / target</span><b class="sltp"></b></div><div class="why"></div></div>`;
       host.append(c);
     }
   }
@@ -213,6 +243,19 @@ function render(s) {
     const call = c.querySelector(".call"); call.textContent = "";
     if (d) { call.append(el("span", "tag " + d.action, d.action.toUpperCase()), document.createTextNode(` ${Math.round(d.latencyMs)} ms`)); } else call.textContent = "warming up…";
     c.querySelector(".pos").textContent = p.qty > 0 ? `${usd(p.usd, 0)} long` : "flat";
+    const acc = s.scoreBySymbol?.[p.symbol];
+    c.querySelector(".acc").textContent = acc == null ? "scoring…" : (acc * 100).toFixed(1) + "%";
+    const pl = s.strategist?.plans?.[p.symbol], box = c.querySelector(".plan");
+    box.hidden = !s.strategist;
+    if (s.strategist) {
+      const b = c.querySelector(".pl"); b.textContent = "";
+      if (pl) {
+        b.append(el("span", "tag " + (pl.active ? pl.bias : "stale"), pl.active ? pl.bias.toUpperCase() : "EXPIRED"),
+          document.createTextNode(` ${(pl.conviction * 100).toFixed(0)}% · size ${(pl.size * 100).toFixed(0)}%`));
+        c.querySelector(".sltp").textContent = `-${pl.stopLossPct}% / +${pl.takeProfitPct}% · ${pl.maxHoldMin}m`;
+        c.querySelector(".why").textContent = pl.reason;
+      } else { b.textContent = "waiting for first plan…"; c.querySelector(".sltp").textContent = "–"; c.querySelector(".why").textContent = ""; }
+    }
     const u = c.querySelector(".upl"); u.textContent = p.qty > 0 ? sign(p.pnlBps / 100) + "%" : "–"; u.className = "upl " + (p.pnlBps >= 0 ? "up" : "down");
   }
 

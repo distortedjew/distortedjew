@@ -2,10 +2,20 @@
 
 A small always-on decision agent for stocks and crypto, built on **Jev** (TypeSafe AI's fast decision model: a typed choice/score in ~70-500 ms instead of generated text). **Paper trading only.**
 
-```
-feed (ticks) -> state -> Jev "higher or lower in HORIZON_SEC?" -> confidence gate -> RISK LAYER -> broker -> logs/decisions.jsonl
-```
+Two brains, one set of hard limits:
 
+| Layer | What | How often | Job |
+|---|---|---|---|
+| Strategist | a smarter LLM via OpenRouter (default `stealth/space-bunny-alpha`) | every `STRATEGY_EVERY_MIN` (30) | Reads 1m/15m/1h/1d candles, order-book depth, futures funding + open interest, optional news, and the bot's own results. Per coin: long or flat, conviction, size, stop-loss, take-profit, max hold. |
+| Rule exits | plain code | every tick | Stop-loss, take-profit, strategist turned flat, max hold. Then a `REENTRY_COOLDOWN_MIN` pause on that coin. |
+| Trader | Jev | every 0.5 s | Times entries inside the plan (only coins the strategist marked long with conviction >= `MIN_CONVICTION`); closes early only when >= `EXIT_CONFIDENCE` sure. |
+| Risk | plain code | every order | Exposure caps, order rate, daily-loss kill switch, $10 minimum, no shorting. |
+
+Without `OPENROUTER_API_KEY` (or with `FEED=alpaca` for stocks) it runs Jev alone, as before.
+
+The dashboard's **Jev accuracy** checks every Jev call against the real price once its horizon has passed. 50% is a coin flip; that number, not paper P&L, is the first thing to watch.
+
+- `src/strategist.ts` + `src/market-data.ts`  The strategist: gathers the market picture, asks the LLM, validates and clamps its plan.
 - `src/model.ts`  Jev via `experimental_evaluate` (AI SDK 7), plus a `MockModel` so it runs with no key.
 - `src/risk.ts`   Hard limits outside the model: per-symbol and total exposure caps, order rate limit, daily-loss kill switch (flattens and halts), spot only (no shorting).
 - `src/broker.ts` Paper broker: crosses the spread, adds slippage and taker fees.
@@ -29,7 +39,7 @@ npm start                       # MODEL=mock FEED=sim: no key, no network needed
 Needs Node.js 22+ (Ubuntu: `curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash - && sudo apt install -y nodejs git`).
 
 ```bash
-git clone -b claude/jev-trading-agent https://github.com/distortedjew/distortedjew.git
+git clone https://github.com/distortedjew/distortedjew.git
 cd distortedjew/jev-agent
 sudo bash deploy/install.sh          # copies to /opt/jev-agent, creates a systemd service
 sudo nano /opt/jev-agent/.env        # paste TYPESAFE_AI_API_KEY, Alpaca keys, MODEL=jev
@@ -40,6 +50,8 @@ journalctl -u jev-agent -f           # live logs
 The service restarts automatically on crash or reboot. Update later with `git pull && sudo bash deploy/install.sh && sudo systemctl restart jev-agent` (your `.env` is kept).
 
 ## Honest limits
+
+- The free Space Bunny model is a stealth preview: OpenRouter's free tier allows ~50 requests/day without credits (hence the 30 min default), prompts may be logged by the provider, and the model can be withdrawn. Set `STRATEGIST_FALLBACK_MODELS` so the bot keeps a plan if it disappears; when no plan is available it opens nothing new, and open positions keep their stop-loss / take-profit.
 
 - "Very fast" here means a decision every ~0.5 s per symbol, bounded by API latency. This is not co-located HFT; you won't out-race market makers on latency. Slow decisions are discarded (`MAX_LATENCY_MS`).
 - Fees and spread eat short-horizon edge. Run on paper for weeks and read `logs/decisions.jsonl` before trusting any result. Confidence from Jev is calibrated in aggregate, not a guarantee.

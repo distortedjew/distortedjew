@@ -4,7 +4,9 @@ import { PaperBroker } from "./broker.js";
 import { config } from "./config.js";
 import { startDashboard } from "./dashboard.js";
 import { BinanceFeed, SimFeed } from "./feeds.js";
+import { MarketData } from "./market-data.js";
 import { createModel } from "./model.js";
+import { Strategist } from "./strategist.js";
 import type { Broker, Feed } from "./types.js";
 
 const die = (m: string) => { console.error(m); process.exit(1); };
@@ -31,11 +33,24 @@ if (config.broker === "alpaca") {
 } else broker = new PaperBroker(config.startCash, config.feeBps, config.slippageBps);
 
 const agent = new Agent(config, createModel(), broker, feed);
+
+// The strategist reads Binance market data, so it runs with crypto (Binance symbols); stocks keep Jev-only mode.
+if (config.strategist.apiKey && config.feed !== "alpaca") {
+  const data = new MarketData({
+    restUrl: config.binanceRestUrl, futuresUrl: config.binanceFuturesUrl,
+    alphaVantageKey: config.alphaVantageKey, newsEveryMin: config.newsEveryMin,
+  });
+  agent.strategist = new Strategist(
+    { ...config.strategist, feePctPerSide: config.feeBps / 100 },
+    config.symbols, data, () => agent.strategistContext(),
+  );
+} else if (config.strategist.apiKey) console.log("strategist: off (FEED=alpaca is for stocks; the strategist needs Binance crypto symbols)");
 // Alpaca reports the real account, so use its starting equity as the baseline for PnL.
 if (config.broker === "alpaca") (config as { startCash: number }).startCash = broker.equity({});
 
-console.log(`jev-agent: model=${config.model} feed=${config.feed} broker=${config.broker} symbols=${config.symbols} PAPER TRADING`);
+console.log(`jev-agent: strategist=${agent.strategist ? config.strategist.model : "off"} model=${config.model} feed=${config.feed} broker=${config.broker} symbols=${config.symbols} PAPER TRADING`);
 await agent.start();
+agent.strategist?.start();
 startDashboard(agent, config.dashboard);
 
 const report = setInterval(() => console.log(JSON.stringify(agent.summary())), 10_000);
