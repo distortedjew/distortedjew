@@ -8,7 +8,7 @@ export class BinanceFeed implements Feed {
   private cbs: Cb[] = [];
   private ws?: WebSocket;
   private stopped = false;
-  constructor(private symbols: string[]) {}
+  constructor(private symbols: string[], private baseUrl = "wss://stream.binance.com:9443") {}
   on(cb: Cb) { this.cbs.push(cb); }
   private emit(e: Parameters<Cb>[0]) { for (const cb of this.cbs) cb(e); }
 
@@ -17,7 +17,7 @@ export class BinanceFeed implements Feed {
 
   private connect() {
     const streams = this.symbols.flatMap((s) => [`${s.toLowerCase()}@bookTicker`, `${s.toLowerCase()}@aggTrade`]);
-    const ws = (this.ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams.join("/")}`));
+    const ws = (this.ws = new WebSocket(`${this.baseUrl}/stream?streams=${streams.join("/")}`));
     ws.on("message", (raw) => {
       const { data: d } = JSON.parse(raw.toString());
       if (d.e === "aggTrade") {

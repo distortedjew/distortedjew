@@ -49,10 +49,12 @@ The service restarts automatically on crash or reboot. Update later with `git pu
 ## Alpaca (stocks + crypto, paper)
 
 1. Sign up free at alpaca.markets, switch to **Paper Trading**, generate API keys (only you can do this; it needs your identity).
-2. In `.env`: `FEED=alpaca BROKER=alpaca ALPACA_KEY_ID=... ALPACA_SECRET_KEY=... SYMBOLS=AAPL,TSLA,BTC/USD`
+2. In `.env`, set `ALPACA_KEY_ID` / `ALPACA_SECRET_KEY`, then pick one:
+   - **Crypto (recommended):** `FEED=binance BROKER=alpaca SYMBOLS=BTCUSDT,ETHUSDT`. Binance's free feed ticks many times a second; orders go to your Alpaca paper account as BTC/USD, ETH/USD. On a US server set `BINANCE_WS_URL=wss://stream.binance.us:9443`.
+   - **Stocks:** `FEED=alpaca BROKER=alpaca SYMBOLS=AAPL,TSLA`. Alpaca's free feed allows one websocket and is thin (ETH/USD there was ~5 quotes/min in testing), too slow for crypto at a 30 s horizon.
 3. `npm start`. Stocks use the free IEX feed and only trade in market hours (the broker refuses stock orders when the market is closed). Crypto runs 24/7.
 
-Status: written against Alpaca's documented API but **not yet run against a real account** (no keys in the build sandbox). First run with `MAX_POSITION_USD=50` and watch the dashboard.
+Orders under $10 are refused by Alpaca, so the risk layer never places a buy under `MIN_ORDER_USD` and turns a small exit into a full close. A rejected order counts as an error and shows on the dashboard.
 
 ## Dashboard
 

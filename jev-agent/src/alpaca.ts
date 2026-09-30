@@ -3,6 +3,12 @@ import type { Broker, Feed, Fill, Quote, Trade } from "./types.js";
 
 const PAPER_API = "https://paper-api.alpaca.markets"; // hard-coded: this agent never talks to a live account
 const isCrypto = (s: string) => s.includes("/");
+
+/** BTCUSDT (Binance) -> BTC/USD (Alpaca). Returns null for symbols that aren't USD-quoted crypto pairs. */
+export function binanceToAlpaca(s: string): string | null {
+  const m = /^([A-Z0-9]+?)(USDT|USDC|USD)$/.exec(s.toUpperCase());
+  return m ? `${m[1]}/USD` : null;
+}
 const norm = (s: string) => s.replace("/", "");
 
 type Cb = (e: { type: "quote"; q: Quote } | { type: "trade"; t: Trade }) => void;
@@ -59,7 +65,8 @@ export class AlpacaBroker implements Broker {
   private pos = new Map<string, Pos>();
   private marketOpen = false;
   lastError = "";
-  constructor(private keyId: string, private secret: string) {}
+  /** `toAlpaca` maps the feed's symbols to Alpaca's (identity when the feed is Alpaca's own). */
+  constructor(private keyId: string, private secret: string, private toAlpaca: (s: string) => string = (s) => s) {}
 
   private async api(method: string, path: string, body?: unknown) {
     const r = await fetch(PAPER_API + path, {
@@ -87,7 +94,9 @@ export class AlpacaBroker implements Broker {
     setInterval(() => safe(() => this.refreshClock()), 30_000).unref();
   }
 
-  async submit(symbol: string, side: "buy" | "sell", usd: number, q: Quote): Promise<Fill | null> {
+  /** Throws on a rejected order so the agent counts it as an error and shows it on the dashboard. */
+  async submit(feedSymbol: string, side: "buy" | "sell", usd: number, q: Quote): Promise<Fill | null> {
+    const symbol = this.toAlpaca(feedSymbol);
     const crypto = isCrypto(symbol);
     if (!crypto && !this.marketOpen) return null; // a "day" order now would queue and fill at the next open
     const key = norm(symbol);
@@ -106,15 +115,16 @@ export class AlpacaBroker implements Broker {
       // Optimistic local update until the next refresh (2 s) reflects the real fill.
       const cur = held ?? { qty: 0, avg: px };
       this.pos.set(key, { qty: cur.qty + (side === "buy" ? qty : -qty), avg: cur.avg });
-      return { symbol, side, qty, price: px, fee: 0, ts: Date.now() };
+      return { symbol: feedSymbol, side, qty, price: px, fee: 0, ts: Date.now() };
     } catch (e) {
       this.lastError = (e as Error).message;
-      console.error(this.lastError);
-      return null;
+      // Our view of the position may be stale (that's how a sub-$10 exit happens); resync before the next decision.
+      await this.refresh().catch(() => {});
+      throw e;
     }
   }
-  positionQty(symbol: string) { return this.pos.get(norm(symbol))?.qty ?? 0; }
-  avgPrice(symbol: string) { return this.pos.get(norm(symbol))?.avg; }
+  positionQty(symbol: string) { return this.pos.get(norm(this.toAlpaca(symbol)))?.qty ?? 0; }
+  avgPrice(symbol: string) { return this.pos.get(norm(this.toAlpaca(symbol)))?.avg; }
   cash() { return this.cashUsd; }
   equity() { return this.eq; }
 }

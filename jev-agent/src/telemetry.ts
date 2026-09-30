@@ -28,7 +28,7 @@ export class Telemetry {
   }
   addEvent(e: Omit<EventRec, "ts">) {
     // A repeated block/skip (e.g. rate limit hit on every tick) would bury the fills, so show it once per 30 s.
-    if (e.kind === "blocked" || e.kind === "skip") {
+    if (e.kind === "blocked" || e.kind === "skip" || e.kind === "error") {
       const dup = this.events.findLast((x) => x.kind === e.kind && x.symbol === e.symbol && x.text === e.text);
       if (dup && Date.now() - dup.ts < 30_000) return;
     }

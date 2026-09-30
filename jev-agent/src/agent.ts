@@ -97,7 +97,10 @@ export class Agent {
       return null;
     }
     const fill = await this.broker.submit(symbol, side, r.order.usd, q);
-    if (!fill) return null;
+    if (!fill) {
+      this.tel.addEvent({ kind: "skip", symbol, side, text: "broker declined the order (market closed?)" });
+      return null;
+    }
     this.stats.orders++;
     if (side === "buy") {
       const prevAvg = this.avgPx.get(symbol) ?? 0;

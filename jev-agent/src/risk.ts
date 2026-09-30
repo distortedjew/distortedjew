@@ -27,10 +27,13 @@ export class Risk {
     let usd = o.usd;
     if (o.side === "buy") {
       usd = Math.min(usd, this.cfg.maxPositionUsd - v.symbolUsd, this.cfg.maxTotalExposureUsd - v.totalUsd);
-      if (usd < 1) return { order: null, reason: "position/exposure cap" };
+      if (usd < this.cfg.minOrderUsd) return { order: null, reason: "position/exposure cap" };
     } else {
+      if (v.symbolUsd < 1) return { order: null, reason: "nothing to sell (no shorting)" };
       usd = Math.min(usd, v.symbolUsd);
-      if (usd < 1) return { order: null, reason: "nothing to sell (no shorting)" };
+      // A sell below the minimum, or one that would leave a remainder below it, closes the whole position
+      // instead, so we never create dust the broker would refuse to sell later.
+      if (usd < this.cfg.minOrderUsd || v.symbolUsd - usd < this.cfg.minOrderUsd) usd = v.symbolUsd;
     }
     this.orderTimes.push(t);
     return { order: { ...o, usd } };
