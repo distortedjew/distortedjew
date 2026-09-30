@@ -47,7 +47,7 @@ export class SymbolBook {
       position: {
         side: position.qty > 0 ? "long" : "flat",
         usd,
-        unrealizedBps: position.qty > 0 ? ((mid - position.avgPx) / position.avgPx) * 1e4 : 0,
+        unrealizedBps: position.qty > 0 && position.avgPx > 0 ? ((mid - position.avgPx) / position.avgPx) * 1e4 : 0,
       },
     };
   }

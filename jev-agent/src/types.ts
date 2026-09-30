@@ -28,7 +28,9 @@ export interface Fill { symbol: string; side: "buy" | "sell"; qty: number; price
 
 export interface Broker {
   /** Market-order `usd` notional of `symbol` on `side`, filled against `quote`. */
-  submit(symbol: string, side: "buy" | "sell", usd: number, quote: Quote): Fill | null;
+  submit(symbol: string, side: "buy" | "sell", usd: number, quote: Quote): Fill | null | Promise<Fill | null>;
+  /** Average entry price if the broker knows it (Alpaca does; survives restarts). */
+  avgPrice?(symbol: string): number | undefined;
   positionQty(symbol: string): number;
   equity(marks: Record<string, number>): number;
   cash(): number;

@@ -3,7 +3,7 @@
 set -euo pipefail
 id jev &>/dev/null || useradd --system --home /opt/jev-agent --shell /usr/sbin/nologin jev
 mkdir -p /opt/jev-agent/logs
-cp -r package.json package-lock.json tsconfig.json src /opt/jev-agent/
+cp -r package.json package-lock.json tsconfig.json src public /opt/jev-agent/
 [ -f /opt/jev-agent/.env ] || { cp .env.example /opt/jev-agent/.env; echo "Edit /opt/jev-agent/.env (set TYPESAFE_AI_API_KEY, MODEL=jev, FEED=binance)"; }
 chmod 600 /opt/jev-agent/.env
 (cd /opt/jev-agent && npm ci)

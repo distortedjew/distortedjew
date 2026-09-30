@@ -4,7 +4,10 @@ const num = (k: string, d: number) => Number(env(k, String(d)));
 export const config = {
   model: env("MODEL", "mock") as "mock" | "jev",
   jevModelId: env("JEV_MODEL_ID", "jev-latest"),
-  feed: env("FEED", "sim") as "sim" | "binance",
+  feed: env("FEED", "sim") as "sim" | "binance" | "alpaca",
+  broker: env("BROKER", "paper") as "paper" | "alpaca",
+  alpaca: { keyId: env("ALPACA_KEY_ID", ""), secret: env("ALPACA_SECRET_KEY", "") },
+  dashboard: { port: num("DASHBOARD_PORT", 8787), host: env("DASHBOARD_HOST", "127.0.0.1"), token: env("DASHBOARD_TOKEN", "") },
   symbols: env("SYMBOLS", "BTCUSDT,ETHUSDT").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean),
   startCash: num("START_CASH", 10000),
   horizonSec: num("HORIZON_SEC", 30),
