@@ -1,0 +1,20 @@
+[Unit]
+Description=Jev trading agent (paper)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/opt/jev-agent
+EnvironmentFile=/opt/jev-agent/.env
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=3
+# Unprivileged, read-only system: it only needs to write logs/.
+User=jev
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/jev-agent/logs
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
