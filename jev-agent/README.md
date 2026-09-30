@@ -2,20 +2,30 @@
 
 A small always-on decision agent for stocks and crypto, built on **Jev** (TypeSafe AI's fast decision model: a typed choice/score in ~70-500 ms instead of generated text). **Paper trading only.**
 
-Two brains, one set of hard limits:
+**Default strategy (`STRATEGY=trend`): daily crypto trend following, backtested.** The research, design and results are in [STRATEGY.md](STRATEGY.md). In short: from 2018 to 2026, after 0.30% costs per trade, it returned **21.7% a year with Sharpe 1.49 and a maximum drawdown of -16%**. Holding BTC returned 22.9% with Sharpe 0.65 and a -81% drawdown.
 
-| Layer | What | How often | Job |
-|---|---|---|---|
-| Strategist | a smarter LLM via OpenRouter (default `stealth/space-bunny-alpha`) | every `STRATEGY_EVERY_MIN` (30) | Reads 1m/15m/1h/1d candles, order-book depth, futures funding + open interest, optional news, and the bot's own results. Per coin: long or flat, conviction, size, stop-loss, take-profit, max hold. |
-| Rule exits | plain code | every tick | Stop-loss, take-profit, strategist turned flat, max hold. Then a `REENTRY_COOLDOWN_MIN` pause on that coin. |
-| Trader | Jev | every 0.5 s | Times entries inside the plan (only coins the strategist marked long with conviction >= `MIN_CONVICTION`); closes early only when >= `EXIT_CONFIDENCE` sure. |
-| Risk | plain code | every order | Exposure caps, order rate, daily-loss kill switch, $10 minimum, no shorting. |
+| Layer | What | When |
+|---|---|---|
+| Trend ensemble | 9 Donchian breakout models per coin (5-360 days) with trailing stops; volatility-targeted, correlation-aware sizing | daily, after the UTC close |
+| AI risk officer | LLM via OpenRouter (default `stealth/space-bunny-alpha`); may only **cut** a coin (x0..1) for a concrete risk | every `AI_REVIEW_EVERY_HOURS` (6) |
+| Jev executor | works each order over `EXEC_WINDOW_MIN` in slices, waiting while Jev expects a better price; the deadline always completes it | during rebalances |
+| Risk layer | exposure caps, order rate, daily-loss kill switch, $10 minimum, no shorting | every order |
+| Shadow portfolio | the same strategy without AI cuts, to measure whether the AI helps | continuously |
 
-Without `OPENROUTER_API_KEY` (or with `FEED=alpaca` for stocks) it runs Jev alone, as before.
+```bash
+npm run fetch-data   # download daily history (Binance) into data/
+npm run backtest     # rerun the evidence on your own data
+```
 
-The dashboard's **Jev accuracy** checks every Jev call against the real price once its horizon has passed. 50% is a coin flip; that number, not paper P&L, is the first thing to watch.
+The earlier intraday mode (Jev every 0.5 s plus an LLM plan) is `STRATEGY=scalp`. It's experimental, because fees make short-horizon trading very hard (see STRATEGY.md). With `FEED=alpaca` for stocks, the bot runs Jev alone.
 
-- `src/strategist.ts` + `src/market-data.ts`  The strategist: gathers the market picture, asks the LLM, validates and clamps its plan.
+- `src/strategy/trend.ts`  The trend strategy (pure functions shared by the backtest and the live bot).
+- `src/trend-trader.ts` + `src/executor.ts` + `src/overlay.ts`  The daily runner, the Jev-timed executor, and the AI risk officer.
+- `src/backtest.ts` + `src/fetch-data.ts`  The backtester and the history download.
+- `src/daily-bars.ts`  Live completed daily bars (Binance, with an Alpaca fallback).
+- `src/notify.ts`  Optional Telegram alerts for rebalances, AI cuts, the kill switch and failures.
+- `src/market-data.ts`  The market picture for the LLM: multi-timeframe candles, order book, funding and open interest, and news.
+- `src/strategist.ts`  Scalp mode only: the LLM plan-setter.
 - `src/model.ts`  Jev via `experimental_evaluate` (AI SDK 7), plus a `MockModel` so it runs with no key.
 - `src/risk.ts`   Hard limits outside the model: per-symbol and total exposure caps, order rate limit, daily-loss kill switch (flattens and halts), spot only (no shorting).
 - `src/broker.ts` Paper broker: crosses the spread, adds slippage and taker fees.

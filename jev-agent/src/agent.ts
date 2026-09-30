@@ -5,6 +5,7 @@ import type { Config } from "./config.js";
 import { Risk } from "./risk.js";
 import { SymbolBook } from "./state.js";
 import { Telemetry } from "./telemetry.js";
+import type { Executor } from "./executor.js";
 import type { Strategist } from "./strategist.js";
 import type { Broker, Feed, MarketState, Model } from "./types.js";
 
@@ -29,6 +30,10 @@ export class Agent {
   private entryTs = new Map<string, number>();
   private exitTs = new Map<string, number>(); // no re-entry right after an exit: stops stop-loss churn
   strategist?: Strategist;
+  /** Trend mode: orders come from the daily rebalance and are worked by the executor; the tick loop only drives it. */
+  executor?: Executor;
+  /** Extra dashboard data from the active strategy. */
+  extraSnapshot?: () => Record<string, unknown>;
   private marks: Record<string, number> = {};
   readonly risk: Risk;
   readonly tel = new Telemetry();
@@ -64,7 +69,21 @@ export class Agent {
   private equity() { return this.broker.equity(this.marks); }
   private avg(symbol: string) { return this.broker.avgPrice?.(symbol) ?? this.avgPx.get(symbol) ?? 0; }
 
+  /** The compact market state Jev is asked about, for the current book of `symbol`. */
+  marketState(symbol: string) {
+    return this.books.get(symbol)?.state({ qty: this.broker.positionQty(symbol), avgPx: this.avg(symbol) }) ?? null;
+  }
+  mid(symbol: string) { return this.marks[symbol]; }
+  positionUsd(symbol: string) { return this.broker.positionQty(symbol) * (this.marks[symbol] ?? 0); }
+  equityNow() { return this.equity(); }
+  brokerCash() { return this.broker.cash(); }
+  event(kind: "fill" | "skip" | "error" | "kill" | "blocked", symbol: string, text: string, side?: "buy" | "sell") {
+    this.tel.addEvent({ kind, symbol, text, side });
+    if (kind === "error") this.stats.errors++;
+  }
+
   private async tick(symbol: string) {
+    if (this.executor) return this.trendTick(symbol);
     const now = Date.now();
     if (this.busy.has(symbol) || now - (this.lastDecide.get(symbol) ?? 0) < this.cfg.decideEveryMs) return;
     const book = this.books.get(symbol)!;
@@ -131,6 +150,24 @@ export class Agent {
     }
   }
 
+  /** Trend mode: the kill switch still applies; otherwise the executor works any open rebalance order. */
+  private async trendTick(symbol: string) {
+    if (this.busy.has(symbol)) return;
+    const qty = this.broker.positionQty(symbol);
+    if (this.risk.shouldFlatten(this.equity())) {
+      this.executor!.cancel(symbol);
+      if (qty > 0 && this.books.get(symbol)?.quote) {
+        this.busy.add(symbol);
+        try {
+          this.tel.addEvent({ kind: "kill", symbol, text: "daily loss limit hit: flattening" });
+          await this.place(symbol, "sell", this.positionUsd(symbol) * 1.01, "kill-switch");
+        } catch (e) { this.event("error", symbol, (e as Error).message); } finally { this.busy.delete(symbol); }
+      }
+      return;
+    }
+    await this.executor!.onTick(symbol);
+  }
+
   /** Exits that need no model: the strategist's stop-loss, take-profit, flat call and max hold. */
   private ruleExit(symbol: string, s: MarketState): string | null {
     const p = this.strategist?.lastPlan(symbol);
@@ -143,6 +180,9 @@ export class Agent {
     if (p && heldMin > p.maxHoldMin) return `max hold ${Math.round(heldMin)} min`;
     return null;
   }
+
+  /** Places an order through the risk layer (used by the trend executor). Errors propagate to the caller. */
+  place(symbol: string, side: "buy" | "sell", usd: number, why: string, d?: unknown) { return this.execute(symbol, side, usd, why, d); }
 
   private async execute(symbol: string, side: "buy" | "sell", usd: number, why: string, d?: unknown) {
     // Fills against the *current* quote, not the one the decision was based on.
@@ -237,6 +277,7 @@ export class Agent {
       events: t.events.slice(-60).reverse(),
       score: t.scoreTotals(),
       scoreBySymbol: Object.fromEntries([...t.score].map(([k, v]) => [k, v.n ? v.hits / v.n : null])),
+      ...(this.extraSnapshot?.() ?? {}),
       strategist: this.strategist ? {
         ...this.strategist.status, everyMin: this.cfg.strategist.everyMin, minConviction: this.cfg.strategist.minConviction,
         plans: Object.fromEntries(this.cfg.symbols.map((s) => {

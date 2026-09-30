@@ -76,6 +76,11 @@ canvas{width:100%;display:block}
 .tag.long{background:color-mix(in srgb,var(--up) 20%,transparent);color:var(--up)}
 .tag.flat{background:color-mix(in srgb,var(--mut) 20%,transparent);color:var(--mut)}
 .tag.stale{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+.dots{display:flex;gap:4px;margin-top:6px}.dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--up)}
+.wbar{height:6px;border-radius:99px;background:var(--line);position:relative;margin-top:6px;overflow:hidden}
+.wbar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px}.wbar .t{background:color-mix(in srgb,var(--accent) 55%,transparent)}.wbar .c{background:var(--accent);height:3px;top:1.5px}
+#perf{height:120px;margin-top:8px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--mut);margin-top:6px}.legend b{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .lim{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:12px;color:var(--mut)}
 .lim b{display:block;color:var(--text);font-size:14px;font-variant-numeric:tabular-nums}
 </style>
@@ -105,6 +110,10 @@ canvas{width:100%;display:block}
   <section class="grid main">
     <div class="card"><h2>Equity <span id="eq-range"></span></h2><canvas id="eq" role="img" aria-label="Equity over time"></canvas></div>
     <div class="grid" style="align-content:start">
+      <div class="card" id="trend-card" hidden><h2>Trend strategy <span id="tr-next"></span></h2>
+        <dl class="strat" id="tr"></dl><div class="note" id="tr-note"></div><div class="err" id="tr-err"></div>
+        <canvas id="perf" role="img" aria-label="Live strategy return versus the same strategy without AI cuts"></canvas>
+        <div class="legend"><span><b style="background:var(--accent)"></b>live (with AI officer)</span><span><b style="background:var(--mut)"></b>shadow (rules only)</span></div></div>
       <div class="card" id="strat-card" hidden><h2>Strategist <span id="strat-next"></span></h2>
         <dl class="strat" id="strat"></dl><div class="note" id="strat-note"></div><div class="err" id="strat-err"></div></div>
       <div class="card"><h2>Activity</h2><div class="feed" id="feed"><div class="empty">Waiting for the first decision…</div></div></div>
@@ -203,6 +212,33 @@ function render(s) {
     $("strat-note").textContent = st.marketNote || "";
     $("strat-err").textContent = st.lastError ? "Last error: " + st.lastError : "";
   }
+  const T = s.trend; $("trend-card").hidden = !T;
+  if (T) {
+    const ago = (t) => (t ? dur(Math.max(0, Math.round((s.now - t) / 1000))) + " ago" : "never");
+    const X = T.execution, O = T.officer, P = T.performance;
+    const D = $("tr"); D.textContent = "";
+    const rows = [
+      ["Capital", usd(T.capital, 0) + ` · vol target ${(T.params.targetVol * 100).toFixed(0)}%`],
+      ["Last rebalance", ago(T.lastRun)],
+      ["Execution", X.completed ? `${X.avgShortfallBps >= 0 ? "+" : ""}${X.avgShortfallBps.toFixed(1)} bps vs arrival · ${X.timedSlices} Jev-timed / ${X.forcedSlices} deadline · ${X.waits} waits` : `orders worked over ${X.windowMin} min, Jev-timed`],
+      ["Strategy return", `${P.livePct >= 0 ? "+" : ""}${P.livePct.toFixed(2)}% live · ${P.shadowPct >= 0 ? "+" : ""}${P.shadowPct.toFixed(2)}% rules-only`],
+      ["AI officer", O ? `${O.model} · reviewed ${ago(O.at)} · every ${O.everyH}h · ${O.failures} failed` : "off (no OPENROUTER_API_KEY)"],
+    ];
+    for (const [k, v] of rows) D.append(el("dt", "", k), el("dd", "", String(v)));
+    $("tr-next").textContent = T.nextRun ? "next in " + dur(Math.max(0, Math.round((T.nextRun - s.now) / 1000))) : "starting…";
+    $("tr-note").textContent = O?.note || "";
+    $("tr-err").textContent = [T.lastError && "Rebalance: " + T.lastError, O?.lastError && "AI: " + O.lastError].filter(Boolean).join(" · ");
+    const H = P.history;
+    if (H.length > 1) {
+      const { g, w, h } = fit($("perf")); g.clearRect(0, 0, w, h);
+      const all = H.flatMap((x) => [x.live, x.shadow]); let lo = Math.min(...all, 0), hi = Math.max(...all, 0); if (hi - lo < 1e-4) { lo -= 0.01; hi += 0.01; }
+      const X_ = (i) => (i / (H.length - 1)) * (w - 2), Y_ = (v) => 4 + (1 - (v - lo) / (hi - lo)) * (h - 8);
+      g.strokeStyle = css("--line"); g.beginPath(); g.moveTo(0, Y_(0)); g.lineTo(w, Y_(0)); g.stroke();
+      for (const [k, col] of [["shadow", css("--mut")], ["live", css("--accent")]]) {
+        g.beginPath(); H.forEach((x, i) => (i ? g.lineTo(X_(i), Y_(x[k])) : g.moveTo(X_(i), Y_(x[k])))); g.strokeStyle = col; g.lineWidth = 2; g.stroke();
+      }
+    }
+  }
   $("k-ord").textContent = s.stats.orders;
   $("k-ord-s").textContent = `${s.stats.decisions} decisions · ${s.stats.blocked} blocked · ${s.stats.errors} errors`;
 
@@ -223,7 +259,10 @@ function render(s) {
         <div class="row"><span>Position</span><b class="pos"></b></div>
         <div class="row"><span>Unrealized</span><b class="upl"></b></div>
         <div class="row"><span>Jev hit rate</span><b class="acc"></b></div>
-        <div class="plan" hidden><div class="row" style="margin-top:0"><span>Strategist</span><b class="pl"></b></div>
+        <div class="plan tb" hidden><div class="row" style="margin-top:0"><span>Trend models</span><b class="tm"></b></div><div class="dots"></div>
+          <div class="row"><span>Target / current</span><b class="tw"></b></div><div class="wbar"><i class="t"></i><i class="c"></i></div>
+          <div class="row"><span>Stop · vol</span><b class="ts"></b></div><div class="row"><span>AI officer</span><b class="ta"></b></div><div class="why ty"></div></div>
+        <div class="plan sp" hidden><div class="row" style="margin-top:0"><span>Strategist</span><b class="pl"></b></div>
           <div class="row"><span>Stop / target</span><b class="sltp"></b></div><div class="why"></div></div>`;
       host.append(c);
     }
@@ -245,7 +284,26 @@ function render(s) {
     c.querySelector(".pos").textContent = p.qty > 0 ? `${usd(p.usd, 0)} long` : "flat";
     const acc = s.scoreBySymbol?.[p.symbol];
     c.querySelector(".acc").textContent = acc == null ? "scoring…" : (acc * 100).toFixed(1) + "%";
-    const pl = s.strategist?.plans?.[p.symbol], box = c.querySelector(".plan");
+    const tc = s.trend?.coins?.find((x) => x.symbol === p.symbol), tb = c.querySelector(".tb");
+    tb.hidden = !tc;
+    if (tc) {
+      const on = tc.models.filter(Boolean).length;
+      c.querySelector(".tm").textContent = tc.signal == null ? "need 365d history" : `${on}/${tc.models.length} long`;
+      const dots = c.querySelector(".dots");
+      if (dots.children.length !== tc.models.length) { dots.textContent = ""; tc.models.forEach(() => dots.append(el("i"))); }
+      [...dots.children].forEach((d, i) => { d.className = tc.models[i] ? "on" : ""; d.title = `${s.trend.params.lookbacks[i]}-day model: ${tc.models[i] ? "long" : "flat"}`; });
+      c.querySelector(".tw").textContent = `${(tc.target * 100).toFixed(1)}% / ${(tc.current * 100).toFixed(1)}%` + (tc.job ? ` · ${tc.job.side} $${(tc.job.totalUsd - tc.job.remainingUsd).toFixed(0)}/${tc.job.totalUsd.toFixed(0)}` : "");
+      const scale = Math.max(0.4, tc.target, tc.current);
+      c.querySelector(".wbar .t").style.width = (tc.target / scale) * 100 + "%";
+      c.querySelector(".wbar .c").style.width = (tc.current / scale) * 100 + "%";
+      c.querySelector(".ts").textContent = `${tc.nearestStop ? tc.nearestStop.toPrecision(5) : "–"} · ${tc.vol ? (tc.vol * 100).toFixed(0) + "%" : "–"}`;
+      const ta = c.querySelector(".ta"); ta.textContent = "";
+      if (!s.trend.officer) ta.textContent = "off";
+      else if (tc.multiplier < 1) ta.append(el("span", "tag sell", `CUT x${tc.multiplier}`));
+      else ta.append(el("span", "tag flat", "NO CUT"));
+      c.querySelector(".ty").textContent = tc.multiplier < 1 ? tc.reason : "";
+    }
+    const pl = s.strategist?.plans?.[p.symbol], box = c.querySelector(".sp");
     box.hidden = !s.strategist;
     if (s.strategist) {
       const b = c.querySelector(".pl"); b.textContent = "";

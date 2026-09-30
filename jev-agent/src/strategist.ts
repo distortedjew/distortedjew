@@ -1,4 +1,7 @@
 import type { MarketData } from "./market-data.js";
+import { askOpenRouter, extractJson } from "./openrouter.js";
+
+export { extractJson };
 
 /** The strategist's instructions for one symbol. The fast loop may only act inside these. */
 export interface Plan {
@@ -48,13 +51,6 @@ For every symbol return:
 Use the agent's own recent performance: if it is losing on a symbol, lower conviction or go flat.
 Answer with ONLY a JSON object: {"plans":[{"symbol":"BTCUSDT","bias":"flat","conviction":0.2,"size":0,"stopLossPct":1.5,"takeProfitPct":3,"maxHoldMin":120,"reason":"..."}], "marketNote":"one sentence on the overall market"}`;
 
-/** Pulls the first JSON object out of a model reply (tolerates code fences and preamble). */
-export function extractJson(text: string): any {
-  const start = text.indexOf("{"), end = text.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("no JSON object in reply");
-  return JSON.parse(text.slice(start, end + 1));
-}
-
 /** Validates and clamps one plan so a confused model can't produce a dangerous instruction. */
 export function sanitizePlan(raw: any, symbol: string, now: number, validMin: number): Plan {
   const bias = raw?.bias === "long" ? "long" : "flat";
@@ -97,30 +93,6 @@ export class Strategist {
   /** Latest plan even if expired: its stop-loss / take-profit still protect an open position. */
   lastPlan(symbol: string): Plan | undefined { return this.plans.get(symbol); }
 
-  private async ask(messages: { role: string; content: string }[]) {
-    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${this.o.apiKey}`,
-        "content-type": "application/json",
-        "x-title": "jev-agent",
-      },
-      body: JSON.stringify({
-        model: this.o.model,
-        ...(this.o.fallbackModels.length ? { models: [this.o.model, ...this.o.fallbackModels] } : {}),
-        messages,
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-      }),
-      signal: AbortSignal.timeout(this.o.timeoutMs),
-    });
-    const body = await r.json().catch(() => ({}));
-    if (!r.ok || body.error) throw new Error(`openrouter ${r.status}: ${body.error?.message ?? JSON.stringify(body).slice(0, 200)}`);
-    const text = body.choices?.[0]?.message?.content;
-    if (!text) throw new Error("openrouter: empty reply");
-    return { text: String(text), model: String(body.model ?? this.o.model) };
-  }
-
   async run() {
     if (this.running) return;
     this.running = true;
@@ -130,7 +102,7 @@ export class Strategist {
     try {
       const markets = await Promise.all(this.symbols.map((s) => this.data.snapshot(s)));
       const user = JSON.stringify({ now: new Date().toISOString(), agent: this.context(), markets });
-      const { text, model } = await this.ask([
+      const { text, model } = await askOpenRouter(this.o, [
         { role: "system", content: SYSTEM(this.o.feePctPerSide) },
         { role: "user", content: user },
       ]);
