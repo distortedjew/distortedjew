@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { LegalPage } from "@/components/landing/legal-page";
 import { MINIMUM_AGE, APP_NAME } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Terms of Service" };
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Service",
+  description:
+    "The rules for using Wisp: who can join, what isn't allowed, and how accounts are moderated.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

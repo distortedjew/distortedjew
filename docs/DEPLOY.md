@@ -202,6 +202,29 @@ Configure them in `.env`, then run the "update" command above.
 Until email is configured, verification and password-reset links are
 printed in the app logs instead of being sent.
 
+### Ads (Google AdSense)
+
+Ads show on the home page and the games page only, never inside a chat.
+They're off until you set them up:
+
+1. Apply at [adsense.google.com](https://adsense.google.com) with your live
+   domain. Google reviews the site before approving it.
+2. In AdSense, create two **display ad units** (e.g. "Home" and "Games") and
+   note their slot IDs.
+3. In AdSense → **Privacy & messaging**, publish a consent message for
+   Europe/UK. Google requires this before showing ads there.
+4. Set these in `.env` and rebuild (`up -d --build`), since they're built
+   into the page:
+   ```
+   NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-1234567890123456
+   NEXT_PUBLIC_ADSENSE_SLOT_LANDING=1234567890
+   NEXT_PUBLIC_ADSENSE_SLOT_GAMES=0987654321
+   ```
+5. Check `https://your-domain.com/ads.txt` shows your publisher line.
+
+To see where ads will appear before you have an account, set
+`NEXT_PUBLIC_AD_PLACEHOLDERS=true` and rebuild.
+
 ---
 
 ## Troubleshooting

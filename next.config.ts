@@ -2,6 +2,19 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 
+// Google AdSense hosts, allowed only when ads are configured
+// (NEXT_PUBLIC_ADSENSE_CLIENT is read at build time, like the ad code).
+const adsOn = /^ca-pub-\d{10,20}$/.test(process.env.NEXT_PUBLIC_ADSENSE_CLIENT?.trim() ?? "");
+const AD_SCRIPT_HOSTS = adsOn
+  ? " https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://www.googletagservices.com"
+  : "";
+const AD_FRAME_HOSTS = adsOn
+  ? " https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://www.google.com https://*.adtrafficquality.google"
+  : "";
+const AD_CONNECT_HOSTS = adsOn
+  ? " https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://*.google.com https://*.doubleclick.net"
+  : "";
+
 const CSP = [
   "default-src 'self'",
   // Next.js App Router ships small inline <script> tags carrying RSC
@@ -14,15 +27,15 @@ const CSP = [
   // blocks loading any *external* injected script, which is the more
   // common XSS payload shape.
   // challenges.cloudflare.com is the optional Turnstile CAPTCHA widget (unused/harmless if no site key is configured).
-  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
-  "frame-src https://challenges.cloudflare.com",
+  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${AD_SCRIPT_HOSTS}${isDev ? " 'unsafe-eval'" : ""}`,
+  `frame-src https://challenges.cloudflare.com${AD_FRAME_HOSTS}`,
   // Tailwind/Radix set inline styles for positioning/animation; nonce-based
   // style CSP isn't practical with these libraries, so 'unsafe-inline' is
   // the pragmatic tradeoff here (script-src stays strict, which matters more).
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' ws: wss: https://challenges.cloudflare.com",
+  `connect-src 'self' ws: wss: https://challenges.cloudflare.com${AD_CONNECT_HOSTS}`,
   "media-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",

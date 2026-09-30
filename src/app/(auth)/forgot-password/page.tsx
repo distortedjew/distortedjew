@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
           <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
             <MailCheck className="size-6" />
           </span>
-          <CardTitle>Check your email</CardTitle>
+          <CardTitle as="h1">Check your email</CardTitle>
           <CardDescription>
             If an account exists for {email}, we&apos;ve sent a link to reset your password. It expires in 30 minutes.
           </CardDescription>
@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Forgot your password?</CardTitle>
+        <CardTitle as="h1">Forgot your password?</CardTitle>
         <CardDescription>Enter your email and we&apos;ll send you a reset link.</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>

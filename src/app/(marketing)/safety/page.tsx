@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { MINIMUM_AGE, APP_NAME } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Safety" };
+export const metadata: Metadata = pageMetadata({
+  title: "Safety",
+  description:
+    "How Wisp keeps chats with strangers safe: an 18+ age check, one-tap report and block, screened messages and human moderators.",
+  path: "/safety",
+});
 
 const PROTECTIONS = [
   {

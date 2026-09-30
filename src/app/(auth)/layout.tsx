@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { APP_NAME } from "@/lib/constants";
@@ -11,6 +13,8 @@ const FLATTEN_CARD = [
   "[&_[data-slot=card-title]]:font-display [&_[data-slot=card-title]]:text-4xl [&_[data-slot=card-title]]:font-bold [&_[data-slot=card-title]]:tracking-tight",
   "[&_[data-slot=card-description]]:text-base",
 ].join(" ");
+
+export const metadata: Metadata = { robots: NOINDEX };
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { LegalPage } from "@/components/landing/legal-page";
 import { APP_NAME } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy",
+  description:
+    "What Wisp collects, why, how long it's kept, and how to delete your account.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (
@@ -38,6 +44,27 @@ export default function PrivacyPage() {
         moderation process described on our{" "}
         <a href="/safety" className="underline">
           safety page
+        </a>
+        .
+      </p>
+
+      <h2>Advertising</h2>
+      <p>
+        Some public pages, like the home page and the games page, may show ads from Google AdSense.
+        Ads never appear inside a chat. Google and its partners may use cookies to show and measure
+        ads, and in the European Economic Area, the UK and Switzerland you&apos;re asked for consent
+        first. See{" "}
+        <a
+          href="https://policies.google.com/technologies/partner-sites"
+          className="underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          how Google uses information from sites that use its services
+        </a>
+        , and manage ad personalization in your{" "}
+        <a href="https://adssettings.google.com" className="underline" target="_blank" rel="noopener noreferrer">
+          Google ad settings
         </a>
         .
       </p>

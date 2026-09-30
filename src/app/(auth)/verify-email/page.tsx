@@ -22,7 +22,7 @@ function VerifyingCard() {
     <Card>
       <CardHeader className="items-center text-center">
         <Loader2 className="mb-2 size-10 animate-spin text-muted-foreground" />
-        <CardTitle>Verifying your email…</CardTitle>
+        <CardTitle as="h1">Verifying your email…</CardTitle>
       </CardHeader>
     </Card>
   );
@@ -64,7 +64,7 @@ function VerifyEmailForm() {
         {status === "verifying" && (
           <>
             <Loader2 className="mb-2 size-10 animate-spin text-muted-foreground" />
-            <CardTitle>Verifying your email…</CardTitle>
+            <CardTitle as="h1">Verifying your email…</CardTitle>
           </>
         )}
         {status === "success" && (
@@ -72,7 +72,7 @@ function VerifyEmailForm() {
             <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-success/15 text-success-foreground dark:text-success">
               <CheckCircle2 className="size-6" />
             </span>
-            <CardTitle>Email verified</CardTitle>
+            <CardTitle as="h1">Email verified</CardTitle>
             <CardDescription>Thanks for confirming your email address.</CardDescription>
           </>
         )}
@@ -81,7 +81,7 @@ function VerifyEmailForm() {
             <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-destructive/15 text-destructive">
               <XCircle className="size-6" />
             </span>
-            <CardTitle>Couldn&apos;t verify email</CardTitle>
+            <CardTitle as="h1">Couldn&apos;t verify email</CardTitle>
             <CardDescription>{error}</CardDescription>
           </>
         )}

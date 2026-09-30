@@ -118,7 +118,6 @@ body {
 
 .font-display {
   font-family: var(--font-display);
-  font-optical-sizing: auto;
 }
 
 /* Large display type: heavy, slightly condensed, tight. The headline is the design. */

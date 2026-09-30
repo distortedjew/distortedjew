@@ -62,7 +62,7 @@ function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Welcome back</CardTitle>
+        <CardTitle as="h1">Welcome back</CardTitle>
         <CardDescription>Log in to pick up where you left off.</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
