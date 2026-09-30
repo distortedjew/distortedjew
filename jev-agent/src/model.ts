@@ -11,7 +11,7 @@ const QUESTIONS = {
       question: "Will the mid price be higher or lower than now after `horizonSec` seconds?",
       goal: "Short-horizon trading. Each trade pays the spread (`spreadBps`) plus fees, so the expected move must beat that cost. If unsure, the market is a coin flip.",
       inputs:
-        "`trades.cvd` (taker buy volume minus taker sell volume) and `bookImbalance` are the strongest signals. `returnsBps` shows recent momentum. `position` is what we already hold.",
+        "`trades.cvd` (taker buy volume minus taker sell volume) and `bookImbalance` are the strongest short-term signals. `returnsBps` shows recent momentum. `position` is what we already hold. `plan`, when present, is a slower strategist's view of the bigger picture (trend, positioning, news); weigh it as context, but judge the next `horizonSec` seconds on the order flow.",
     },
     criteria: {
       buy: "Mid is more likely to be higher after `horizonSec` seconds, by more than the trading cost.",

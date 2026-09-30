@@ -6,7 +6,9 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "backtest": "tsx src/backtest.ts",
+    "fetch-data": "tsx src/fetch-data.ts"
   },
   "dependencies": {
     "@ai-sdk/typesafe-ai": "^3.0.0",

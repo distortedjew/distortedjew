@@ -15,6 +15,42 @@ export class Telemetry {
   lastDecision = new Map<string, DecisionRec>();
   decisionMix = { buy: 0, sell: 0 };
 
+  /** Scorecard: every Jev call is checked against the real price once its horizon has passed. */
+  private pending: { symbol: string; mid: number; buy: boolean; confident: boolean; due: number }[] = [];
+  score = new Map<string, { n: number; hits: number; confN: number; confHits: number }>();
+  trades = new Map<string, { wins: number; losses: number; realizedUsd: number }>();
+
+  scoreOpen(symbol: string, mid: number, d: Decision, horizonSec: number, minConf: number) {
+    this.pending.push({ symbol, mid, buy: d.probabilities.buy >= 0.5, confident: d.confidence >= minConf, due: Date.now() + horizonSec * 1000 });
+    if (this.pending.length > 20_000) this.pending.shift();
+  }
+  scoreMature(symbol: string, mid: number) {
+    const now = Date.now();
+    this.pending = this.pending.filter((p) => {
+      if (p.symbol !== symbol || p.due > now) return true;
+      if (mid !== p.mid) {
+        const hit = p.buy === mid > p.mid;
+        const s = this.score.get(symbol) ?? { n: 0, hits: 0, confN: 0, confHits: 0 };
+        s.n++; s.hits += +hit;
+        if (p.confident) { s.confN++; s.confHits += +hit; }
+        this.score.set(symbol, s);
+      }
+      return false;
+    });
+  }
+  addTrade(symbol: string, realizedUsd: number) {
+    const t = this.trades.get(symbol) ?? { wins: 0, losses: 0, realizedUsd: 0 };
+    realizedUsd >= 0 ? t.wins++ : t.losses++;
+    t.realizedUsd += realizedUsd;
+    this.trades.set(symbol, t);
+  }
+  scoreTotals() {
+    let n = 0, hits = 0, confN = 0, confHits = 0, wins = 0, losses = 0, realizedUsd = 0;
+    for (const s of this.score.values()) { n += s.n; hits += s.hits; confN += s.confN; confHits += s.confHits; }
+    for (const t of this.trades.values()) { wins += t.wins; losses += t.losses; realizedUsd += t.realizedUsd; }
+    return { n, hitRate: n ? hits / n : null, confN, confHitRate: confN ? confHits / confN : null, wins, losses, realizedUsd };
+  }
+
   addEquity(v: number) { ring(this.equity, [Date.now(), v], 3600); }
   addPrice(symbol: string, mid: number) {
     const a = this.prices.get(symbol) ?? []; this.prices.set(symbol, a);

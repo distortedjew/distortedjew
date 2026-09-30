@@ -13,6 +13,8 @@ export interface MarketState {
   returnsBps: { last5s: number; last15s: number; last60s: number };
   trades: { count: number; buyVol: number; sellVol: number; cvd: number; lastSide: "buy" | "sell" | null };
   position: { side: "long" | "flat"; usd: number; unrealizedBps: number };
+  /** The strategist's current view, when the strategist is on. */
+  plan?: { bias: "long" | "flat" | "none"; conviction?: number; reason?: string };
 }
 
 export interface Decision {
