@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jev Agent</title>
+<style>
+:root{
+  --bg:#0a0d14;--bg2:#0f1420;--card:#131a29;--line:#1f2a40;--text:#e8edf7;--mut:#7f8da8;
+  --up:#2ee6a6;--down:#ff5c7a;--accent:#7c8cff;--warn:#ffb84d;
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]){
+  --bg:#f3f5fa;--bg2:#e9edf6;--card:#fff;--line:#dde3f0;--text:#141a2b;--mut:#67738d;--up:#0a9f6e;--down:#d6304f;--accent:#4b5ae0;--warn:#c77a00}}
+:root[data-theme=light]{--bg:#f3f5fa;--bg2:#e9edf6;--card:#fff;--line:#dde3f0;--text:#141a2b;--mut:#67738d;--up:#0a9f6e;--down:#d6304f;--accent:#4b5ae0;--warn:#c77a00}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font);background:radial-gradient(1200px 600px at 10% -10%,color-mix(in srgb,var(--accent) 14%,transparent),transparent),var(--bg);color:var(--text);min-height:100vh}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--up));display:grid;place-items:center;font-weight:800;color:#0a0d14}
+h1{font-size:18px;margin:0;letter-spacing:.2px}
+.sub{color:var(--mut);font-size:12px}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:12px;color:var(--mut)}
+.pill b{color:var(--text);font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut)}
+.live .dot{background:var(--up);box-shadow:0 0 0 0 var(--up);animation:pulse 1.8s infinite}
+.off .dot{background:var(--down)}
+@keyframes pulse{70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.paper{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
+button.theme{cursor:pointer;background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:6px 10px;font-size:12px}
+.banner{display:none;margin-bottom:14px;padding:12px 16px;border-radius:12px;border:1px solid var(--down);background:color-mix(in srgb,var(--down) 14%,var(--card));color:var(--text);font-weight:600}
+.banner.show{display:block}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.k-l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.k-v{font-size:26px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.k-s{font-size:12px;color:var(--mut);margin-top:4px;font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}
+.main{grid-template-columns:minmax(0,2fr) minmax(0,1fr);margin-bottom:14px}
+@media(max-width:900px){.main{grid-template-columns:1fr}}
+.card h2{font-size:13px;margin:0 0 12px;color:var(--mut);font-weight:600;letter-spacing:.04em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+canvas{width:100%;display:block}
+#eq{height:280px}
+.syms{grid-template-columns:repeat(auto-fill,minmax(290px,1fr));margin-bottom:14px}
+.sym-h{display:flex;justify-content:space-between;align-items:baseline}
+.sym-n{font-weight:700;font-size:16px}
+.sym-p{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:14px}
+.spark{height:54px;margin:10px 0}
+.bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--down) 55%,var(--card));overflow:hidden;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--up);transition:width .4s}
+.bar-l{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:5px;font-variant-numeric:tabular-nums}
+.row{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:8px;font-variant-numeric:tabular-nums}
+.row b{color:var(--text);font-weight:600}
+.tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.06em}
+.tag.buy{background:color-mix(in srgb,var(--up) 20%,transparent);color:var(--up)}
+.tag.sell{background:color-mix(in srgb,var(--down) 20%,transparent);color:var(--down)}
+.feed{max-height:328px;overflow:auto;font-size:12px}
+.ev{display:grid;grid-template-columns:62px 16px 1fr;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);align-items:start}
+.ev:last-child{border:0}
+.ev time{color:var(--mut);font-family:var(--mono);font-size:11px}
+.ev .ic{width:8px;height:8px;border-radius:50%;margin-top:4px;background:var(--mut)}
+.ev.fill .ic{background:var(--up)}.ev.fill.sell .ic{background:var(--down)}
+.ev.blocked .ic,.ev.skip .ic{background:var(--warn)}.ev.error .ic,.ev.kill .ic{background:var(--down)}
+.ev span{overflow-wrap:anywhere}
+.ev em{font-style:normal;color:var(--mut);margin-right:6px}
+.empty{color:var(--mut);font-size:13px;padding:18px 0;text-align:center}
+.foot{color:var(--mut);font-size:11px;margin-top:18px;text-align:center}
+.lim{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:12px;color:var(--mut)}
+.lim b{display:block;color:var(--text);font-size:14px;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">J</div>
+    <div><h1>Jev Agent</h1><div class="sub" id="sub">connecting…</div></div>
+    <div class="spacer"></div>
+    <span class="pill paper"><b>PAPER</b> no real money</span>
+    <span class="pill off" id="conn"><span class="dot"></span><b id="connT">offline</b></span>
+    <button class="theme" id="theme" aria-label="Toggle light or dark theme">Theme</button>
+  </header>
+
+  <div class="banner" id="halt">Kill switch tripped: the daily loss limit was hit. Positions were closed and new buys are halted until 00:00 UTC.</div>
+
+  <section class="grid kpis">
+    <div class="card"><div class="k-l">Equity</div><div class="k-v" id="k-eq">–</div><div class="k-s" id="k-eq-s"></div></div>
+    <div class="card"><div class="k-l">P&amp;L</div><div class="k-v" id="k-pnl">–</div><div class="k-s" id="k-pnl-s"></div></div>
+    <div class="card"><div class="k-l">Exposure</div><div class="k-v" id="k-exp">–</div><div class="k-s" id="k-exp-s"></div></div>
+    <div class="card"><div class="k-l">Decision latency</div><div class="k-v" id="k-lat">–</div><div class="k-s" id="k-lat-s"></div></div>
+    <div class="card"><div class="k-l">Orders</div><div class="k-v" id="k-ord">–</div><div class="k-s" id="k-ord-s"></div></div>
+  </section>
+
+  <section class="grid main">
+    <div class="card"><h2>Equity <span id="eq-range"></span></h2><canvas id="eq" role="img" aria-label="Equity over time"></canvas></div>
+    <div class="grid" style="align-content:start">
+      <div class="card"><h2>Activity</h2><div class="feed" id="feed"><div class="empty">Waiting for the first decision…</div></div></div>
+    </div>
+  </section>
+
+  <section class="grid syms" id="syms"></section>
+
+  <section class="card"><h2>Risk limits (enforced outside the model)</h2><div class="lim" id="lim"></div></section>
+  <div class="foot">Read-only view. The agent decides in milliseconds; this page refreshes every second. Paper results are not a promise of live performance.</div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const q = new URLSearchParams(location.search), token = q.get("token");
+const usd = (n, d = 2) => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+const sign = (n) => (n >= 0 ? "+" : "") + n.toFixed(2);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const dur = (s) => (s < 3600 ? Math.floor(s / 60) + "m " + (s % 60) + "s" : Math.floor(s / 3600) + "h " + Math.floor((s % 3600) / 60) + "m");
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+let last = null;
+
+// Theme toggle; persisted only when storage works.
+try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+$("theme").onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme:light)").matches ? "light" : "dark");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("theme", next); } catch {}
+  if (last) render(last);
+};
+
+function fit(c) {
+  const r = c.getBoundingClientRect(), d = devicePixelRatio || 1;
+  c.width = Math.round(r.width * d); c.height = Math.round(r.height * d);
+  const g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+  return { g, w: r.width, h: r.height };
+}
+
+function line(c, pts, { color, fill, axis }) {
+  const { g, w, h } = fit(c);
+  g.clearRect(0, 0, w, h);
+  if (pts.length < 2) return;
+  const padL = axis ? 58 : 0, padB = axis ? 18 : 0, top = 6;
+  let lo = Math.min(...pts), hi = Math.max(...pts);
+  if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+  const m = (hi - lo) * 0.12; lo -= m; hi += m;
+  const X = (i) => padL + (i / (pts.length - 1)) * (w - padL - 2);
+  const Y = (v) => top + (1 - (v - lo) / (hi - lo)) * (h - top - padB);
+  if (axis) {
+    g.font = "11px ui-monospace,monospace"; g.fillStyle = css("--mut"); g.strokeStyle = css("--line"); g.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const v = lo + ((hi - lo) * i) / 4, y = Y(v);
+      g.beginPath(); g.moveTo(padL, y); g.lineTo(w, y); g.stroke();
+      g.fillText(usd(v, hi - lo < 50 ? 2 : 0), 0, y + 4);
+    }
+  }
+  g.beginPath();
+  pts.forEach((v, i) => (i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))));
+  g.strokeStyle = color; g.lineWidth = 2; g.lineJoin = "round"; g.stroke();
+  if (fill) {
+    g.lineTo(X(pts.length - 1), h - padB); g.lineTo(X(0), h - padB); g.closePath();
+    const gr = g.createLinearGradient(0, 0, 0, h);
+    gr.addColorStop(0, color + "44"); gr.addColorStop(1, color + "00");
+    g.fillStyle = gr; g.fill();
+  }
+  g.beginPath(); g.arc(X(pts.length - 1), Y(pts.at(-1)), 3.5, 0, 7); g.fillStyle = color; g.fill();
+}
+
+function render(s) {
+  last = s;
+  $("sub").textContent = `${s.model} · ${s.feed} feed · ${s.broker} broker · up ${dur(s.uptimeSec)}`;
+  $("halt").classList.toggle("show", s.halted);
+
+  $("k-eq").textContent = usd(s.equity);
+  $("k-eq-s").textContent = `start ${usd(s.startCash, 0)} · cash ${usd(s.cash, 0)}`;
+  const k = $("k-pnl"); k.textContent = (s.pnl >= 0 ? "+" : "") + usd(s.pnl); k.className = "k-v " + (s.pnl >= 0 ? "up" : "down");
+  $("k-pnl-s").textContent = sign((s.pnl / s.startCash) * 100) + "% since start";
+  $("k-exp").textContent = usd(s.exposure, 0);
+  $("k-exp-s").textContent = `of ${usd(s.config.maxTotalExposureUsd, 0)} max`;
+  $("k-lat").textContent = s.latency.p50 ? Math.round(s.latency.p50) + " ms" : "–";
+  $("k-lat-s").textContent = s.latency.p95 ? `p95 ${Math.round(s.latency.p95)} ms · ${s.stats.late} stale` : "no decisions yet";
+  $("k-ord").textContent = s.stats.orders;
+  $("k-ord-s").textContent = `${s.stats.decisions} decisions · ${s.stats.blocked} blocked · ${s.stats.errors} errors`;
+
+  const ser = s.equitySeries.map((p) => p[1]);
+  line($("eq"), ser, { color: s.pnl >= 0 ? css("--up") : css("--down"), fill: true, axis: true });
+  if (s.equitySeries.length > 1) $("eq-range").textContent = dur(Math.round((s.equitySeries.at(-1)[0] - s.equitySeries[0][0]) / 1000)) + " window";
+
+  // Symbol cards: rebuilt only when the symbol set changes, then updated in place so canvases don't flicker.
+  const host = $("syms");
+  if (host.children.length !== s.positions.length) {
+    host.textContent = "";
+    for (const p of s.positions) {
+      const c = el("div", "card"); c.dataset.sym = p.symbol;
+      c.innerHTML = `<div class="sym-h"><span class="sym-n"></span><span class="sym-p"></span></div>
+        <canvas class="spark" role="img"></canvas>
+        <div class="bar"><i></i></div><div class="bar-l"><span class="bl"></span><span class="br"></span></div>
+        <div class="row"><span>Latest call</span><b class="call"></b></div>
+        <div class="row"><span>Position</span><b class="pos"></b></div>
+        <div class="row"><span>Unrealized</span><b class="upl"></b></div>`;
+      host.append(c);
+    }
+  }
+  for (const p of s.positions) {
+    const c = host.querySelector(`[data-sym="${CSS.escape(p.symbol)}"]`); if (!c) continue;
+    const d = s.decisions.find((x) => x.symbol === p.symbol), px = s.prices[p.symbol] || [];
+    c.querySelector(".sym-n").textContent = p.symbol;
+    c.querySelector(".sym-p").textContent = p.mid ? p.mid.toLocaleString(undefined, { maximumFractionDigits: p.mid < 10 ? 4 : 2 }) : "–";
+    const up = px.length > 1 ? px.at(-1) >= px[0] : true;
+    c.querySelector("canvas").setAttribute("aria-label", `${p.symbol} price, last ${px.length} seconds`);
+    line(c.querySelector("canvas"), px, { color: up ? css("--up") : css("--down"), fill: true });
+    const buy = d ? d.buy : 0.5;
+    c.querySelector(".bar i").style.width = buy * 100 + "%";
+    c.querySelector(".bl").textContent = `buy ${(buy * 100).toFixed(0)}%`;
+    c.querySelector(".br").textContent = `sell ${((d ? d.sell : 0.5) * 100).toFixed(0)}%`;
+    const call = c.querySelector(".call"); call.textContent = "";
+    if (d) { call.append(el("span", "tag " + d.action, d.action.toUpperCase()), document.createTextNode(` ${Math.round(d.latencyMs)} ms`)); } else call.textContent = "warming up…";
+    c.querySelector(".pos").textContent = p.qty > 0 ? `${usd(p.usd, 0)} long` : "flat";
+    const u = c.querySelector(".upl"); u.textContent = p.qty > 0 ? sign(p.pnlBps / 100) + "%" : "–"; u.className = "upl " + (p.pnlBps >= 0 ? "up" : "down");
+  }
+
+  const feed = $("feed"); feed.textContent = "";
+  if (!s.events.length) feed.append(el("div", "empty", "No trades yet. The agent only acts above " + (s.config.minConfidence * 100).toFixed(0) + "% confidence."));
+  for (const e of s.events) {
+    const r = el("div", `ev ${e.kind} ${e.side || ""}`);
+    r.append(el("time", "", new Date(e.ts).toLocaleTimeString([], { hour12: false })), el("i", "ic"));
+    const t = el("span"); if (e.symbol) t.append(el("em", "", e.symbol)); t.append(document.createTextNode(e.text));
+    r.append(t); feed.append(r);
+  }
+
+  const L = $("lim"); L.textContent = "";
+  for (const [n, v] of [["Max per symbol", usd(s.config.maxPositionUsd, 0)], ["Max total exposure", usd(s.config.maxTotalExposureUsd, 0)], ["Orders / min", s.config.maxOrdersPerMin], ["Daily loss kill switch", usd(s.config.dailyLossLimitUsd, 0)], ["Min confidence", (s.config.minConfidence * 100).toFixed(0) + "%"], ["Horizon", s.config.horizonSec + " s"]]) {
+    const d = el("div", "", n); d.prepend(el("b", "", String(v))); L.append(d);
+  }
+}
+
+function setConn(ok) { const c = $("conn"); c.className = "pill " + (ok ? "live" : "off"); $("connT").textContent = ok ? "live" : "reconnecting…"; }
+
+function connect() {
+  const es = new EventSource("/api/stream" + (token ? "?token=" + encodeURIComponent(token) : ""));
+  es.onopen = () => setConn(true);
+  es.onmessage = (m) => { setConn(true); render(JSON.parse(m.data)); };
+  es.onerror = () => { setConn(false); es.close(); setTimeout(connect, 2000); };
+}
+connect();
+addEventListener("resize", () => last && render(last));
+</script>
+</body>
+</html>
