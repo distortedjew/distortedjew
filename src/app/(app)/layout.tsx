@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { SocketProvider } from "@/hooks/socket-provider";
 import { Topbar } from "@/components/app-shell/topbar";
 import { MobileTabbar } from "@/components/app-shell/mobile-tabbar";
+
+// Chat, rooms and account pages are for signed-in people and change per
+// user; keep them out of search results (public pages opt back in).
+export const metadata: Metadata = { robots: NOINDEX };
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getCurrentUser();
@@ -10,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session) {
     return (
       <div className="relative flex min-h-screen flex-col">
-        <main className="flex-1">{children}</main>
+        <main id="main" tabIndex={-1} className="outline-none flex-1">{children}</main>
       </div>
     );
   }
@@ -41,7 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             }}
           />
         )}
-        <main className="flex-1 pb-20 md:pb-0">{children}</main>
+        <main id="main" tabIndex={-1} className="outline-none flex-1 pb-20 md:pb-0">{children}</main>
         <MobileTabbar />
       </div>
     </SocketProvider>

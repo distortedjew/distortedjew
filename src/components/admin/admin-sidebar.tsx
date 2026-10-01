@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Flag, Users, Radio, ShieldAlert, BarChart3, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Flag, MessageSquareWarning, Users, Radio, ShieldAlert, BarChart3, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 
 const LINKS = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/reports", label: "Reports", icon: Flag },
+  { href: "/admin/flagged", label: "Flagged messages", icon: MessageSquareWarning },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/sessions", label: "Sessions", icon: Radio },
   { href: "/admin/moderation", label: "Moderation log", icon: ShieldAlert },

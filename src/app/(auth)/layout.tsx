@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { APP_NAME } from "@/lib/constants";
@@ -12,6 +14,8 @@ const FLATTEN_CARD = [
   "[&_[data-slot=card-description]]:text-base",
 ].join(" ");
 
+export const metadata: Metadata = { robots: NOINDEX };
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col px-5 sm:px-8">
@@ -21,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           {APP_NAME}
         </Link>
       </header>
-      <main className={`mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10 ${FLATTEN_CARD}`}>
+      <main id="main" tabIndex={-1} className={`mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10 outline-none ${FLATTEN_CARD}`}>
         {children}
       </main>
     </div>

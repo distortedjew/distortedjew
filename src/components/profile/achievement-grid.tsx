@@ -41,14 +41,23 @@ export function AchievementGrid({ achievements }: { achievements: AchievementVie
                   "flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-colors",
                   unlocked
                     ? "border-primary/30 bg-primary/5"
-                    : "border-border/60 bg-card/40 opacity-50 grayscale",
+                    : "border-border/60 bg-card/40",
                 )}
               >
-                <div className="flex size-10 items-center justify-center rounded-full bg-accent text-primary">
+                {/* Only the badge is dimmed when locked; the text stays readable. */}
+                <div
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-full bg-accent text-primary",
+                    !unlocked && "opacity-50 grayscale",
+                  )}
+                >
                   <Icon className="size-5" />
                 </div>
-                <div className="text-xs font-medium">{a.name}</div>
-                <div className="text-[10px] text-muted-foreground">{a.description}</div>
+                <div className="text-xs font-medium">
+                  {a.name}
+                  {!unlocked && <span className="sr-only"> (locked)</span>}
+                </div>
+                <div className="text-xs text-muted-foreground">{a.description}</div>
               </div>
             );
           })}

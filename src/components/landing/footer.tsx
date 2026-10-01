@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { APP_NAME } from "@/lib/constants";
+import { legalDetails } from "@/lib/legal";
+import { CookieSettingsLink } from "@/components/consent/cookie-settings-link";
 
 const COLUMNS = [
   {
@@ -18,11 +20,13 @@ const COLUMNS = [
       { href: "/safety", label: "Safety" },
       { href: "/terms", label: "Terms of service" },
       { href: "/privacy", label: "Privacy policy" },
+      { href: "/cookies", label: "Cookie policy" },
     ],
   },
 ];
 
 export function Footer() {
+  const legal = legalDetails();
   return (
     <footer className="border-t border-border bg-background px-5 sm:px-8">
       <div className="mx-auto max-w-6xl py-14">
@@ -54,9 +58,22 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-start justify-between gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
-          <span>© {new Date().getFullYear()} {APP_NAME}</span>
-          <span>For adults 18+. Be kind, and report anyone who isn&apos;t.</span>
+        <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
+          <div className="flex flex-col gap-1">
+            <span>
+              © {new Date().getFullYear()} {legal.entityName ?? APP_NAME}
+              {legal.address && <>, {legal.address}</>}
+            </span>
+            {legal.contactEmail && (
+              <a href={`mailto:${legal.contactEmail}`} className="hover:text-foreground">
+                {legal.contactEmail}
+              </a>
+            )}
+          </div>
+          <div className="flex flex-col gap-1 sm:items-end">
+            <CookieSettingsLink className="text-left hover:text-foreground sm:text-right" />
+            <span>For adults 18+. Be kind, and report anyone who isn&apos;t.</span>
+          </div>
         </div>
       </div>
     </footer>

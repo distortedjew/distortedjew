@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { SplitSquareHorizontal, Brain, Puzzle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AdSection } from "@/components/ads/ad-section";
 import { GAME_META } from "@/lib/games/registry";
 import type { GameType } from "@/lib/games/types";
 
-export const metadata: Metadata = { title: "Games" };
+export const metadata: Metadata = pageMetadata({
+  title: "Mini-games",
+  description:
+    "Play Would You Rather, Trivia, Guess the Word and Draw & Guess with the people you meet on Wisp, right inside the chat.",
+  path: "/games",
+});
 
 const ICONS: Record<GameType, typeof SplitSquareHorizontal> = {
   WOULD_YOU_RATHER: SplitSquareHorizontal,
@@ -18,7 +25,8 @@ export default function GamesPage() {
   const games = Object.entries(GAME_META) as [GameType, (typeof GAME_META)[GameType]][];
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
+    <>
+      <div className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
       <h1 className="type-poster text-5xl sm:text-6xl">Mini-games</h1>
       <p className="mt-4 max-w-[46ch] text-lg leading-relaxed text-muted-foreground">
         Games run inside a chat or a group room. During a chat, tap the controller icon at the top
@@ -50,6 +58,8 @@ export default function GamesPage() {
           <Link href="/rooms">Join a group room</Link>
         </Button>
       </div>
-    </div>
+      </div>
+      <AdSection placement="games" width="max-w-3xl" />
+    </>
   );
 }

@@ -1,81 +1,143 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { pageMetadata } from "@/lib/seo";
 import { LegalPage } from "@/components/landing/legal-page";
-import { MINIMUM_AGE, APP_NAME } from "@/lib/constants";
+import { APP_NAME, MINIMUM_AGE } from "@/lib/constants";
+import { legalDetails, operatorName } from "@/lib/legal";
 
-export const metadata: Metadata = { title: "Terms of Service" };
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Service",
+  description:
+    "The rules for using Wisp: who can join, what isn't allowed, how accounts are moderated, and who runs the service.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
+  const legal = legalDetails();
+  const operator = operatorName(legal);
+
   return (
-    <LegalPage title="Terms of Service" updated="September 2026">
-      <p className="text-muted-foreground">
-        These Terms govern your use of {APP_NAME}. By creating an account or
-        using {APP_NAME} as a guest, you agree to them.
+    <LegalPage title="Terms of Service" updated="October 2026">
+      <p>
+        These terms are an agreement between you and {operator}, which runs {APP_NAME}. By
+        creating an account or chatting as a guest, you agree to them and to our{" "}
+        <Link href="/privacy" className="underline">
+          Privacy Policy
+        </Link>
+        .
       </p>
 
-      <h2>1. Eligibility</h2>
+      <h2>1. Who can use {APP_NAME}</h2>
       <p>
-        You must be at least {MINIMUM_AGE} years old to use {APP_NAME}. By
-        using the service you confirm that you meet this requirement. We may
-        request additional verification and suspend accounts we reasonably
-        believe belong to someone under {MINIMUM_AGE}.
+        You must be {MINIMUM_AGE} or older. We ask for your birth year before your first chat and
+        may suspend accounts we reasonably believe belong to someone younger.
       </p>
 
       <h2>2. Your account</h2>
       <p>
-        You may use {APP_NAME} as a registered account or as a temporary
-        guest. You are responsible for the activity that happens under your
-        session, and for keeping your password confidential. Guest sessions
-        are not permanently tied to real-world identity information.
+        You can chat as a guest or create an account. You&apos;re responsible for what happens under
+        your login and for keeping your password private.
       </p>
 
-      <h2>3. Acceptable use</h2>
+      <h2>3. {APP_NAME} is free</h2>
+      <p>
+        {APP_NAME} costs nothing to use. There are no purchases, subscriptions or hidden fees, so
+        there&apos;s nothing to refund. Some public pages may show ads. If we ever offer paid
+        features, we&apos;ll show the price and refund terms before you pay.
+      </p>
+
+      <h2>4. Rules</h2>
       <ul>
-        <li>No harassment, threats, hate speech, or targeted abuse.</li>
-        <li>No sexual content involving minors, ever, under any circumstance.</li>
-        <li>No spam, scams, phishing, or automated/bot traffic.</li>
-        <li>No recording or redistributing another user without their consent.</li>
-        <li>No impersonation of another person, brand, or Wisp staff.</li>
+        <li>No harassment, threats, hate speech or targeted abuse.</li>
+        <li>No sexual content involving minors, ever. We report it to the authorities.</li>
+        <li>No nudity or sexual content with anyone who hasn&apos;t clearly agreed to it.</li>
+        <li>No spam, scams, phishing, or bots and other automated use.</li>
+        <li>No recording, screenshotting or sharing other people without their permission.</li>
+        <li>No pretending to be another person, a brand or {APP_NAME} staff.</li>
+        <li>Nothing illegal where you or the other person live.</li>
       </ul>
       <p>
-        Violations may result in a warning, timeout, suspension, or permanent
-        ban, at our discretion, following the process described on our{" "}
-        <a href="/safety" className="underline">
+        Breaking these rules can lead to a warning, a timeout, a suspension or a permanent ban, as
+        described on our{" "}
+        <Link href="/safety" className="underline">
           safety page
-        </a>
+        </Link>
         .
       </p>
 
-      <h2>4. Content</h2>
+      <h2>5. What you post</h2>
       <p>
-        Messages, matches, and room activity are provided for real-time
-        conversation between users. We do not claim ownership over what you
-        say, but we may retain limited records (see our{" "}
-        <a href="/privacy" className="underline">
-          Privacy Policy
-        </a>
-        ) for safety, moderation, and abuse-prevention purposes.
+        You own what you write and share. You give us permission to store it, show it to the people
+        you&apos;re talking to, and use it for moderation, only for as long as needed to run{" "}
+        {APP_NAME} and as described in the Privacy Policy. Don&apos;t post anything you don&apos;t
+        have the right to share.
       </p>
 
-      <h2>5. Termination</h2>
+      <h2>6. Ending your account</h2>
       <p>
-        You may stop using {APP_NAME} and request account deletion at any
-        time from Settings. We may suspend or terminate access for violations
-        of these Terms or applicable law.
+        You can delete your account at any time from Settings. We may suspend or close accounts that
+        break these terms or the law, or to protect other people.
       </p>
 
-      <h2>6. Disclaimers</h2>
+      <h2>7. No guarantees</h2>
       <p>
-        {APP_NAME} connects you with strangers. We use automated and human
-        moderation to reduce abuse, but we cannot guarantee the behavior of
-        other users. Use good judgment, and report or block anyone who makes
-        you uncomfortable.
+        {APP_NAME} connects you with strangers. We use automated checks and moderators to reduce
+        abuse, but we can&apos;t control what other people say or do, and the service is provided
+        &quot;as is&quot;, without guarantees that it will always be available or error-free. Use
+        good judgment, don&apos;t share personal details, and report or block anyone who makes you
+        uncomfortable.
       </p>
 
-      <h2>7. Changes</h2>
+      <h2>8. Limits on our liability</h2>
       <p>
-        We may update these Terms from time to time. Continued use of{" "}
-        {APP_NAME} after changes take effect constitutes acceptance of the
-        updated Terms.
+        To the extent the law allows, {operator} isn&apos;t liable for indirect or consequential
+        losses, or for what other users do. Nothing in these terms limits liability that can&apos;t
+        be limited by law, or your rights as a consumer.
+      </p>
+
+      <h2>9. Copyright complaints</h2>
+      <p>
+        If you believe something on {APP_NAME} infringes your copyright
+        {legal.contactEmail ? (
+          <>
+            , email{" "}
+            <a href={`mailto:${legal.contactEmail}`} className="underline">
+              {legal.contactEmail}
+            </a>{" "}
+            with the work, where it appears, and your contact details
+          </>
+        ) : (
+          ", contact us with the work, where it appears, and your contact details"
+        )}
+        .
+      </p>
+
+      <h2>10. Governing law</h2>
+      <p>
+        {legal.jurisdiction
+          ? `These terms are governed by the laws of ${legal.jurisdiction}, without taking away any protection the law where you live gives you.`
+          : "These terms are governed by the laws of the place where the operator is established, without taking away any protection the law where you live gives you."}
+      </p>
+
+      <h2>11. Changes</h2>
+      <p>
+        We may update these terms. For significant changes we&apos;ll tell you in the app before
+        they take effect. If you keep using {APP_NAME} after that, the new terms apply.
+      </p>
+
+      <h2>12. Contact</h2>
+      <p>
+        {operator}
+        {legal.address && <>, {legal.address}</>}
+        {legal.contactEmail && (
+          <>
+            .{" "}
+            <a href={`mailto:${legal.contactEmail}`} className="underline">
+              {legal.contactEmail}
+            </a>
+          </>
+        )}
+        .
       </p>
     </LegalPage>
   );

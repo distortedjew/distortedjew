@@ -5,6 +5,7 @@ import { createGateway } from "./ws/gateway";
 import { serveUpload } from "./uploads";
 import { normalizeForwardedHeaders } from "./client-ip";
 import { authSecretProblem } from "@/lib/auth/jwt";
+import { missingLegalDetails } from "@/lib/legal";
 import { warmBlocklistCache } from "@/lib/matchmaking/blocklist";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -18,6 +19,13 @@ async function main() {
   if (secretProblem) {
     console.error(`> ${secretProblem} Generate one with: openssl rand -base64 32, put it in .env, and restart.`);
     process.exit(1);
+  }
+
+  const missingLegal = missingLegalDetails();
+  if (!dev && missingLegal.length > 0) {
+    console.warn(
+      `> Legal details not set: ${missingLegal.join(", ")}. The Terms, Privacy Policy and footer need the operator's name, address and contact email. Add them to .env.`,
+    );
   }
 
   await app.prepare();

@@ -40,7 +40,7 @@ function ResetPasswordForm() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Invalid link</CardTitle>
+          <CardTitle as="h1">Invalid link</CardTitle>
           <CardDescription>
             This password reset link is missing its token. Request a new one below.
           </CardDescription>
@@ -84,7 +84,7 @@ function ResetPasswordForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Choose a new password</CardTitle>
+        <CardTitle as="h1">Choose a new password</CardTitle>
         <CardDescription>Make it at least 8 characters, with a mix of letters and a number.</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>

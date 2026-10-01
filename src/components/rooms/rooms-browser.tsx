@@ -193,7 +193,7 @@ export function RoomsBrowser({ rooms }: { rooms: RoomSummary[] }) {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <Icon className="size-4 text-primary" />
-                      <h3 className="font-display text-base font-semibold">{room.title}</h3>
+                      <h2 className="font-display text-base font-semibold">{room.title}</h2>
                     </div>
                     <Badge variant={full ? "muted" : "success"}>
                       {room.participantCount}/{room.maxParticipants}

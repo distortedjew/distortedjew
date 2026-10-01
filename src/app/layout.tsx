@@ -3,18 +3,19 @@ import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from "next/font/googl
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { ConsentBanner } from "@/components/consent/consent-banner";
 import { APP_NAME } from "@/lib/constants";
 import { TAGLINE, DESCRIPTION } from "@/lib/brand";
 import "./globals.css";
 
-// Display: Bricolage Grotesque, with its width and optical-size axes for
+// Display: Bricolage Grotesque, with its width axis for
 // condensed poster headlines. Body and chat: Atkinson Hyperlegible, built for
 // legibility, which matters when half the conversations are in a second
 // language.
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
   subsets: ["latin"],
-  axes: ["opsz", "wdth"],
+  axes: ["wdth"],
   display: "swap",
 });
 
@@ -35,12 +36,16 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icon.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: `${APP_NAME} — ${TAGLINE}`,
     description: DESCRIPTION,
-    url: APP_URL,
+    url: "/",
     siteName: APP_NAME,
     type: "website",
   },
@@ -69,10 +74,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       data-scroll-behavior="smooth"
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <a
+          href="#main"
+          className="sr-only z-[100] rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+        >
+          Skip to content
+        </a>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           {children}
           <Toaster />
           <ServiceWorkerRegister />
+          <ConsentBanner />
         </ThemeProvider>
       </body>
     </html>
