@@ -5,7 +5,7 @@ import { generateGuestUsername } from "@/lib/auth/guest-name";
 import { guestSchema } from "@/lib/validation/auth";
 import { rateLimit } from "@/lib/redis/rate-limit";
 import { getClientIpHash, getUserAgent } from "@/lib/request";
-import { MINIMUM_AGE } from "@/lib/constants";
+import { UNDERAGE_MESSAGE, blockAgeRetry, isAgeBlocked, isUnderage } from "@/lib/auth/age-gate";
 
 export async function POST(req: NextRequest) {
   const ipHash = await getClientIpHash();
@@ -17,6 +17,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (isAgeBlocked(req)) {
+    return NextResponse.json({ error: UNDERAGE_MESSAGE }, { status: 403 });
+  }
+
   const json = await req.json().catch(() => ({}));
   const parsed = guestSchema.safeParse(json);
   if (!parsed.success) {
@@ -26,12 +30,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const age = new Date().getFullYear() - parsed.data.birthYear;
-  if (age < MINIMUM_AGE) {
-    return NextResponse.json(
-      { error: `You must be at least ${MINIMUM_AGE} years old to join Wisp.` },
-      { status: 403 },
-    );
+  if (isUnderage(parsed.data.birthYear)) {
+    return blockAgeRetry(NextResponse.json({ error: UNDERAGE_MESSAGE }, { status: 403 }));
   }
 
   let username = generateGuestUsername();

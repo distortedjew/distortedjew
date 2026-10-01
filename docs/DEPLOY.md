@@ -90,6 +90,10 @@ Edit `.env` (`nano .env`) and fill in:
 - `PUBLIC_IP`: the IP printed above
 - `ACME_EMAIL`: your email
 - `AUTH_SECRET`, `POSTGRES_PASSWORD`, `TURN_SECRET`: the generated values
+- `LEGAL_ENTITY_NAME`, `LEGAL_ADDRESS`, `LEGAL_CONTACT_EMAIL`,
+  `LEGAL_JURISDICTION`: who runs the site. They're shown in the footer,
+  Terms and Privacy Policy, which privacy law requires. See
+  [COMPLIANCE.md](COMPLIANCE.md).
 
 Everything else can stay as is for now.
 
@@ -224,6 +228,19 @@ They're off until you set them up:
 
 To see where ads will appear before you have an account, set
 `NEXT_PUBLIC_AD_PLACEHOLDERS=true` and rebuild.
+
+### Privacy and data retention
+
+Old data is deleted automatically every 6 hours, matching the periods in the
+Privacy Policy (chat messages after 30 days, inactive guests after 90, and
+so on). Nothing to set up. To pause it, set `DISABLE_RETENTION_JOB=true`
+and restart, but the Privacy Policy will then be untrue.
+
+Moderators should check **Admin → Flagged messages** regularly: the Safety
+page tells users that borderline messages are reviewed by a person.
+
+The full pre-launch checklist (legal details, child-safety reporting,
+lawyer review) is in [COMPLIANCE.md](COMPLIANCE.md).
 
 ---
 

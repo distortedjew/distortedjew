@@ -15,7 +15,7 @@ export default function NotFound() {
           {APP_NAME}
         </Link>
       </header>
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12">
+      <main id="main" tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12">
         <h1 className="type-poster text-5xl sm:text-6xl">This page doesn&apos;t exist</h1>
         <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           The link may be old or mistyped. You can start a chat from the home page.

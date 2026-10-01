@@ -5,7 +5,7 @@ const STEPS = [
   },
   {
     title: "Get matched",
-    body: "Usually within seconds. You see their name, what you have in common, and their country if they share it.",
+    body: "When people are online, usually within seconds. You see their name, what you have in common, and their country if they share it.",
   },
   {
     title: "Talk, play, or move on",

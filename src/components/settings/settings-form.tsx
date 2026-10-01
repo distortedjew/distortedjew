@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Trash2, BadgeCheck, MailWarning } from "lucide-react";
+import { Loader2, Trash2, BadgeCheck, MailWarning, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RETENTION } from "@/lib/retention-policy";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -210,10 +211,28 @@ export function SettingsForm({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle as="h2">Your data</CardTitle>
+          <CardDescription>
+            Download a copy of everything Wisp holds about your account: profile, settings, messages
+            you&apos;ve sent, connections, reports you filed and login history.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline">
+            <a href="/api/account/export" download>
+              <Download className="size-4" />
+              Download my data
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card className="border-destructive/30">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger zone</CardTitle>
-          <CardDescription>Deleting your account removes your profile and personal data.</CardDescription>
+          <CardTitle as="h2" className="text-destructive">Delete account</CardTitle>
+          <CardDescription>Permanently remove your account. You can download your data first.</CardDescription>
         </CardHeader>
         <CardContent>
           <Dialog>
@@ -227,9 +246,10 @@ export function SettingsForm({
               <DialogHeader>
                 <DialogTitle>Delete your account?</DialogTitle>
                 <DialogDescription>
-                  This removes your profile, avatar, and personal details immediately. It
-                  can&apos;t be undone. Some conversation records may be retained in
-                  anonymized form for safety purposes, per our Privacy Policy.
+                  Your username, email, password, profile, avatar, friends and notifications
+                  are deleted now. Messages you sent are deleted within {RETENTION.messagesDays}{" "}
+                  days ({RETENTION.flaggedDays} if they were reported), and are no longer linked
+                  to you in the meantime. This can&apos;t be undone.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>

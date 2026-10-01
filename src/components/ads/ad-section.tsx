@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Script from "next/script";
 import { adSlotId, adsenseClient, showAdPlaceholders, type AdPlacement } from "@/lib/ads";
+import { useAdConsent } from "@/components/consent/consent-banner";
 
 declare global {
   interface Window {
@@ -12,9 +13,9 @@ declare global {
 
 /**
  * A clearly labelled ad between page sections. Renders nothing unless
- * AdSense is configured (or placeholders are switched on to preview where
- * ads will go). Space is reserved up front so the page doesn't jump when
- * the ad loads.
+ * AdSense is configured and the visitor accepted ad cookies (or
+ * placeholders are switched on to preview where ads will go). Space is
+ * reserved up front so the page doesn't jump when the ad loads.
  */
 export function AdSection({
   placement,
@@ -26,8 +27,10 @@ export function AdSection({
 }) {
   const client = adsenseClient();
   const slot = adSlotId(placement);
-  const live = Boolean(client && slot);
-  const placeholder = !live && showAdPlaceholders();
+  const consented = useAdConsent();
+  // No ad code, and no empty box, until the visitor has accepted ad cookies.
+  const live = Boolean(client && slot && consented);
+  const placeholder = !client && showAdPlaceholders();
 
   if (!live && !placeholder) return null;
 

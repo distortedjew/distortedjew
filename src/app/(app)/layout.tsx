@@ -16,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session) {
     return (
       <div className="relative flex min-h-screen flex-col">
-        <main className="flex-1">{children}</main>
+        <main id="main" tabIndex={-1} className="outline-none flex-1">{children}</main>
       </div>
     );
   }
@@ -47,7 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             }}
           />
         )}
-        <main className="flex-1 pb-20 md:pb-0">{children}</main>
+        <main id="main" tabIndex={-1} className="outline-none flex-1 pb-20 md:pb-0">{children}</main>
         <MobileTabbar />
       </div>
     </SocketProvider>

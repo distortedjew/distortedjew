@@ -9,6 +9,7 @@ import { getActiveMatchId, endMatch, leaveQueue } from "@/lib/matchmaking/engine
 import { getRoomIdsForUser, getRoomMemberIds, getRoomParticipantViews, leaveRoom } from "@/lib/rooms/service";
 import { getRandomIcebreaker } from "@/lib/icebreakers";
 import { rateLimit } from "@/lib/redis/rate-limit";
+import { prisma } from "@/lib/db/client";
 import {
   handleQueueJoin,
   handleQueueLeave,
@@ -85,6 +86,8 @@ export function createGateway() {
 
     registerConnection(ws, meta);
     connectionCountByUser.set(meta.userId, (connectionCountByUser.get(meta.userId) ?? 0) + 1);
+    // Keeps active guests from being cleaned up as inactive (see src/lib/retention.ts).
+    prisma.user.update({ where: { id: meta.userId }, data: { lastActiveAt: new Date() } }).catch(() => undefined);
 
     ws.on("message", async (raw) => {
       let msg: ClientMessage;

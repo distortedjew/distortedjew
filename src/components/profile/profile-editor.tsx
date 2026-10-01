@@ -133,6 +133,8 @@ export function ProfileEditor({ user, profile, achievements }: ProfileEditorProp
               <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
             </Avatar>
             <button
+              type="button"
+              aria-label="Change profile photo"
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:brightness-110"
               disabled={uploading}
@@ -166,7 +168,7 @@ export function ProfileEditor({ user, profile, achievements }: ProfileEditorProp
                 <span>Level {user.level}</span>
                 <span>{user.xp} / {user.nextLevelXp} XP</span>
               </div>
-              <Progress value={user.progressToNextLevel} />
+              <Progress value={user.progressToNextLevel} aria-label={`Progress to level ${user.level + 1}`} />
             </div>
           </div>
         </CardContent>

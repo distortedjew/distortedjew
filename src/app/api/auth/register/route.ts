@@ -5,7 +5,7 @@ import { createSessionForUser } from "@/lib/auth/session";
 import { registerSchema } from "@/lib/validation/auth";
 import { rateLimit } from "@/lib/redis/rate-limit";
 import { getClientIpHash, getUserAgent } from "@/lib/request";
-import { MINIMUM_AGE } from "@/lib/constants";
+import { UNDERAGE_MESSAGE, blockAgeRetry, isAgeBlocked, isUnderage } from "@/lib/auth/age-gate";
 import { getCaptchaProvider } from "@/lib/captcha";
 import { sendVerificationEmail } from "@/lib/auth/send-verification-email";
 
@@ -17,6 +17,10 @@ export async function POST(req: NextRequest) {
       { error: "Too many attempts. Try again later." },
       { status: 429 },
     );
+  }
+
+  if (isAgeBlocked(req)) {
+    return NextResponse.json({ error: UNDERAGE_MESSAGE }, { status: 403 });
   }
 
   const json = await req.json().catch(() => null);
@@ -34,12 +38,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Captcha verification failed. Please try again." }, { status: 400 });
   }
 
-  const age = new Date().getFullYear() - birthYear;
-  if (age < MINIMUM_AGE) {
-    return NextResponse.json(
-      { error: `You must be at least ${MINIMUM_AGE} years old to join Wisp.` },
-      { status: 403 },
-    );
+  if (isUnderage(birthYear)) {
+    return blockAgeRetry(NextResponse.json({ error: UNDERAGE_MESSAGE }, { status: 403 }));
   }
 
   const existing = await prisma.user.findFirst({

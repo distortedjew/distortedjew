@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           {APP_NAME}
         </Link>
       </header>
-      <main className={`mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10 ${FLATTEN_CARD}`}>
+      <main id="main" tabIndex={-1} className={`mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10 outline-none ${FLATTEN_CARD}`}>
         {children}
       </main>
     </div>

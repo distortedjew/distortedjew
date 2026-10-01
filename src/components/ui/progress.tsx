@@ -12,6 +12,7 @@ function Progress({
   return (
     <ProgressPrimitive.Root
       className={cn("relative h-2 w-full overflow-hidden rounded-full bg-muted", className)}
+      value={value}
       {...props}
     >
       <ProgressPrimitive.Indicator
