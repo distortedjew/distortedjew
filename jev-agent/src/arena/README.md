@@ -26,9 +26,12 @@ npx tsx src/arena/run.ts --arena crypto --strategy src/arena/strategies/<id>.ts 
 ## Scoring
 **score = min(train Sharpe, validation Sharpe).** A strategy has to work in both periods. Ties go to higher validation CAGR, then smaller max drawdown.
 
-Bars to beat (score):
-- crypto: incumbent-trend **1.22** (train 1.98, val 1.22, val CAGR 15.3%, val DD -8.1%)
-- etf: bench-6040 **0.64** (train 0.64, val 0.82) and incumbent-trend **0.65** (train 0.79, val 0.65)
+Bars to beat (score). See `LEADERBOARD.md` for the full table:
+- crypto champion: `r1-crypto-regime` **1.30** (train 2.12, val 1.30, val CAGR 15.9%, val DD -8.8%)
+- etf champion: `r1-etf-volmanaged` **0.89** (train 0.90, val 0.89, val CAGR 9.0%, val DD -16.1%)
+
+Data notes: `LINK.csv` has no rows before the holdout, so the crypto arena effectively has 5 coins (SOL and AVAX start in 2020).
+You may `import` other strategy files from `src/arena/strategies/` (e.g. to blend them), but you must not modify them. Each import has its own module state.
 
 ## Research discipline (this decides whether your result is real)
 - Start from an economic reason or published evidence, not from curve fitting. Say what it is.
