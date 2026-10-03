@@ -120,3 +120,26 @@ test("executor: a refused slice is retried, not abandoned", async () => {
   assert.equal(got, 200);
   assert.equal(ex.stats.cancelled, 0);
 });
+
+test("no look-ahead: on trendless random prices the strategy earns ~nothing before costs", async () => {
+  const { trendStrategy, metrics } = await import("../src/backtest.js");
+  let seed = 42;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2 ** 31; return seed / 2 ** 31; };
+  const gauss = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+  const sharpes: number[] = [];
+  for (let run = 0; run < 3; run++) {
+    const u: Record<string, Map<string, any>> = {};
+    for (const s of ["A", "B", "C", "D"]) {
+      let p = 100; const m = new Map();
+      for (let i = 0; i < 365 * 10; i++) {
+        const d = new Date(Date.UTC(2010, 0, 1) + i * 864e5).toISOString().slice(0, 10);
+        const o = p; p *= Math.exp(-(0.06 ** 2) / 2 + 0.06 * gauss()); // zero arithmetic drift, no autocorrelation
+        m.set(d, { date: d, open: o, high: Math.max(o, p), low: Math.min(o, p), close: p, volume: 1 });
+      }
+      u[s] = m;
+    }
+    sharpes.push(metrics(trendStrategy(u, "2011-06-01", 0)).sharpe);
+  }
+  const avg = sharpes.reduce((a, b) => a + b, 0) / sharpes.length;
+  assert.ok(Math.abs(avg) < 0.6, `average Sharpe on random data should be ~0, got ${avg.toFixed(2)} (${sharpes.map((x) => x.toFixed(2))})`);
+});

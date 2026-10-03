@@ -7,7 +7,10 @@
  *   npm run backtest -- --fee 0.5       # stress costs (% per side, fee + slippage)
  */
 import { readFileSync, existsSync, writeFileSync } from "node:fs";
-import { DEFAULT_TREND, TrendEngine, needsTrade, targetWeights, type Bar, type TrendParams } from "./strategy/trend.js";
+import { DEFAULT_TREND, TrendEngine, VARIANTS, needsTrade, targetWeights, type Bar, type TrendParams } from "./strategy/trend.js";
+
+/** Bar keys are "YYYY-MM-DD" (daily) or "YYYY-MM-DDTHH:MM" (intraday), always UTC. */
+export const toMs = (d: string) => Date.parse(d.length === 10 ? d + "T00:00:00Z" : d + ":00Z");
 
 export function loadBars(path: string): Bar[] {
   return readFileSync(path, "utf8").trim().split("\n").slice(1).map((l) => {
@@ -97,12 +100,13 @@ export function maCross(u: Universe, start: string, costPct: number) {
   }, (c, t) => (t === 0 ? c > 1e-4 : Math.abs(c - t) > 0.05 * t));
 }
 
-const addDays = (d: string, k: number) => new Date(Date.parse(d) + k * 864e5).toISOString().slice(0, 10);
+const addDays = (d: string, k: number) => new Date(toMs(d) + k * 864e5).toISOString().slice(0, 10);
 
 export function metrics(r: Result) {
   const v = r.equity.map((e) => e.value);
-  const years = (Date.parse(r.equity.at(-1)!.date) - Date.parse(r.equity[0].date)) / (365.25 * 864e5);
+  const years = (toMs(r.equity.at(-1)!.date) - toMs(r.equity[0].date)) / (365.25 * 864e5);
   const rets = v.slice(1).map((x, i) => x / v[i] - 1);
+  const ppy = rets.length / years; // bars per year, so daily and 4h results annualise correctly
   const mean = rets.reduce((a, b) => a + b, 0) / rets.length;
   const sd = Math.sqrt(rets.reduce((a, b) => a + (b - mean) ** 2, 0) / (rets.length - 1));
   const down = Math.sqrt(rets.reduce((a, b) => a + Math.min(0, b) ** 2, 0) / rets.length);
@@ -110,7 +114,7 @@ export function metrics(r: Result) {
   for (const x of v) { peak = Math.max(peak, x); mdd = Math.min(mdd, x / peak - 1); }
   const cagr = (v.at(-1)! / v[0]) ** (1 / years) - 1;
   return {
-    cagr, vol: sd * Math.sqrt(365), sharpe: sd ? (mean / sd) * Math.sqrt(365) : 0, sortino: down ? (mean / down) * Math.sqrt(365) : 0,
+    cagr, vol: sd * Math.sqrt(ppy), sharpe: sd ? (mean / sd) * Math.sqrt(ppy) : 0, sortino: down ? (mean / down) * Math.sqrt(ppy) : 0,
     maxDD: mdd, calmar: mdd ? cagr / -mdd : 0, total: v.at(-1)! / v[0] - 1,
     turnoverPerYear: r.turnover / years, tradesPerYear: r.trades / years,
     avgExposure: r.exposure.reduce((a, b) => a + b, 0) / r.exposure.length,
@@ -138,17 +142,52 @@ export function slice(r: Result, from: string, to = "9999"): Result {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const arg = (k: string, d: string) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
   const symbols = arg("symbols", "BTC,ETH,SOL,DOGE,AVAX,LINK").split(",");
-  const start = arg("start", "2018-01-01"), cost = +arg("fee", "0.30");
-  const u: Universe = {};
-  for (const s of symbols) {
-    const f = `data/${s}.csv`;
-    if (!existsSync(f)) { console.error(`missing ${f}`); continue; }
-    u[s] = new Map(loadBars(f).map((b) => [b.date, b]));
-  }
+  const compare = process.argv.includes("--compare");
+  const start = arg("start", compare ? "2019-01-01" : "2018-01-01"), cost = +arg("fee", "0.30");
+  const load = (suffix: string) => {
+    const u: Universe = {};
+    for (const s of symbols) {
+      const f = `data/${s}${suffix}.csv`;
+      if (!existsSync(f)) { console.error(`missing ${f} (run: npm run fetch-data${suffix ? " -- --interval 4h" : ""})`); continue; }
+      u[s] = new Map(loadBars(f).map((b) => [b.date, b]));
+    }
+    return u;
+  };
+  const u = load("");
   const pct = (x: number) => (x * 100).toFixed(1).padStart(7) + "%";
   const row = (name: string, m: ReturnType<typeof metrics>) =>
     console.log(`${name.padEnd(28)}${pct(m.cagr)}${m.sharpe.toFixed(2).padStart(8)}${m.sortino.toFixed(2).padStart(8)}${pct(m.maxDD)}${m.calmar.toFixed(2).padStart(8)}${pct(m.vol)}${pct(m.avgExposure)}${(m.tradesPerYear ? m.tradesPerYear.toFixed(0) : "-").padStart(8)}`);
   const header = () => console.log(`${"".padEnd(28)}${"CAGR".padStart(8)}${"Sharpe".padStart(8)}${"Sortino".padStart(8)}${"MaxDD".padStart(8)}${"Calmar".padStart(8)}${"Vol".padStart(8)}${"AvgExp".padStart(8)}${"Trd/yr".padStart(8)}`);
+
+  if (compare) {
+    // Daily vs 4-hour variants, same coins, same period, same costs.
+    const u4 = load("-4h");
+    if (!Object.keys(u4).length) process.exit(1);
+    const tv = +arg("vol", "0.25"), mw = +arg("maxweight", "0.35");
+    const run = (name: string, c: number, t = tv, w = mw) => {
+      const v = VARIANTS[name];
+      return trendStrategy(v.interval === "4h" ? u4 : u, start, c, { ...v.params, targetVol: t, maxWeight: w }, name);
+    };
+    const res = [run("1d", cost), run("4h-fast", cost), run("4h-same", cost), buyHold(u, start, cost, ["BTC"], "Buy & hold BTC")];
+    console.log(`\nDaily vs 4-hour, ${start} .. ${res[0].equity.at(-1)!.date}, ${Object.keys(u4).join(" ")}, cost ${cost}% per side, TARGET_VOL ${tv}, MAX_WEIGHT ${mw}\n`);
+    header(); for (const r of res) row(r.name, metrics(r));
+    for (const [from, to, label] of [["2019-01-01", "2021-12-31", "2019-2021"], ["2022-01-01", "9999", "2022-now"], [addDays(res[0].equity.at(-1)!.date, -365), "9999", "last 12 months"]]) {
+      console.log(`\n${label}`); header();
+      for (const r of res) row(r.name, metrics(slice(r, from, to)));
+    }
+    console.log("\nCost sensitivity (the 4h variants trade more, so fees matter more)"); header();
+    for (const c of [0.15, 0.5]) for (const n of ["1d", "4h-fast", "4h-same"]) row(`${n} @ ${c}%`, metrics(run(n, c)));
+    console.log("\nHigher risk setting: TARGET_VOL 0.5, MAX_WEIGHT 0.5"); header();
+    for (const n of ["1d", "4h-fast", "4h-same"]) row(`${n} vol 0.5`, metrics(run(n, cost, 0.5, 0.5)));
+    const ms = res.slice(0, 3).map((r) => ({ n: r.name, m: metrics(r) }));
+    const best = ms.reduce((a, b) => (b.m.sharpe > a.m.sharpe ? b : a));
+    const d = ms[0].m;
+    console.log(`\nVERDICT: highest Sharpe = ${best.n} (${best.m.sharpe.toFixed(2)} vs 1d ${d.sharpe.toFixed(2)}).`);
+    console.log(best.n === "1d" || best.m.sharpe < d.sharpe + 0.1
+      ? "Keep TREND_VARIANT=1d: the 4h variants do not clearly beat it after costs."
+      : `Consider TREND_VARIANT=${best.n}: it beats 1d by >0.1 Sharpe after costs. Check it also holds at 0.5% cost above before switching.`);
+    process.exit(0);
+  }
 
   const results = [
     trendStrategy(u, start, cost),

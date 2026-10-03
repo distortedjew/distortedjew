@@ -15,7 +15,10 @@ A small always-on decision agent for stocks and crypto, built on **Jev** (TypeSa
 ```bash
 npm run fetch-data   # download daily history (Binance) into data/
 npm run backtest     # rerun the evidence on your own data
+npm run fetch-data -- --interval 4h && npm run backtest -- --compare   # daily vs 4-hour variants, with a verdict
 ```
+
+Risk dial: `TARGET_VOL` / `MAX_WEIGHT` (0.25/0.35 by default; 0.5/0.5 backtested at ~45%/yr with a -30% worst drop). Candle size: `TREND_VARIANT=1d|4h-fast|4h-same`.
 
 The earlier intraday mode (Jev every 0.5 s plus an LLM plan) is `STRATEGY=scalp`. It's experimental, because fees make short-horizon trading very hard (see STRATEGY.md). With `FEED=alpaca` for stocks, the bot runs Jev alone.
 

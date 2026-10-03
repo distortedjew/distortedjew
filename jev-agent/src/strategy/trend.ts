@@ -19,7 +19,8 @@ export interface TrendParams {
   targetVol: number;        // annualised volatility target for the whole portfolio when every model is long (0.25 = 25%)
   maxWeight: number;        // cap per coin as a fraction of equity
   maxGross: number;         // cap on total exposure (1 = no leverage)
-  minHistory: number;       // days of data a coin needs before it can trade
+  minHistory: number;       // bars of data a coin needs before it can trade
+  barsPerYear: number;      // for annualising volatility (365 daily bars, 2190 four-hour bars)
 }
 
 export const DEFAULT_TREND: TrendParams = {
@@ -29,7 +30,22 @@ export const DEFAULT_TREND: TrendParams = {
   maxWeight: 0.35,
   maxGross: 1,
   minHistory: 365,
+  barsPerYear: 365,
 };
+
+/**
+ * Strategy variants by candle size. Lookbacks are in bars.
+ *  1d       the published design: trends of 5-360 days, decided once a day.
+ *  4h-fast  same bar counts on 4h candles: trends of ~1-60 days, reacts ~6x faster, trades more.
+ *  4h-same  the 1d horizons (5-360 days) measured in 4h bars: same trends, checked every 4 hours.
+ */
+export type Interval = "1d" | "4h";
+export const VARIANTS: Record<string, { interval: Interval; params: TrendParams }> = {
+  "1d": { interval: "1d", params: DEFAULT_TREND },
+  "4h-fast": { interval: "4h", params: { ...DEFAULT_TREND, volWindow: 360, minHistory: 400, barsPerYear: 2190 } },
+  "4h-same": { interval: "4h", params: { ...DEFAULT_TREND, lookbacks: DEFAULT_TREND.lookbacks.map((n) => n * 6), volWindow: 360, minHistory: 2200, barsPerYear: 2190 } },
+};
+export const INTERVAL_MS: Record<Interval, number> = { "1d": 86_400_000, "4h": 14_400_000 };
 
 export interface CoinSignal {
   signal: number;           // 0..1: fraction of the ensemble models that are long
@@ -80,7 +96,7 @@ export class TrendEngine {
     const cs = this.closes, rets: number[] = [];
     for (let t = Math.max(1, cs.length - this.p.volWindow); t < cs.length; t++) rets.push(Math.log(cs[t] / cs[t - 1]));
     const mean = rets.reduce((s, x) => s + x, 0) / rets.length;
-    const vol = Math.sqrt(rets.reduce((s, x) => s + (x - mean) ** 2, 0) / Math.max(1, rets.length - 1)) * Math.sqrt(365);
+    const vol = Math.sqrt(rets.reduce((s, x) => s + (x - mean) ** 2, 0) / Math.max(1, rets.length - 1)) * Math.sqrt(this.p.barsPerYear);
     return {
       signal: this.long.filter(Boolean).length / this.long.length,
       models: [...this.long],
@@ -121,7 +137,7 @@ export function targetWeights(signals: Record<string, CoinSignal | null>, p: Tre
   for (let i = 0; i < R.length; i++) for (let j = 0; j < R.length; j++) {
     let c = 0;
     for (let t = 0; t < n; t++) c += (R[i][t] - mu[i]) * (R[j][t] - mu[j]);
-    varP += base[i] * base[j] * (c / (n - 1)) * 365;
+    varP += base[i] * base[j] * (c / (n - 1)) * p.barsPerYear;
   }
   const k = varP > 0 ? p.targetVol / Math.sqrt(varP) : 0;
   live.forEach(([s, sig], i) => { w[s] = Math.min(p.maxWeight, sig.signal * base[i] * k); });

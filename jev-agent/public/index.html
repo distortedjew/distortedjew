@@ -218,7 +218,7 @@ function render(s) {
     const X = T.execution, O = T.officer, P = T.performance;
     const D = $("tr"); D.textContent = "";
     const rows = [
-      ["Capital", usd(T.capital, 0) + ` · vol target ${(T.params.targetVol * 100).toFixed(0)}%`],
+      ["Capital", usd(T.capital, 0) + ` · vol target ${(T.params.targetVol * 100).toFixed(0)}% · ${T.variant ?? "1d"}`],
       ["Last rebalance", ago(T.lastRun)],
       ["Execution", X.completed ? `${X.avgShortfallBps >= 0 ? "+" : ""}${X.avgShortfallBps.toFixed(1)} bps vs arrival · ${X.timedSlices} Jev-timed / ${X.forcedSlices} deadline · ${X.waits} waits` : `orders worked over ${X.windowMin} min, Jev-timed`],
       ["Strategy return", `${P.livePct >= 0 ? "+" : ""}${P.livePct.toFixed(2)}% live · ${P.shadowPct >= 0 ? "+" : ""}${P.shadowPct.toFixed(2)}% rules-only`],
