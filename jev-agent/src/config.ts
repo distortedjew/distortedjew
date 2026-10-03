@@ -29,6 +29,7 @@ export const config = {
   alphaVantageKey: env("ALPHAVANTAGE_API_KEY", ""),
   newsEveryMin: num("NEWS_EVERY_MIN", 60),
   trend: {
+    variant: env("TREND_VARIANT", "1d"), // 1d | 4h-fast | 4h-same (see STRATEGY.md; switch only after npm run backtest -- --compare)
     targetVol: num("TARGET_VOL", 0.25),
     maxWeight: num("MAX_WEIGHT", 0.35),
     rebalanceUtcHour: num("REBALANCE_UTC_HOUR", 0), // daily bars close at 00:00 UTC; rebalance shortly after

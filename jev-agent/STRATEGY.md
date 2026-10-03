@@ -49,6 +49,23 @@ The test runs on daily data from 2018-01-01 to 2026-09-30 for BTC, ETH, SOL, DOG
 
 **What the backtest cannot show:** the AI officer and Jev's execution timing. There is no historical record of the LLM's calls, and no free intraday history. Both are measured live instead, through the shadow portfolio and cost against arrival. It also can't show intraday gaps below a stop, which it only sees at the daily close.
 
+## The risk dial and faster variants
+
+**Risk dial (`TARGET_VOL`, `MAX_WEIGHT`).** Same signals, more money at work. Sharpe stays about 1.5 at every setting. What changes is the size of gains and drawdowns. Backtest 2018-2026, 0.30% costs:
+
+| Setting | CAGR | Max DD | Avg exposure | Trades/month |
+|---|---|---|---|---|
+| 0.25 / 0.35 (default) | 21.7% | -16.0% | 13% | 12 |
+| 0.35 / 0.35 | 31.1% | -21.1% | 19% | 16 |
+| 0.5 / 0.5 | 44.7% | -29.7% | 26% | 20 |
+| 0.7 / 0.6 | 61.7% | -39.1% | 36% | 24 |
+
+Even the winning strategy lost money in 56% of all 30-day windows and 45% of 90-day windows. Days or weeks of losses say nothing about whether it works.
+
+**Faster variants (`TREND_VARIANT`).** `4h-fast` runs the same nine bar counts on 4-hour candles, so trends of about 1-60 days, with roughly 8x more trades. `4h-same` keeps the daily 5-360 day horizons but rechecks every 4 hours. Neither has published evidence. Test them on your own data with `npm run fetch-data -- --interval 4h && npm run backtest -- --compare`. The command prints a verdict, and you should switch only if a variant beats `1d` after costs, including at 0.5%.
+
+**Backtest integrity check.** On trendless random-walk prices (zero drift), all three variants score Sharpe ≈ 0 before costs and lose after them, and the fastest loses most: -8%/yr at 0.30% cost from about 1,200 trades a year. So the backtest has no look-ahead, and the daily strategy's real-data Sharpe of 1.49 comes from real trends. This check runs as an automated test.
+
 ## What "good" looks like live
 
 - The strategy is **flat or small most of the time**. Average exposure is 13% of capital. It makes its money in a few strong trends and loses little in crashes.

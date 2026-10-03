@@ -1,11 +1,11 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { Agent } from "./agent.js";
 import type { Config } from "./config.js";
-import { dailyBars, type DailyBarsOpts } from "./daily-bars.js";
+import { candles, type DailyBarsOpts } from "./daily-bars.js";
 import type { Executor } from "./executor.js";
 import type { Notifier } from "./notify.js";
 import type { RiskOfficer } from "./overlay.js";
-import { DEFAULT_TREND, coinSignal, needsTrade, targetWeights, type CoinSignal, type TrendParams } from "./strategy/trend.js";
+import { INTERVAL_MS, VARIANTS, coinSignal, needsTrade, targetWeights, type CoinSignal, type Interval, type TrendParams } from "./strategy/trend.js";
 
 interface ShadowState { cash: number; units: Record<string, number> }
 interface Persisted {
@@ -24,6 +24,8 @@ const SHADOW_COST = 0.003; // fee + slippage per side, as in the backtest
  */
 export class TrendTrader {
   params: TrendParams;
+  interval: Interval;
+  variant: string;
   signals: Record<string, CoinSignal | null> = {};
   raw: Record<string, number> = {};
   final: Record<string, number> = {};
@@ -36,7 +38,11 @@ export class TrendTrader {
     private cfg: Config, private agent: Agent, private exec: Executor, private bars: DailyBarsOpts,
     private officer: RiskOfficer | undefined, private notify: Notifier, private statePath = "logs/trend-state.json",
   ) {
-    this.params = { ...DEFAULT_TREND, targetVol: cfg.trend.targetVol, maxWeight: cfg.trend.maxWeight };
+    const v = VARIANTS[cfg.trend.variant];
+    if (!v) throw new Error(`TREND_VARIANT must be one of ${Object.keys(VARIANTS).join(", ")}`);
+    this.variant = cfg.trend.variant;
+    this.interval = v.interval;
+    this.params = { ...v.params, targetVol: cfg.trend.targetVol, maxWeight: cfg.trend.maxWeight };
     if (existsSync(statePath)) {
       try { this.st = JSON.parse(readFileSync(statePath, "utf8")); } catch { this.st = {}; }
     }
@@ -59,7 +65,12 @@ export class TrendTrader {
     try {
       const syms = this.cfg.symbols;
       const loaded = await Promise.all(syms.map(async (s) => {
-        try { const r = await dailyBars(s, this.bars); this.sources[s] = `${r.source} (${r.bars.length}d to ${r.bars.at(-1)?.date})`; return [s, r.bars] as const; }
+        try {
+          const need = Math.max(this.params.minHistory, ...this.params.lookbacks, this.params.volWindow) + 50;
+          const r = await candles(s, this.bars, this.interval, need);
+          this.sources[s] = `${r.source} (${r.bars.length} ${this.interval} candles to ${r.bars.at(-1)?.date})`;
+          return [s, r.bars] as const;
+        }
         catch (e) { this.sources[s] = (e as Error).message; return [s, null] as const; }
       }));
       const failed = loaded.filter(([, b]) => !b).map(([s]) => s);
@@ -111,7 +122,7 @@ export class TrendTrader {
   /** What the risk officer sees about the strategy. */
   private view() {
     return {
-      description: "Donchian breakout ensemble (9 lookbacks 5-360d), trailing mid-channel stops, portfolio vol target " + this.params.targetVol,
+      description: `Donchian breakout ensemble (variant ${this.variant}: lookbacks ${this.params.lookbacks.join("/")} ${this.interval} candles), trailing mid-channel stops, portfolio vol target ${this.params.targetVol}`,
       coins: Object.fromEntries(this.cfg.symbols.map((s) => {
         const g = this.signals[s];
         return [s, g ? { modelsLong: g.models.filter(Boolean).length + "/" + g.models.length, annualVol: +g.vol.toFixed(2), targetWeight: +(this.raw[s] ?? 0).toFixed(3), currentWeight: +(this.agent.positionUsd(s) / this.capital()).toFixed(3) } : "not enough history"];
@@ -143,11 +154,20 @@ export class TrendTrader {
     return { live, shadow };
   }
 
+  /** Next run: 5 minutes after the next candle close (daily: at REBALANCE_UTC_HOUR; 4h: 00/04/08/12/16/20 UTC). */
   private scheduleNext() {
-    const n = new Date(); n.setUTCHours(this.cfg.trend.rebalanceUtcHour, 5, 0, 0);
-    if (n.getTime() <= Date.now()) n.setUTCDate(n.getUTCDate() + 1);
-    this.nextRun = n.getTime();
-    setTimeout(() => { void this.run("daily").then(() => this.scheduleNext()); }, this.nextRun - Date.now()).unref();
+    let next: number;
+    if (this.interval === "1d") {
+      const n = new Date(); n.setUTCHours(this.cfg.trend.rebalanceUtcHour, 5, 0, 0);
+      if (n.getTime() <= Date.now()) n.setUTCDate(n.getUTCDate() + 1);
+      next = n.getTime();
+    } else {
+      const ms = INTERVAL_MS[this.interval];
+      next = Math.floor(Date.now() / ms) * ms + ms + 5 * 60_000;
+      if (next - ms > Date.now()) next -= ms; // still inside the 5-minute grace of the current close
+    }
+    this.nextRun = next;
+    setTimeout(() => { void this.run(this.interval === "1d" ? "daily" : this.interval).then(() => this.scheduleNext()); }, this.nextRun - Date.now()).unref();
   }
 
   async start() {
@@ -164,7 +184,7 @@ export class TrendTrader {
     const perf = this.updateShadow(false);
     return {
       trend: {
-        params: this.params, capital: this.capital(), lastRun: this.lastRun, nextRun: this.nextRun, lastError: this.lastError, sources: this.sources,
+        params: this.params, variant: this.variant, interval: this.interval, capital: this.capital(), lastRun: this.lastRun, nextRun: this.nextRun, lastError: this.lastError, sources: this.sources,
         coins: this.cfg.symbols.map((s) => {
           const g = this.signals[s], stops = g?.stops.filter((x): x is number => x != null) ?? [];
           return {
