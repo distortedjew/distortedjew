@@ -4,6 +4,7 @@ import type { Config } from "./config.js";
 import { candles, type DailyBarsOpts } from "./daily-bars.js";
 import type { Executor } from "./executor.js";
 import type { Notifier } from "./notify.js";
+import type { NewsReflex } from "./news-reflex.js";
 import type { RiskOfficer } from "./overlay.js";
 import { INTERVAL_MS, VARIANTS, coinSignal, needsTrade, targetWeights, type CoinSignal, type Interval, type TrendParams } from "./strategy/trend.js";
 
@@ -33,6 +34,8 @@ export class TrendTrader {
   lastRun = 0; nextRun = 0; lastReviewAt = 0; lastError = ""; sources: Record<string, string> = {};
   private st: Persisted = {};
   private running = false;
+  private rerun?: string;
+  reflex?: NewsReflex;
 
   constructor(
     private cfg: Config, private agent: Agent, private exec: Executor, private bars: DailyBarsOpts,
@@ -59,7 +62,8 @@ export class TrendTrader {
   capital() { return Math.min(this.cfg.capitalUsd, this.agent.equityNow()); }
 
   async run(reason: string) {
-    if (this.running) return;
+    // A news cut must not be lost because a scheduled run is in progress: queue it.
+    if (this.running) { if (reason === "news") this.rerun = reason; return; }
     this.running = true;
     this.lastRun = Date.now();
     try {
@@ -89,7 +93,8 @@ export class TrendTrader {
           if (cuts.length) void this.notify.send(`AI risk officer cut: ${cuts.join(" | ")}`);
         }
       }
-      for (const s of syms) this.multipliers[s] = this.officer ? this.officer.multiplier(s, hrs * 2) : 1;
+      const base = (s: string) => s.replace(/(USDT|USDC|USD)$/, "");
+      for (const s of syms) this.multipliers[s] = (this.officer ? this.officer.multiplier(s, hrs * 2) : 1) * (this.reflex ? this.reflex.multiplier(base(s)) : 1);
       this.final = Object.fromEntries(syms.map((s) => [s, (this.raw[s] ?? 0) * this.multipliers[s]]));
 
       const cap = this.capital(), orders: string[] = [];
@@ -101,7 +106,9 @@ export class TrendTrader {
       for (const { s, cur, tgt, side } of plan) {
         if (!needsTrade(cur, tgt)) { this.exec.cancel(s); continue; }
         if (side === "buy" && this.agent.risk.halted) continue;
-        this.exec.submit(s, side, Math.abs(tgt - cur) * cap, reason, tgt === 0);
+        // News: only act on the cuts (sells), immediately; buys wait for the next scheduled run.
+        if (reason === "news" && side === "buy") continue;
+        this.exec.submit(s, side, Math.abs(tgt - cur) * cap, reason, tgt === 0, reason === "news");
         orders.push(`${side} ${s} ${(cur * 100).toFixed(1)}%→${(tgt * 100).toFixed(1)}%`);
       }
       this.updateShadow(true);
@@ -116,6 +123,7 @@ export class TrendTrader {
       void this.notify.send(`Rebalance failed: ${this.lastError}`);
     } finally {
       this.running = false;
+      if (this.rerun) { const r = this.rerun; this.rerun = undefined; void this.run(r); }
     }
   }
 
@@ -190,7 +198,9 @@ export class TrendTrader {
           return {
             symbol: s, models: g?.models ?? [], signal: g?.signal ?? null, vol: g?.vol ?? null,
             nearestStop: stops.length ? Math.max(...stops) : null,
-            raw: this.raw[s] ?? 0, multiplier: this.multipliers[s] ?? 1, reason: this.officer?.last?.cuts[s]?.reason ?? "",
+            raw: this.raw[s] ?? 0, multiplier: this.multipliers[s] ?? 1,
+            reason: [this.officer?.last?.cuts[s]?.multiplier !== undefined && this.officer.last.cuts[s].multiplier < 1 ? `AI: ${this.officer.last.cuts[s].reason}` : "",
+              this.reflex && this.reflex.multiplier(s.replace(/(USDT|USDC|USD)$/, "")) < 1 ? `News: ${this.reflex.activeCuts().filter((c) => c.coin === "market" || c.coin === s.replace(/(USDT|USDC|USD)$/, "")).map((c) => c.title).join(" | ")}` : ""].filter(Boolean).join(" · "),
             target: this.final[s] ?? 0, current: this.agent.positionUsd(s) / Math.max(1, this.capital()),
             job: (() => { const j = this.exec.jobs.get(s); return j ? { side: j.side, totalUsd: j.totalUsd, remainingUsd: j.remainingUsd, waits: j.waits } : null; })(),
           };

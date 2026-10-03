@@ -10,6 +10,8 @@ A small always-on decision agent for stocks and crypto, built on **Jev** (TypeSa
 | AI risk officer | LLM via OpenRouter (default `stealth/space-bunny-alpha`); may only **cut** a coin (x0..1) for a concrete risk | every `AI_REVIEW_EVERY_HOURS` (6) |
 | Jev executor | works each order over `EXEC_WINDOW_MIN` in slices, waiting while Jev expects a better price; the deadline always completes it | during rebalances |
 | Risk layer | exposure caps, order rate, daily-loss kill switch, $10 minimum, no shorting | every order |
+| News reflex | Jev classifies every new crypto headline (~0.3 s). On a severe threat (hack, insolvency, delisting, withdrawal halt, enforcement) it cuts that coin, or all coins for a market-wide event, immediately, for 12 h | every 60 s |
+| Jev scorecard | Jev predicts every coin's next `HORIZON_SEC` without trading; the dashboard grades hit rate, luck (z-score) and moves vs trading cost | every 15 s per coin |
 | Shadow portfolio | the same strategy without AI cuts, to measure whether the AI helps | continuously |
 
 ```bash

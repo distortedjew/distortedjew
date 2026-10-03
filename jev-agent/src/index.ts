@@ -11,6 +11,8 @@ import { Executor } from "./executor.js";
 import { Notifier } from "./notify.js";
 import { RiskOfficer } from "./overlay.js";
 import { TrendTrader } from "./trend-trader.js";
+import { JevNewsClassifier, KeywordClassifier, NewsReflex } from "./news-reflex.js";
+import { Scorecard } from "./scorecard.js";
 import type { Broker, Feed } from "./types.js";
 
 const die = (m: string) => { console.error(m); process.exit(1); };
@@ -66,7 +68,30 @@ if (config.strategy === "trend") {
     binanceRestUrl: config.binanceRestUrl, alpacaKeyId: config.alpaca.keyId, alpacaSecret: config.alpaca.secret,
     toAlpaca: (s) => binanceToAlpaca(s),
   }, officer, notify);
-  agent.extraSnapshot = () => trend!.snapshot();
+  // News reflex: Jev classifies every new headline; a severe threat cuts that coin (or all) at once.
+  const coins = config.symbols.map((s) => s.replace(/(USDT|USDC|USD)$/, ""));
+  const reflex = config.news.enabled ? new NewsReflex(config.news, coins,
+    config.model === "jev" ? new JevNewsClassifier(config.jevModelId) : new KeywordClassifier(),
+    (hit, why) => {
+      agent.event("kill", hit.join(","), `news reflex: cutting ${hit.join(", ")} — ${why}`);
+      void notify.send(`NEWS REFLEX cut ${hit.join(", ")} to x${config.news.cutTo} for ${config.news.cutHours}h: ${why}`);
+      void trend!.run("news");
+    }) : undefined;
+  trend.reflex = reflex;
+  // Scorecard: Jev predicts every coin on a cadence without trading; graded after HORIZON_SEC.
+  const scorecard = config.scorecard.enabled ? new Scorecard({
+    model, symbols: config.symbols,
+    state: (s) => agent.marketState(s),
+    record: (s, mid, d) => { agent.stats.decisions++; agent.tel.addDecision(s, d); agent.tel.scoreOpen(s, mid, d, config.horizonSec, config.minConfidence); },
+    onError: (m) => agent.event("error", "scorecard", m),
+  }, config.scorecard.everySec) : undefined;
+  reflex?.start();
+  scorecard?.start();
+  agent.extraSnapshot = () => ({
+    ...trend!.snapshot(),
+    news: reflex ? { classifier: config.model === "jev" ? config.jevModelId : "keywords", stats: reflex.stats, cuts: reflex.activeCuts(), recent: reflex.recent.slice(0, 12), feeds: config.news.feeds.length } : null,
+    scorecard: scorecard ? { calls: scorecard.calls, errors: scorecard.errors, lastError: scorecard.lastError, everySec: config.scorecard.everySec, horizonSec: config.horizonSec, roundTripBps: 2 * config.feeBps } : null,
+  });
   let wasHalted = false;
   setInterval(() => {
     if (agent.risk.halted && !wasHalted) void notify.send("KILL SWITCH: daily loss limit hit, positions flattened, buys halted until 00:00 UTC");
