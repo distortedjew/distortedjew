@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="ORCHARD, a pink fruit-shaped robot with a leaf sprout">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3a6c3"/><stop offset="1" stop-color="#9c2d57"/></linearGradient>
+    <radialGradient id="fruit" cx="0.35" cy="0.3" r="0.9"><stop offset="0" stop-color="#ffe9f1"/><stop offset="1" stop-color="#f08fb3"/></radialGradient>
+  </defs>
+  <rect width="160" height="160" rx="36" fill="url(#bg)"/>
+  <path d="M80 50 C60 36 26 44 28 86 C30 122 56 140 80 132 C104 140 130 122 132 86 C134 44 100 36 80 50 Z" fill="url(#fruit)"/>
+  <path d="M80 50 Q78 34 86 22" stroke="#6b3a1f" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M86 30 C96 14 120 16 124 22 C116 34 98 38 86 30 Z" fill="#2e9e4f"/>
+  <path d="M90 29 Q106 24 118 23" stroke="#1d6b34" stroke-width="2" fill="none"/>
+  <circle cx="62" cy="86" r="9" fill="#5a1530"/><circle cx="98" cy="86" r="9" fill="#5a1530"/>
+  <circle cx="65" cy="83" r="3" fill="#fff"/><circle cx="101" cy="83" r="3" fill="#fff"/>
+  <ellipse cx="50" cy="104" rx="8" ry="5" fill="#e34f86" opacity=".5"/><ellipse cx="110" cy="104" rx="8" ry="5" fill="#e34f86" opacity=".5"/>
+  <path d="M68 108 Q80 118 92 108" stroke="#5a1530" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <g transform="translate(36 30)" fill="#fff">
+    <circle r="4" cx="0" cy="-5"/><circle r="4" cx="5" cy="0"/><circle r="4" cx="0" cy="5"/><circle r="4" cx="-5" cy="0"/>
+    <circle r="2.5" fill="#eda100"/>
+  </g>
+</svg>

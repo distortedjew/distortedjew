@@ -1,0 +1,16 @@
+[Unit]
+Description=Options bots dashboard
+After=network-online.target
+
+[Service]
+User=optionbots
+WorkingDirectory=/opt/options-bots
+ExecStart=/opt/options-bots/.venv/bin/python dashboard/server.py
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/options-bots/data
+
+[Install]
+WantedBy=multi-user.target

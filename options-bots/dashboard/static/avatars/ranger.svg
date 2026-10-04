@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="RANGER, a green robot in a ranger hat with a compass badge">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#199e70"/><stop offset="1" stop-color="#0b4a34"/></linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eafaf3"/><stop offset="1" stop-color="#a9e4cc"/></linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="36" fill="url(#bg)"/>
+  <path d="M10 136 L46 96 L66 116 L94 84 L150 136 Z" fill="#0b4a34" opacity=".55"/>
+  <rect x="44" y="58" width="72" height="62" rx="16" fill="url(#face)"/>
+  <ellipse cx="80" cy="58" rx="56" ry="9" fill="#8a5a2b"/>
+  <path d="M54 58 Q56 26 80 24 Q104 26 106 58 Z" fill="#a8703a"/>
+  <path d="M56 50 H104" stroke="#5c3a17" stroke-width="5"/>
+  <path d="M74 28 L80 36 L86 28" fill="none" stroke="#5c3a17" stroke-width="3"/>
+  <rect x="56" y="74" width="16" height="10" rx="5" fill="#0b4a34"/><rect x="88" y="74" width="16" height="10" rx="5" fill="#0b4a34"/>
+  <path d="M68 100 H92" stroke="#0b4a34" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="80" cy="134" r="14" fill="#eafaf3" stroke="#a8703a" stroke-width="3"/>
+  <path d="M80 123 L84 134 L80 145 L76 134 Z" fill="#e34948"/>
+  <circle cx="80" cy="134" r="2.5" fill="#0b4a34"/>
+</svg>

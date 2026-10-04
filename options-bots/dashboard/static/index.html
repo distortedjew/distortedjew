@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Options Bot Command</title>
+<link rel="icon" href="avatars/atlas.svg">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f3f0;
+  --surface-1: #fcfcfb;
+  --surface-2: #f0efec;
+  --border: #e2e1dc;
+  --grid: #e8e7e3;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7974;
+  --good: #0a7a3d;
+  --bad: #c42b2b;
+  --warn: #9a6400;
+  --bot-atlas: #2a78d6;
+  --bot-nova: #eb6834;
+  --bot-ranger: #1baf7a;
+  --bot-volt: #eda100;
+  --bot-orchard: #e87ba4;
+  --series-equity: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111110;
+    --surface-1: #1a1a19;
+    --surface-2: #242422;
+    --border: #33332f;
+    --grid: #2c2c29;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --good: #4cc27e;
+    --bad: #f07272;
+    --warn: #e2a63b;
+    --bot-atlas: #3987e5;
+    --bot-nova: #d95926;
+    --bot-ranger: #199e70;
+    --bot-volt: #c98500;
+    --bot-orchard: #d55181;
+    --series-equity: #3987e5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111110;
+  --surface-1: #1a1a19;
+  --surface-2: #242422;
+  --border: #33332f;
+  --grid: #2c2c29;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --good: #4cc27e;
+  --bad: #f07272;
+  --warn: #e2a63b;
+  --bot-atlas: #3987e5;
+  --bot-nova: #d95926;
+  --bot-ranger: #199e70;
+  --bot-volt: #c98500;
+  --bot-orchard: #d55181;
+  --series-equity: #3987e5;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text-primary);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+h1 { font-size: 20px; margin: 0; letter-spacing: .02em; }
+.sub { color: var(--text-secondary); font-size: 13px; }
+.muted { color: var(--text-muted); }
+.hero { text-align: right; }
+.hero .num { font-size: 32px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.toolbar { display: flex; gap: 8px; align-items: center; }
+button.theme { background: var(--surface-1); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; }
+.panel { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.panel h2 { font-size: 14px; margin: 0 0 2px; }
+.chart { position: relative; height: 220px; margin-top: 8px; }
+.chart svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.tip { position: absolute; pointer-events: none; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 12px; white-space: nowrap; display: none; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+.tip .sw { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 3px; border-radius: 2px; background: var(--c); margin-right: 6px; vertical-align: middle; }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-muted); font-size: 13px; text-align: center; padding: 0 20px; }
+details.table { margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+details.table table { margin-top: 6px; }
+.bots { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.bot { border-top: 4px solid var(--c); position: relative; overflow: hidden; }
+.bot::after { content: ""; position: absolute; right: -60px; top: -60px; width: 180px; height: 180px; border-radius: 50%; background: var(--c); opacity: .07; pointer-events: none; }
+.bot-head { display: flex; gap: 14px; align-items: center; }
+.bot-head img { width: 72px; height: 72px; border-radius: 18px; flex: none; }
+.bot-name { font-size: 20px; font-weight: 750; letter-spacing: .08em; }
+.chip { display: inline-block; border: 1px solid var(--border); background: var(--surface-2); border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 600; margin-left: 6px; vertical-align: 3px; letter-spacing: 0; }
+.tagline { color: var(--text-secondary); font-size: 13px; font-style: italic; }
+.strategy { color: var(--text-primary); font-size: 13px; margin-top: 2px; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+.status i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: currentColor; }
+.st-trading { color: var(--good); } .st-closed { color: var(--text-muted); } .st-paused, .st-stale { color: var(--warn); } .st-offline { color: var(--bad); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0 10px; }
+.stat { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+.stat .k { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.stat .v { font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.signal { font-size: 12px; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
+.signal b { color: var(--text-primary); font-weight: 600; }
+.dir { font-weight: 700; }
+h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin: 12px 0 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+th { text-align: left; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); padding: 4px 6px 4px 0; }
+td { border-bottom: 1px solid var(--grid); padding: 5px 6px 5px 0; vertical-align: top; }
+td.r, th.r { text-align: right; }
+.none { color: var(--text-muted); font-size: 12px; padding: 4px 0; }
+.rules { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+.feed { max-height: 420px; overflow: auto; }
+.feed .row { display: grid; grid-template-columns: 96px 128px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--grid); font-size: 12px; }
+.feed .who { white-space: nowrap; font-weight: 700; letter-spacing: .05em; }
+.feed .who::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 6px; }
+.lv-warn .msg { color: var(--warn); } .lv-error .msg { color: var(--bad); }
+footer { margin-top: 20px; font-size: 12px; color: var(--text-muted); }
+@media (max-width: 860px) { .charts { grid-template-columns: 1fr; } .bots { grid-template-columns: 1fr; } .hero { text-align: left; } }
+@media (max-width: 480px) { .stats { grid-template-columns: repeat(2, 1fr); } .feed .row { grid-template-columns: 1fr; gap: 2px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Options Bot Command</h1>
+      <div class="sub">Five bots, five underlyings. <span id="updated" class="muted">loading…</span></div>
+    </div>
+    <div class="toolbar">
+      <div class="hero">
+        <div class="sub">Account equity</div>
+        <div class="num" id="equity">—</div>
+        <div class="sub" id="equity-change"></div>
+      </div>
+      <button class="theme" id="theme" type="button" aria-label="Toggle color theme">◐</button>
+    </div>
+  </header>
+
+  <section class="charts">
+    <div class="panel">
+      <h2>Account equity</h2>
+      <div class="sub">Snapshot every 5 minutes while the market is open</div>
+      <div class="chart" id="eq-chart"></div>
+      <details class="table"><summary>Show as table</summary><div id="eq-table"></div></details>
+    </div>
+    <div class="panel">
+      <h2>Realized P&amp;L by bot</h2>
+      <div class="sub">Cumulative, in dollars, at each closed trade</div>
+      <div class="chart" id="pnl-chart"></div>
+      <div class="legend" id="pnl-legend"></div>
+      <details class="table"><summary>Show as table</summary><div id="pnl-table"></div></details>
+    </div>
+  </section>
+
+  <section class="bots" id="bots"></section>
+
+  <section class="panel">
+    <h2>Activity</h2>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <footer>Read-only view. Pause a bot by creating <code>data/PAUSE_&lt;bot&gt;</code> (or <code>data/PAUSE</code> for all) on the server; it keeps managing open positions but opens nothing new.</footer>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const usd = (v, sign = false) => v == null ? "—" :
+  (sign && v > 0 ? "+" : v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+const pct = (v) => v == null ? "—" : Math.round(v * 100) + "%";
+const cls = (v) => v > 0 ? "pos" : v < 0 ? "neg" : "";
+const botColor = (name) => `var(--bot-${name})`;
+const fmtTime = (t) => new Date(t.length === 16 ? t + "Z" : t).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+// theme toggle
+try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+$("#theme").onclick = () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("theme", root.dataset.theme); } catch {}
+};
+
+// ---- line chart (shared by both panels) -------------------------------------
+function lineChart(el, series, { money = true, step = false, emptyText = "No data yet" } = {}) {
+  el.innerHTML = "";
+  const pts = series.flatMap((s) => s.points);
+  if (!pts.length) { el.innerHTML = `<div class="empty">${emptyText}</div>`; return; }
+  const W = el.clientWidth, H = el.clientHeight, m = { l: 56, r: series.length > 1 ? 70 : 12, t: 8, b: 24 };
+  const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+  let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  if (series.length > 1) { y0 = Math.min(y0, 0); y1 = Math.max(y1, 0); }
+  if (x0 === x1) { x0 -= 3600e3; x1 += 3600e3; }
+  if (y0 === y1) { y0 -= 1; y1 += 1; }
+  const pad = (y1 - y0) * 0.08; y0 -= pad; y1 += pad;
+  const X = (x) => m.l + (x - x0) / (x1 - x0) * (W - m.l - m.r);
+  const Y = (y) => m.t + (1 - (y - y0) / (y1 - y0)) * (H - m.t - m.b);
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const add = (tag, attrs, parent = svg) => { const n = document.createElementNS(ns, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); parent.appendChild(n); return n; };
+  // grid + y labels
+  for (let i = 0; i <= 4; i++) {
+    const v = y0 + (y1 - y0) * i / 4, y = Y(v);
+    add("line", { x1: m.l, x2: W - m.r, y1: y, y2: y, stroke: "var(--grid)", "stroke-width": 1 });
+    const t = add("text", { x: m.l - 8, y: y + 4, "text-anchor": "end", "font-size": 11, fill: "var(--text-muted)" });
+    t.textContent = money ? usd(v) : v.toFixed(0);
+  }
+  if (series.length > 1 && y0 < 0 && y1 > 0) add("line", { x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0), stroke: "var(--text-muted)", "stroke-width": 1 });
+  // x labels
+  for (let i = 0; i <= 3; i++) {
+    const v = x0 + (x1 - x0) * i / 3;
+    const t = add("text", { x: X(v), y: H - 6, "text-anchor": i === 0 ? "start" : i === 3 ? "end" : "middle", "font-size": 11, fill: "var(--text-muted)" });
+    t.textContent = new Date(v).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+  // lines
+  for (const s of series) {
+    if (!s.points.length) continue;
+    let d = "";
+    s.points.forEach((p, i) => {
+      if (i === 0) d += `M${X(p.x)},${Y(p.y)}`;
+      else d += step ? `H${X(p.x)}V${Y(p.y)}` : `L${X(p.x)},${Y(p.y)}`;
+    });
+    if (step) d += `H${X(x1)}`;
+    add("path", { d, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" });
+    if (series.length > 1) {   // direct label at the line end
+      const last = s.points[s.points.length - 1];
+      const t = add("text", { x: W - m.r + 6, y: Y(last.y) + 4, "font-size": 11, "font-weight": 600, fill: "var(--text-secondary)" });
+      t.textContent = s.label;
+    }
+  }
+  // hover layer: crosshair + tooltip
+  const cross = add("line", { y1: m.t, y2: H - m.b, stroke: "var(--text-muted)", "stroke-width": 1, "stroke-dasharray": "3 3", visibility: "hidden" });
+  const dots = series.map((s) => add("circle", { r: 4, fill: s.color, stroke: "var(--surface-1)", "stroke-width": 2, visibility: "hidden" }));
+  const hit = add("rect", { x: m.l, y: 0, width: Math.max(0, W - m.l - m.r), height: H, fill: "transparent" });
+  el.appendChild(svg);
+  const tip = document.createElement("div"); tip.className = "tip"; el.appendChild(tip);
+  const valueAt = (s, x) => { let v = null; for (const p of s.points) { if (p.x <= x) v = p; else break; } return step ? v : v; };
+  hit.addEventListener("pointermove", (e) => {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (W / r.width);
+    const xv = x0 + (px - m.l) / (W - m.l - m.r) * (x1 - x0);
+    // snap to nearest data x
+    let best = pts[0].x; for (const p of pts) if (Math.abs(p.x - xv) < Math.abs(best - xv)) best = p.x;
+    cross.setAttribute("x1", X(best)); cross.setAttribute("x2", X(best)); cross.setAttribute("visibility", "visible");
+    let rows = "";
+    series.forEach((s, i) => {
+      const v = valueAt(s, best);
+      if (!v) { dots[i].setAttribute("visibility", "hidden"); return; }
+      dots[i].setAttribute("cx", X(best)); dots[i].setAttribute("cy", Y(v.y)); dots[i].setAttribute("visibility", "visible");
+      rows += `<div><span class="sw" style="background:${s.color}"></span>${esc(s.label)} <b>${money ? usd(v.y, series.length > 1) : v.y}</b></div>`;
+    });
+    tip.innerHTML = `<div class="muted">${new Date(best).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</div>${rows}`;
+    tip.style.display = "block";
+    const left = X(best) / W * el.clientWidth;
+    tip.style.left = Math.min(left + 12, el.clientWidth - tip.offsetWidth - 4) + "px";
+    tip.style.top = "6px";
+  });
+  hit.addEventListener("pointerleave", () => { tip.style.display = "none"; cross.setAttribute("visibility", "hidden"); dots.forEach((d) => d.setAttribute("visibility", "hidden")); });
+}
+
+// ---- rendering ---------------------------------------------------------------
+let last = null;
+function render(st) {
+  last = st;
+  $("#updated").textContent = "Updated " + new Date(st.generated).toLocaleTimeString();
+  const eq = st.equity;
+  if (eq.length) {
+    const cur = eq[eq.length - 1].v, first = eq[0].v;
+    $("#equity").textContent = usd(cur);
+    const ch = cur - first;
+    $("#equity-change").innerHTML = `<span class="${cls(ch)}">${usd(ch, true)}</span> over the period shown`;
+  }
+  lineChart($("#eq-chart"), [{ label: "Equity", color: "var(--series-equity)", points: eq.map((p) => ({ x: Date.parse(p.t + "Z"), y: p.v })) }],
+    { emptyText: "Equity appears once a bot runs during market hours" });
+  $("#eq-table").innerHTML = table(["Time", "Equity"], eq.slice(-30).reverse().map((p) => [fmtTime(p.t), usd(p.v)]));
+
+  const series = st.bots.map((b) => ({ label: b.title, color: botColor(b.name), points: b.curve.map((p) => ({ x: Date.parse(p.t), y: p.v })) }));
+  lineChart($("#pnl-chart"), series, { step: true, emptyText: "No closed trades yet" });
+  $("#pnl-legend").innerHTML = st.bots.map((b) => `<span style="--c:${botColor(b.name)}">${esc(b.title)} · ${esc(b.underlying)}</span>`).join("");
+  $("#pnl-table").innerHTML = table(["Bot", "Trades", "Win rate", "Realized", "Open P&L"],
+    st.bots.map((b) => [b.title, b.stats.trades, pct(b.stats.win_rate), usd(b.stats.realized, true), usd(b.stats.unrealized, true)]));
+
+  $("#bots").innerHTML = st.bots.map(botCard).join("");
+  const byName = Object.fromEntries(st.bots.map((b) => [b.name, b]));
+  $("#feed").innerHTML = st.events.map((e) => `
+    <div class="row lv-${esc(e.level)}">
+      <div class="who" style="--c:${botColor(e.bot)}">${esc(byName[e.bot]?.title ?? e.bot)}</div>
+      <div class="muted">${fmtTime(e.ts)}</div>
+      <div class="msg">${esc(e.message)}</div>
+    </div>`).join("") || `<div class="none">No activity yet.</div>`;
+}
+
+function table(head, rows) {
+  return `<table><thead><tr>${head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${
+    rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
+const STATUS = { trading: "Trading", "market closed": "Market closed", paused: "Paused", stale: "No heartbeat", offline: "Offline" };
+function botCard(b) {
+  const sig = b.detail?.signal || {};
+  const st = b.status === "market closed" ? "closed" : b.status;
+  const keys = Object.entries(sig).filter(([k, v]) => !["direction", "checked_at", "rule", "blocked"].includes(k) && v != null);
+  const fmt = (v) => typeof v === "number" ? (Math.abs(v) < 1 ? v.toFixed(3) : v.toFixed(2)) : v;
+  const dir = sig.direction ? `<span class="dir">${esc(sig.direction)}</span>` : "no setup";
+  const legs = (p) => p.legs.map((l) => `${l.side === "sell" ? "−" : "+"}${l.strike}${l.kind[0].toUpperCase()}`).join(" ");
+  const stock = b.detail?.stock;
+  return `
+  <article class="panel bot" style="--c:${botColor(b.name)}">
+    <div class="bot-head">
+      <img src="avatars/${esc(b.name)}.svg" alt="">
+      <div>
+        <div class="bot-name">${esc(b.title)}<span class="chip">${esc(b.underlying)}</span></div>
+        <div class="tagline">${esc(b.tagline)}</div>
+        <div class="strategy">${esc(b.strategy)}</div>
+        <div class="status st-${esc(st)}"><i></i>${esc(STATUS[b.status] ?? b.status)}${b.detail?.open != null ? ` · ${b.detail.open} open` : ""}</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">Realized</div><div class="v ${cls(b.stats.realized)}">${usd(b.stats.realized, true)}</div></div>
+      <div class="stat"><div class="k">Open P&amp;L</div><div class="v ${cls(b.stats.unrealized)}">${usd(b.stats.unrealized, true)}</div></div>
+      <div class="stat"><div class="k">Win rate</div><div class="v">${pct(b.stats.win_rate)}</div></div>
+      <div class="stat"><div class="k">Trades</div><div class="v">${b.stats.trades}</div></div>
+    </div>
+    <div class="signal">
+      <span>Signal: ${dir}${sig.checked_at ? ` <span class="muted">(${esc(sig.checked_at.slice(11, 16))} ET)</span>` : ""}</span>
+      ${keys.map(([k, v]) => `<span>${esc(k)} <b>${esc(fmt(v))}</b></span>`).join("")}
+      ${sig.blocked ? `<span class="muted">blocked: ${esc(sig.blocked)}</span>` : ""}
+    </div>
+    ${stock && stock.shares ? `<div class="signal"><span>Stock: <b>${stock.shares}</b> sh @ <b>$${stock.basis.toFixed(2)}</b></span><span class="${cls(stock.unrealized)}">${usd(stock.unrealized, true)}</span></div>` : ""}
+    <h3>Open positions</h3>
+    ${b.open.length ? `<table><thead><tr><th>#</th><th>Type</th><th>Legs</th><th>Exp</th><th class="r">Qty</th><th class="r">Entry</th><th class="r">P&amp;L</th></tr></thead><tbody>
+      ${b.open.map((p) => `<tr><td>${p.id}</td><td>${esc(p.kind.replace("_", " "))}</td><td>${esc(legs(p))}</td><td>${esc(p.legs[0]?.expiration?.slice(5) ?? "")}</td>
+      <td class="r">${p.qty}</td><td class="r">${p.entry_price < 0 ? "cr " : "db "}${Math.abs(p.entry_price).toFixed(2)}</td>
+      <td class="r ${cls(p.mark_pnl)}">${usd(p.mark_pnl, true)}</td></tr>`).join("")}</tbody></table>` : `<div class="none">None</div>`}
+    <h3>Recent closed</h3>
+    ${b.recent.length ? `<table><tbody>${b.recent.slice(0, 5).map((p) => `<tr><td>${esc(fmtTime(p.closed_at))}</td><td>${esc(p.kind.replace("_", " "))}</td><td>${esc(p.exit_reason)}</td><td class="r ${cls(p.pnl)}">${usd(p.pnl, true)}</td></tr>`).join("")}</tbody></table>` : `<div class="none">None yet</div>`}
+    <div class="rules">Take profit ${pct(b.rules.take_profit)} · stop ${b.rules.stop_loss ? pct(b.rules.stop_loss) : "none"} · ${b.rules.exit_dte ? `exit at ${b.rules.exit_dte} DTE` : "hold to expiry"} · max ${b.rules.max_open} open</div>
+  </article>`;
+}
+
+async function refresh() {
+  try {
+    const r = await fetch("api/state", { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    render(await r.json());
+  } catch (e) {
+    $("#updated").textContent = "Can't reach the server (" + e.message + ") - retrying";
+  }
+}
+refresh();
+setInterval(refresh, 15000);
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => last && render(last), 150); });
+</script>
+</body>
+</html>

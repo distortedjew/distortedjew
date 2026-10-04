@@ -1,0 +1,17 @@
+[Unit]
+Description=Options trading bot %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=optionbots
+WorkingDirectory=/opt/options-bots
+ExecStart=/opt/options-bots/.venv/bin/python run_bot.py %i
+Restart=always
+RestartSec=15
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/options-bots/data
+
+[Install]
+WantedBy=multi-user.target
