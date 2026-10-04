@@ -39,7 +39,7 @@ class Orchard(BaseBot):
         prev_qty = self.store.get(self.name, "shares", 0)
         prev_basis = self.store.get(self.name, "basis", 0.0)
         if qty > prev_qty:
-            self.event(f"assigned: now hold {qty} {self.underlying} at ${basis:.2f} - switching to covered calls")
+            self.event(f"assigned: now hold {qty} {self.underlying} at ${basis:.2f} - switching to covered calls", alert="info")
         elif qty < prev_qty:
             called = prev_qty - qty
             strike = self.store.get(self.name, "cc_strike") or self.broker.last_price(self.underlying)
@@ -47,7 +47,7 @@ class Orchard(BaseBot):
             pid = self.store.open_position(self.name, self.underlying, "stock", "bullish", [], called,
                                            prev_basis, prev_basis, {"note": "shares called away"})
             self.store.close_position(pid, strike, pnl, "called away")
-            self.event(f"{called} shares called away at ${strike:.2f} - stock P&L ${pnl:+,.0f}")
+            self.event(f"{called} shares called away at ${strike:.2f} - stock P&L ${pnl:+,.0f}", alert="win" if pnl >= 0 else "loss")
         self.store.put(self.name, "shares", qty)
         self.store.put(self.name, "basis", basis)
         self.stock = {"shares": qty, "basis": basis, "unrealized": upl}

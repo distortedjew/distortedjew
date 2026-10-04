@@ -61,6 +61,52 @@ def bot_summary(store: Store, cls) -> dict:
     }
 
 
+def reason_group(reason: str | None) -> str:
+    """'take profit (+52%)' -> 'take profit'."""
+    return (reason or "unknown").split(" (")[0].split(":")[0].strip()
+
+
+def bot_detail(store: Store, cls) -> dict:
+    """Everything the per-bot page needs: summary, full history, analytics and the bot's own events."""
+    out = bot_summary(store, cls)
+    closed = sorted(store.positions(cls.name, "closed", limit=100_000), key=lambda p: p["closed_at"] or "")
+    booked = [p for p in closed if p["pnl"] is not None]
+    wins = [p["pnl"] for p in booked if p["pnl"] > 0]
+    losses = [p["pnl"] for p in booked if p["pnl"] <= 0]
+    peak = cum = max_dd = 0.0
+    for p in booked:
+        cum += p["pnl"]
+        peak = max(peak, cum)
+        max_dd = min(max_dd, cum - peak)
+    holds = []
+    for p in booked:
+        try:
+            holds.append((datetime.fromisoformat(p["closed_at"]) - datetime.fromisoformat(p["opened_at"])).total_seconds() / 86400)
+        except (TypeError, ValueError):
+            pass
+    reasons: dict[str, dict] = {}
+    for p in booked:
+        r = reasons.setdefault(reason_group(p["exit_reason"]), {"count": 0, "pnl": 0.0})
+        r["count"] += 1
+        r["pnl"] = round(r["pnl"] + p["pnl"], 2)
+    out["analytics"] = {
+        "avg_win": sum(wins) / len(wins) if wins else None,
+        "avg_loss": sum(losses) / len(losses) if losses else None,
+        "profit_factor": (sum(wins) / -sum(losses)) if losses and sum(losses) < 0 else None,
+        "expectancy": sum(p["pnl"] for p in booked) / len(booked) if booked else None,
+        "best": max((p["pnl"] for p in booked), default=None),
+        "worst": min((p["pnl"] for p in booked), default=None),
+        "max_drawdown": round(max_dd, 2),
+        "avg_hold_days": sum(holds) / len(holds) if holds else None,
+        "exit_reasons": reasons,
+        "open_risk": round(sum(p["max_loss"] * p["qty"] for p in out["open"]), 2),
+    }
+    out["history"] = list(reversed(closed))
+    out["events"] = [dict(r) for r in store.db.execute(
+        "SELECT * FROM events WHERE bot=? ORDER BY id DESC LIMIT 200", (cls.name,)).fetchall()]
+    return out
+
+
 def state(store: Store) -> dict:
     since = (datetime.now(timezone.utc) - timedelta(days=90)).strftime("%Y-%m-%dT%H:%M")
     eq = [{"t": r["minute"], "v": r["equity"]} for r in
@@ -95,6 +141,13 @@ def make_handler(store: Store, password: str, user: str):
                     return self._send(401, b"login required", "text/plain",
                                       {"WWW-Authenticate": 'Basic realm="options-bots"'})
             path = self.path.split("?")[0]
+            if path.startswith("/api/bot/"):
+                cls = BOTS.get(path.rsplit("/", 1)[-1])
+                if not cls:
+                    return self._send(404, b"unknown bot", "text/plain")
+                with lock:
+                    body = json.dumps(bot_detail(store, cls), default=str).encode()
+                return self._send(200, body, "application/json")
             if path == "/api/state":
                 try:
                     with lock:

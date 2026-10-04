@@ -17,6 +17,7 @@ from .config import Settings
 from .earnings import next_earnings
 from .execution import net_prices, reversed_legs, work_order
 from .models import Bar, Leg, OptionQuote, Proposal, parse_occ
+from .notify import Notifier
 from .store import Store
 
 ET = ZoneInfo("America/New_York")
@@ -45,8 +46,11 @@ class BaseBot:
     entry_end = (15, 30)
     entry_check_min = 30
 
-    def __init__(self, broker: Broker, store: Store, settings: Settings, sleep=time.sleep):
+    def __init__(self, broker: Broker, store: Store, settings: Settings, sleep=time.sleep,
+                 notifier: Notifier | None = None):
         self.broker, self.store, self.settings, self.sleep = broker, store, settings, sleep
+        self.notifier = notifier or Notifier()   # disabled unless run_bot passes a configured one
+        self.last_price: float | None = None
         self.signal_state: dict = {}
         self.last_manage = 0.0
         self.last_equity_rec = 0.0
@@ -64,19 +68,23 @@ class BaseBot:
         return None
 
     # ---------------------------------------------------------------- logging
-    def event(self, msg: str, level: str = "info") -> None:
+    def event(self, msg: str, level: str = "info", alert: str | None = None, dedupe_key: str | None = None) -> None:
+        """Log + store an event; with `alert` (open/win/loss/warn/error/info) also send it to your phone."""
         log.log(logging.WARNING if level in ("warn", "error") else logging.INFO, "[%s] %s", self.name, msg)
         self.store.event(self.name, msg, level)
+        if alert:
+            self.notifier.alert(self.title, alert, msg, dedupe_key)
 
     # ---------------------------------------------------------------- main loop
     def run_forever(self) -> None:
-        self.event(f"{self.title} online - trading {self.underlying} options ({self.strategy})")
+        self.event(f"{self.title} online - trading {self.underlying} options ({self.strategy})", alert="info",
+                   dedupe_key=f"{self.name}:online")
         while True:
             try:
                 wait = self.cycle()
             except Exception as e:  # keep running; systemd restarts us on a hard crash anyway
                 log.exception("cycle failed")
-                self.event(f"error: {e}", "error")
+                self.event(f"error: {e}", "error", alert="error")
                 wait = 60
             self.sleep(wait)
 
@@ -107,7 +115,7 @@ class BaseBot:
         return 30
 
     def heartbeat(self, status: str, extra: dict | None = None) -> None:
-        detail = {"signal": self.signal_state, **(extra or {})}
+        detail = {"signal": self.signal_state, "price": self.last_price, **(extra or {})}
         self.store.heartbeat(self.name, status, detail)
 
     def _in_entry_window(self, now: datetime) -> bool:
@@ -127,7 +135,7 @@ class BaseBot:
     def maybe_enter(self, now: datetime) -> None:
         today = now.date()
         bars = self.completed_bars(today)
-        price = self.broker.last_price(self.underlying)
+        price = self.last_price = self.broker.last_price(self.underlying)
         direction, state = self.signal(bars, price)
         self.signal_state = {**state, "direction": direction, "checked_at": now.isoformat(timespec="minutes")}
         if not direction:
@@ -135,7 +143,9 @@ class BaseBot:
         block = self.entry_blocker(today, direction)
         if block:
             self.signal_state["blocked"] = block
-            self.event(f"{direction} signal, not entering: {block}")
+            kill = block.startswith("daily loss")
+            self.event(f"{direction} signal, not entering: {block}", "warn" if kill else "info",
+                       alert="warn" if kill else None, dedupe_key=f"kill:{today}" if kill else None)
             return
         prop = self.propose(direction, price, bars)
         if not prop:
@@ -192,7 +202,8 @@ class BaseBot:
             self.name, self.underlying, prop.kind, prop.direction, [l.to_dict() for l in prop.legs],
             res.filled_qty, res.price, prop.max_loss_per_unit, {**prop.meta, "reason": prop.reason})
         what = "credit" if res.price < 0 else "debit"
-        self.event(f"OPEN #{pid} {prop.kind} x{res.filled_qty} @ {what} {abs(res.price):.2f} - {prop.reason}")
+        self.event(f"OPEN #{pid} {prop.kind} x{res.filled_qty} @ {what} {abs(res.price):.2f} - {prop.reason}",
+                   alert="open")
 
     # ---------------------------------------------------------------- exits
     def position_value(self, pos: dict, quotes: dict[str, tuple[float, float]]) -> float | None:
@@ -208,7 +219,7 @@ class BaseBot:
         held = {p["symbol"]: p for p in self.broker.positions()}
         today = datetime.now(ET).date()
         bars = self.completed_bars(today)
-        price = self.broker.last_price(self.underlying)
+        price = self.last_price = self.broker.last_price(self.underlying)
         for pos in positions:
             symbols = [l["symbol"] for l in pos["legs"]]
             if not any(s in held for s in symbols):
@@ -247,13 +258,14 @@ class BaseBot:
         res = work_order(self.broker, self.name, legs, pos["qty"], closing=True,
                          wait_sec=self.settings.exec_wait_sec, steps=steps, sleep=self.sleep)
         if res.filled_qty < 1:
-            self.event(f"exit #{pos['id']} ({reason}) not filled: {res.status} - will retry", "warn")
+            self.event(f"exit #{pos['id']} ({reason}) not filled: {res.status} - will retry", "warn",
+                       alert="warn", dedupe_key=f"{self.name}:exitfail:{pos['id']}")
             return
         exit_value = -res.price          # closing order net price -> value of the position
         pnl = (exit_value - pos["entry_price"]) * 100 * res.filled_qty
         self.store.close_position(pos["id"], exit_value, pnl, reason, qty_left=pos["qty"] - res.filled_qty)
         self.event(f"CLOSE #{pos['id']} x{res.filled_qty} - {reason} - P&L ${pnl:+,.0f}",
-                   "info" if pnl >= 0 else "warn")
+                   "info" if pnl >= 0 else "warn", alert="win" if pnl >= 0 else "loss")
 
     def reconcile_missing(self, pos: dict, today: date, price: float) -> None:
         """The broker no longer holds any leg: expired, assigned, or closed by hand."""
@@ -267,10 +279,10 @@ class BaseBot:
                             for l in pos["legs"])
             pnl = (value - pos["entry_price"]) * 100 * pos["qty"]
             self.store.close_position(pos["id"], value, pnl, "expired / assigned")
-            self.event(f"#{pos['id']} expired/assigned - P&L ${pnl:+,.0f}")
+            self.event(f"#{pos['id']} expired/assigned - P&L ${pnl:+,.0f}", alert="win" if pnl >= 0 else "loss")
         else:
             self.store.close_position(pos["id"], None, None, "closed outside the bot")
-            self.event(f"#{pos['id']} legs are gone at the broker - marked closed (P&L unknown)", "warn")
+            self.event(f"#{pos['id']} legs are gone at the broker - marked closed (P&L unknown)", "warn", alert="warn")
 
     # ---------------------------------------------------------------- option selection
     def chain(self, kind: str, min_dte: int, max_dte: int) -> list[OptionQuote]:

@@ -14,6 +14,7 @@ import threading
 from optionbots.bots import BOTS
 from optionbots.broker import AlpacaBroker
 from optionbots.config import load_settings
+from optionbots.notify import Notifier
 from optionbots.simbroker import SimBroker
 from optionbots.store import Store
 
@@ -31,7 +32,9 @@ def main() -> None:
         broker = AlpacaBroker(settings.key_id, settings.secret_key, live=settings.live)
         logging.info("Alpaca %s trading", "LIVE (real money)" if settings.live else "PAPER")
     names = list(BOTS) if args.bot == "all" else [args.bot]
-    bots = [BOTS[n](broker, Store(settings.db_path), settings) for n in names]
+    notifier = Notifier.from_env()
+    logging.info("phone alerts: %s", "on" if notifier.enabled else "off (set TELEGRAM_* or DISCORD_WEBHOOK_URL)")
+    bots = [BOTS[n](broker, Store(settings.db_path), settings, notifier=notifier) for n in names]
     if settings.broker == "sim":   # the simulator's market never closes
         for b in bots:
             b.entry_start, b.entry_end, b.entry_check_min = (0, 0), (23, 59), 2

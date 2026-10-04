@@ -50,11 +50,37 @@ live P&L, recent closed trades, win rate, and an activity feed. It refreshes eve
 seconds, works on a phone, and has dark and light themes. It is **read-only** and
 holds no broker keys.
 
+Click any bot (its name, avatar or "Full history, payoff & analytics") to open its **detail page**:
+- profit factor, max drawdown, average win and loss, and average hold time
+- cumulative P&L and a breakdown of how trades ended
+- a **payoff-at-expiry diagram** for every open position, with breakevens, max profit and max loss
+- the full trade history, filterable by wins and losses
+- that bot's own activity log
+
 - **Private (default):** it listens on `127.0.0.1:8080`. From your computer, run
   `ssh -L 8080:localhost:8080 you@your-vps`, then open http://localhost:8080.
 - **Public:** set `DASHBOARD_PASSWORD` in `.env`, restart it, and open
   `http://your-vps-ip:8080`. You'll be asked to log in. Open the port with
   `sudo ufw allow 8080`. For HTTPS, put Caddy or nginx in front.
+
+## Phone alerts (Telegram or Discord)
+The bots message you when they open a trade (🟦), close a winner (✅) or a loser (🔻),
+when a stop can't get filled, when the daily loss limit trips (⚠️), on errors (🛑), and
+when ORCHARD gets assigned or called away. They also send one "online" message when they
+start. An identical alert isn't repeated within `ALERT_DEDUPE_MIN` (30) minutes. Alerts
+are sent in the background, so a chat outage never delays trading.
+
+**Telegram:**
+1. In Telegram, message **@BotFather**, send `/newbot`, and copy the token.
+2. Send your new bot any message.
+3. Open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy `"chat":{"id": ...}`.
+4. In `.env`, set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`.
+
+**Discord:** go to Server settings → Integrations → Webhooks → New Webhook → Copy URL,
+then set `DISCORD_WEBHOOK_URL` in `.env`.
+
+Test it with `cd /opt/options-bots && sudo -u optionbots .venv/bin/python -m optionbots.notify`,
+then restart the bots.
 
 ## Control
 - Pause one bot: `sudo -u optionbots touch /opt/options-bots/data/PAUSE_volt`. Pause
