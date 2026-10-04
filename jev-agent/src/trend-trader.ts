@@ -6,10 +6,11 @@ import type { Executor } from "./executor.js";
 import type { Notifier } from "./notify.js";
 import type { NewsReflex } from "./news-reflex.js";
 import type { RiskOfficer } from "./overlay.js";
-import { INTERVAL_MS, VARIANTS, coinSignal, needsTrade, targetWeights, type CoinSignal, type Interval, type TrendParams } from "./strategy/trend.js";
+import { INTERVAL_MS, VARIANTS, applyRegimeFilters, coinSignal, needsTrade, targetWeights, type CoinSignal, type Interval, type TrendParams } from "./strategy/trend.js";
 
 interface ShadowState { cash: number; units: Record<string, number> }
 interface Persisted {
+  lastRegime?: boolean | null;      // last known BTC regime (used if BTC data is temporarily missing)
   baselineEquity?: number;          // account equity when the strategy started (for % P&L)
   shadow?: ShadowState;             // same strategy without the AI cuts, marked to market
   history?: { t: number; live: number; shadow: number }[]; // % returns on capital, hourly
@@ -31,6 +32,7 @@ export class TrendTrader {
   raw: Record<string, number> = {};
   final: Record<string, number> = {};
   multipliers: Record<string, number> = {};
+  regime: boolean | null = null; filtered: Record<string, string> = {};
   lastRun = 0; nextRun = 0; lastReviewAt = 0; lastError = ""; sources: Record<string, string> = {};
   private st: Persisted = {};
   private running = false;
@@ -82,6 +84,18 @@ export class TrendTrader {
       // A coin whose data failed keeps its current position rather than being sold on missing data.
       for (const [s, b] of loaded) this.signals[s] = b ? coinSignal(b.map((x) => x.close), this.params) : this.signals[s] ?? null;
       this.raw = targetWeights(this.signals, this.params);
+      if (this.cfg.trend.filters) {
+        const t = this.cfg.trend;
+        const closes = Object.fromEntries(loaded.map(([s, b]) => [s, b?.map((x) => x.close)]));
+        const regimeSym = syms.find((s) => s.startsWith("BTC")) ?? syms[0];
+        const f = applyRegimeFilters(this.raw, this.signals, closes, regimeSym,
+          { btcMaDays: t.filterBtcMaDays, coinMaDays: t.filterCoinMaDays, minSignal: t.filterMinSignal, barsPerDay: this.interval === "4h" ? 6 : 1 },
+          this.st.lastRegime ?? null);
+        this.raw = f.weights;
+        this.regime = f.regimeUsed;
+        this.filtered = f.reasons;
+        if (f.regime !== null) this.st.lastRegime = f.regime;
+      }
 
       // AI risk officer: at most every AI_REVIEW_EVERY_HOURS (free-tier friendly), reduce-only.
       const hrs = this.cfg.trend.aiReviewEveryHours;
@@ -115,7 +129,8 @@ export class TrendTrader {
       this.lastError = "";
       this.save();
       const lines = syms.map((s) => `${s} ${((this.signals[s]?.signal ?? 0) * 9).toFixed(0)}/9 → ${(this.final[s] * 100).toFixed(1)}%`);
-      console.log(`trend ${reason}: ${lines.join(", ")}${orders.length ? " | orders: " + orders.join(", ") : " | no trades"}`);
+      const regimeNote = this.cfg.trend.filters ? `[BTC regime ${this.regime === true ? "ON" : this.regime === false ? "OFF" : "unknown"}] ` : "";
+      console.log(`trend ${reason}: ${regimeNote}${lines.join(", ")}${orders.length ? " | orders: " + orders.join(", ") : " | no trades"}`);
       if (orders.length) void this.notify.send(`Rebalance (${reason}): ${orders.join(", ")}`);
     } catch (e) {
       this.lastError = (e as Error).message.slice(0, 300);
@@ -192,13 +207,15 @@ export class TrendTrader {
     const perf = this.updateShadow(false);
     return {
       trend: {
-        params: this.params, variant: this.variant, interval: this.interval, capital: this.capital(), lastRun: this.lastRun, nextRun: this.nextRun, lastError: this.lastError, sources: this.sources,
+        params: this.params, variant: this.variant, interval: this.interval,
+        filters: this.cfg.trend.filters ? { regime: this.regime, btcMaDays: this.cfg.trend.filterBtcMaDays, coinMaDays: this.cfg.trend.filterCoinMaDays, minSignal: this.cfg.trend.filterMinSignal } : null,
+        capital: this.capital(), lastRun: this.lastRun, nextRun: this.nextRun, lastError: this.lastError, sources: this.sources,
         coins: this.cfg.symbols.map((s) => {
           const g = this.signals[s], stops = g?.stops.filter((x): x is number => x != null) ?? [];
           return {
             symbol: s, models: g?.models ?? [], signal: g?.signal ?? null, vol: g?.vol ?? null,
             nearestStop: stops.length ? Math.max(...stops) : null,
-            raw: this.raw[s] ?? 0, multiplier: this.multipliers[s] ?? 1,
+            raw: this.raw[s] ?? 0, multiplier: this.multipliers[s] ?? 1, filteredBy: this.filtered[s] ?? "",
             reason: [this.officer?.last?.cuts[s]?.multiplier !== undefined && this.officer.last.cuts[s].multiplier < 1 ? `AI: ${this.officer.last.cuts[s].reason}` : "",
               this.reflex && this.reflex.multiplier(s.replace(/(USDT|USDC|USD)$/, "")) < 1 ? `News: ${this.reflex.activeCuts().filter((c) => c.coin === "market" || c.coin === s.replace(/(USDT|USDC|USD)$/, "")).map((c) => c.title).join(" | ")}` : ""].filter(Boolean).join(" · "),
             target: this.final[s] ?? 0, current: this.agent.positionUsd(s) / Math.max(1, this.capital()),

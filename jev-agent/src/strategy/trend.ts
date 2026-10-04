@@ -156,3 +156,41 @@ export function needsTrade(current: number, target: number, minAbs = 0.02, minRe
   const d = Math.abs(target - current);
   return d >= minAbs && d >= minRel * Math.max(target, current);
 }
+
+/**
+ * Regime filters from the strategy tournament (src/arena/TOURNAMENT.md, winner r2-crypto-champplus),
+ * which held up on the sealed 2024-26 holdout (Sharpe 0.71 vs 0.53 for the unfiltered strategy, max DD
+ * -9.2% vs -15.8%):
+ *  1. market regime: hold nothing while the regime asset (BTC) closes below its `btcMaDays` average
+ *  2. consensus: hold a coin only when at least `minSignal` of the ensemble models are long (4 of 9)
+ *  3. per-coin trend: hold a coin only while it closes above its own `coinMaDays` average
+ * Averages are in days; `barsPerDay` converts for intraday candles.
+ */
+export interface RegimeFilterOpts { btcMaDays: number; coinMaDays: number; minSignal: number; barsPerDay: number }
+export const DEFAULT_FILTERS: Omit<RegimeFilterOpts, "barsPerDay"> = { btcMaDays: 100, coinMaDays: 50, minSignal: 0.4 };
+
+const aboveMa = (closes: number[] | undefined, n: number): boolean | null => {
+  if (!closes || closes.length < n) return null;
+  let s = 0; for (let i = closes.length - n; i < closes.length; i++) s += closes[i];
+  return closes.at(-1)! >= s / n;
+};
+
+/** Returns filtered weights plus the regime state; `regime` is null when the regime asset has no usable data. */
+export function applyRegimeFilters(weights: Record<string, number>, signals: Record<string, CoinSignal | null>,
+  closes: Record<string, number[] | undefined>, regimeSymbol: string, o: RegimeFilterOpts, lastRegime: boolean | null = null) {
+  const btcN = Math.round(o.btcMaDays * o.barsPerDay), coinN = Math.round(o.coinMaDays * o.barsPerDay);
+  const live = aboveMa(closes[regimeSymbol], btcN);
+  // Missing regime data: keep the last known regime rather than dumping everything on a data glitch.
+  const regime = live ?? lastRegime;
+  const out: Record<string, number> = {};
+  const reasons: Record<string, string> = {};
+  for (const [s, w] of Object.entries(weights)) {
+    let why = "";
+    if (regime !== true) why = regime === false ? "BTC below its average" : "no BTC regime data";
+    else if ((signals[s]?.signal ?? 0) < o.minSignal) why = "fewer than 4 of 9 models long";
+    else if (aboveMa(closes[s], coinN) !== true) why = "below its own average";
+    out[s] = why ? 0 : w;
+    if (why && w > 0) reasons[s] = why;
+  }
+  return { weights: out, regime: live, regimeUsed: regime, reasons };
+}

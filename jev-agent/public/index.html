@@ -238,6 +238,7 @@ function render(s) {
     const D = $("tr"); D.textContent = "";
     const rows = [
       ["Capital", usd(T.capital, 0) + ` · vol target ${(T.params.targetVol * 100).toFixed(0)}% · ${T.variant ?? "1d"}`],
+      ["Regime filters", T.filters ? `BTC regime ${T.filters.regime === true ? "ON (above " + T.filters.btcMaDays + "d avg)" : T.filters.regime === false ? "OFF (below " + T.filters.btcMaDays + "d avg: holding nothing)" : "unknown"} · ≥${Math.round(T.filters.minSignal * 9)}/9 models · coin > ${T.filters.coinMaDays}d avg` : "off"],
       ["Last rebalance", ago(T.lastRun)],
       ["Execution", X.completed ? `${X.avgShortfallBps >= 0 ? "+" : ""}${X.avgShortfallBps.toFixed(1)} bps vs arrival · ${X.timedSlices} Jev-timed / ${X.forcedSlices} deadline · ${X.waits} waits` : `orders worked over ${X.windowMin} min, Jev-timed`],
       ["Strategy return", `${P.livePct >= 0 ? "+" : ""}${P.livePct.toFixed(2)}% live · ${P.shadowPct >= 0 ? "+" : ""}${P.shadowPct.toFixed(2)}% rules-only`],
@@ -349,7 +350,7 @@ function render(s) {
       if (!s.trend.officer) ta.textContent = "off";
       else if (tc.multiplier < 1) ta.append(el("span", "tag sell", `CUT x${tc.multiplier}`));
       else ta.append(el("span", "tag flat", "NO CUT"));
-      c.querySelector(".ty").textContent = tc.multiplier < 1 ? tc.reason : "";
+      c.querySelector(".ty").textContent = [tc.filteredBy ? "Filtered out: " + tc.filteredBy : "", tc.multiplier < 1 ? tc.reason : ""].filter(Boolean).join(" · ");
     }
     const pl = s.strategist?.plans?.[p.symbol], box = c.querySelector(".sp");
     box.hidden = !s.strategist;

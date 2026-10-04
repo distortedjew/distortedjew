@@ -49,6 +49,21 @@ The test runs on daily data from 2018-01-01 to 2026-09-30 for BTC, ETH, SOL, DOG
 
 **What the backtest cannot show:** the AI officer and Jev's execution timing. There is no historical record of the LLM's calls, and no free intraday history. Both are measured live instead, through the shadow portfolio and cost against arrival. It also can't show intraday gaps below a stop, which it only sees at the daily close.
 
+## Regime filters (strategy tournament winner)
+
+A tournament of 18 subagent strategies (`src/arena/TOURNAMENT.md`) produced one improvement that held up on a sealed 2024-26 holdout. It adds three filters on top of the trend ensemble (`TREND_FILTERS=on`, default):
+1. Hold nothing while BTC closes below its 100-day average.
+2. Hold a coin only when at least 4 of its 9 models are long.
+3. Hold a coin only while it closes above its own 50-day average.
+
+| 2018-2026, 0.30% costs | CAGR | Sharpe | Max DD | Last 12 months |
+|---|---|---|---|---|
+| Trend + filters | 22.0% | **1.64** | **-10.7%** | +4.3% |
+| Trend (previous default) | 21.7% | 1.49 | -16.0% | -0.3% |
+| Same pair at `TARGET_VOL=0.5`, `MAX_WEIGHT=0.5` | 45.2% / 44.7% | 1.63 / 1.50 | -20.5% / -29.7% | +7.4% / -2.8% |
+
+On the holdout alone, the filtered version scored Sharpe 0.71 against 0.53 for the unfiltered strategy.
+
 ## The risk dial and faster variants
 
 **Risk dial (`TARGET_VOL`, `MAX_WEIGHT`).** Same signals, more money at work. Sharpe stays about 1.5 at every setting. What changes is the size of gains and drawdowns. Backtest 2018-2026, 0.30% costs:

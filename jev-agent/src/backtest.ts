@@ -7,7 +7,7 @@
  *   npm run backtest -- --fee 0.5       # stress costs (% per side, fee + slippage)
  */
 import { readFileSync, existsSync, writeFileSync } from "node:fs";
-import { DEFAULT_TREND, TrendEngine, VARIANTS, needsTrade, targetWeights, type Bar, type TrendParams } from "./strategy/trend.js";
+import { DEFAULT_FILTERS, DEFAULT_TREND, TrendEngine, VARIANTS, applyRegimeFilters, needsTrade, targetWeights, type Bar, type TrendParams } from "./strategy/trend.js";
 
 /** Bar keys are "YYYY-MM-DD" (daily) or "YYYY-MM-DDTHH:MM" (intraday), always UTC. */
 export const toMs = (d: string) => Date.parse(d.length === 10 ? d + "T00:00:00Z" : d + ":00Z");
@@ -59,15 +59,24 @@ function simulate(name: string, u: Universe, start: string, costPct: number,
 }
 const lastClose = (m: Map<string, Bar>, d: string) => { let v = 0; for (const [k, b] of m) { if (k > d) break; v = b.close; } return v; };
 
-export function trendStrategy(u: Universe, start: string, costPct: number, p: TrendParams = DEFAULT_TREND, name = "Trend ensemble") {
+export function trendStrategy(u: Universe, start: string, costPct: number, p: TrendParams = DEFAULT_TREND, name = "Trend ensemble", filters = false) {
   const engines = Object.fromEntries(Object.keys(u).map((s) => [s, new TrendEngine(p)]));
+  const hist: Record<string, number[]> = Object.fromEntries(Object.keys(u).map((s) => [s, []]));
+  const regimeSym = Object.keys(u).find((s) => s.startsWith("BTC")) ?? Object.keys(u)[0];
+  const barsPerDay = p.barsPerYear > 400 ? 6 : 1;
   // warm up engines on history before `start`
   const all = [...new Set(Object.values(u).flatMap((m) => [...m.keys()]))].sort();
-  for (const d of all) if (d < start) for (const s in u) { const b = u[s].get(d); if (b) engines[s].step(b.close); }
+  const keep = 400 * barsPerDay;
+  const push = (s: string, c: number) => { hist[s].push(c); if (hist[s].length > keep) hist[s].shift(); };
+  for (const d of all) if (d < start) for (const s in u) { const b = u[s].get(d); if (b) { engines[s].step(b.close); push(s, b.close); } }
   return simulate(name, u, start, costPct, (d) => {
     const sig: Record<string, ReturnType<TrendEngine["signal"]>> = {};
-    for (const s in u) { const b = u[s].get(d); if (b) engines[s].step(b.close); sig[s] = b ? engines[s].signal() : null; }
-    return targetWeights(sig, p);
+    for (const s in u) { const b = u[s].get(d); if (b) { engines[s].step(b.close); push(s, b.close); } sig[s] = b ? engines[s].signal() : null; }
+    const w = targetWeights(sig, p);
+    if (!filters) return w;
+    // closes only for symbols trading today, like the live bot's freshly loaded candles
+    const closes = Object.fromEntries(Object.keys(u).map((s) => [s, u[s].has(d) ? hist[s] : undefined]));
+    return applyRegimeFilters(w, sig, closes, regimeSym, { ...DEFAULT_FILTERS, barsPerDay }).weights;
   });
 }
 
@@ -190,6 +199,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
 
   const results = [
+    trendStrategy(u, start, cost, DEFAULT_TREND, "Trend + regime filters (live)", true),
     trendStrategy(u, start, cost),
     maCross(u, start, cost),
     buyHold(u, start, cost, ["BTC"], "Buy & hold BTC"),

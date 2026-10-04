@@ -143,3 +143,38 @@ test("no look-ahead: on trendless random prices the strategy earns ~nothing befo
   const avg = sharpes.reduce((a, b) => a + b, 0) / sharpes.length;
   assert.ok(Math.abs(avg) < 0.6, `average Sharpe on random data should be ~0, got ${avg.toFixed(2)} (${sharpes.map((x) => x.toFixed(2))})`);
 });
+
+import { applyRegimeFilters } from "../src/strategy/trend.js";
+const up = (n: number, from = 100) => Array.from({ length: n }, (_, i) => from + i);      // rising: above its average
+const down = (n: number, from = 300) => Array.from({ length: n }, (_, i) => from - i);    // falling: below its average
+const S = (signal: number) => ({ signal, vol: 0.5, returns: [], models: [], stops: [], close: 1 });
+const F = { btcMaDays: 100, coinMaDays: 50, minSignal: 0.4, barsPerDay: 1 };
+
+test("regime filters: BTC below its average -> hold nothing", () => {
+  const r = applyRegimeFilters({ BTCUSDT: 0.2, ETHUSDT: 0.2 }, { BTCUSDT: S(1), ETHUSDT: S(1) }, { BTCUSDT: down(150), ETHUSDT: up(150) }, "BTCUSDT", F);
+  assert.deepEqual(r.weights, { BTCUSDT: 0, ETHUSDT: 0 });
+  assert.equal(r.regime, false);
+});
+
+test("regime filters: consensus and per-coin trend gate each coin", () => {
+  const r = applyRegimeFilters({ BTCUSDT: 0.2, ETHUSDT: 0.2, SOLUSDT: 0.2 },
+    { BTCUSDT: S(5 / 9), ETHUSDT: S(3 / 9), SOLUSDT: S(1) },
+    { BTCUSDT: up(150), ETHUSDT: up(150), SOLUSDT: down(150) }, "BTCUSDT", F);
+  assert.equal(r.weights.BTCUSDT, 0.2);   // regime on, 5/9 long, above its 50d
+  assert.equal(r.weights.ETHUSDT, 0);     // only 3 of 9 models long
+  assert.equal(r.weights.SOLUSDT, 0);     // below its own 50d
+  assert.ok(r.reasons.ETHUSDT && r.reasons.SOLUSDT);
+});
+
+test("regime filters: missing BTC data keeps the last known regime instead of dumping positions", () => {
+  const w = { ETHUSDT: 0.2 }, sig = { ETHUSDT: S(1) }, closes = { ETHUSDT: up(150), BTCUSDT: undefined };
+  assert.equal(applyRegimeFilters(w, sig, closes, "BTCUSDT", F, true).weights.ETHUSDT, 0.2);
+  assert.equal(applyRegimeFilters(w, sig, closes, "BTCUSDT", F, null).weights.ETHUSDT, 0); // never known -> stay out
+});
+
+test("regime filters: intraday candles scale the averages from days to bars", () => {
+  // 4h candles: a 100-day BTC average needs 600 bars; 400 bars is not enough history -> regime unknown
+  const r = applyRegimeFilters({ BTCUSDT: 0.2 }, { BTCUSDT: S(1) }, { BTCUSDT: up(400) }, "BTCUSDT", { ...F, barsPerDay: 6 });
+  assert.equal(r.regime, null);
+  assert.equal(r.weights.BTCUSDT, 0);
+});
