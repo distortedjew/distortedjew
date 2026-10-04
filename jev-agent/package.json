@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
     "backtest": "tsx src/backtest.ts",
-    "fetch-data": "tsx src/fetch-data.ts"
+    "fetch-data": "tsx src/fetch-data.ts",
+    "backtest-stocks": "tsx src/backtest-stocks.ts"
   },
   "dependencies": {
     "@ai-sdk/typesafe-ai": "^3.0.0",

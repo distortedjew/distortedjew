@@ -49,6 +49,46 @@ The test runs on daily data from 2018-01-01 to 2026-09-30 for BTC, ETH, SOL, DOG
 
 **What the backtest cannot show:** the AI officer and Jev's execution timing. There is no historical record of the LLM's calls, and no free intraday history. Both are measured live instead, through the shadow portfolio and cost against arrival. It also can't show intraday gaps below a stop, which it only sees at the daily close.
 
+## Regime filters (strategy tournament winner)
+
+A tournament of 18 subagent strategies (`src/arena/TOURNAMENT.md`) produced one improvement that held up on a sealed 2024-26 holdout. It adds three filters on top of the trend ensemble (`TREND_FILTERS=on`, default):
+1. Hold nothing while BTC closes below its 100-day average.
+2. Hold a coin only when at least 4 of its 9 models are long.
+3. Hold a coin only while it closes above its own 50-day average.
+
+| 2018-2026, 0.30% costs | CAGR | Sharpe | Max DD | Last 12 months |
+|---|---|---|---|---|
+| Trend + filters | 22.0% | **1.64** | **-10.7%** | +4.3% |
+| Trend (previous default) | 21.7% | 1.49 | -16.0% | -0.3% |
+| Same pair at `TARGET_VOL=0.5`, `MAX_WEIGHT=0.5` | 45.2% / 44.7% | 1.63 / 1.50 | -20.5% / -29.7% | +7.4% / -2.8% |
+
+On the holdout alone, the filtered version scored Sharpe 0.71 against 0.53 for the unfiltered strategy.
+
+## The risk dial and faster variants
+
+**Risk dial (`TARGET_VOL`, `MAX_WEIGHT`).** Same signals, more money at work. Sharpe stays about 1.5 at every setting. What changes is the size of gains and drawdowns. Backtest 2018-2026, 0.30% costs:
+
+| Setting | CAGR | Max DD | Avg exposure | Trades/month |
+|---|---|---|---|---|
+| 0.25 / 0.35 (default) | 21.7% | -16.0% | 13% | 12 |
+| 0.35 / 0.35 | 31.1% | -21.1% | 19% | 16 |
+| 0.5 / 0.5 | 44.7% | -29.7% | 26% | 20 |
+| 0.7 / 0.6 | 61.7% | -39.1% | 36% | 24 |
+
+Even the winning strategy lost money in 56% of all 30-day windows and 45% of 90-day windows. Days or weeks of losses say nothing about whether it works.
+
+**Faster variants (`TREND_VARIANT`).** `4h-fast` runs the same nine bar counts on 4-hour candles, so trends of about 1-60 days, with roughly 8x more trades. `4h-same` keeps the daily 5-360 day horizons but rechecks every 4 hours. Neither has published evidence. Test them on your own data with `npm run fetch-data -- --interval 4h && npm run backtest -- --compare`. The command prints a verdict, and you should switch only if a variant beats `1d` after costs, including at 0.5%.
+
+**Backtest integrity check.** On trendless random-walk prices (zero drift), all three variants score Sharpe ≈ 0 before costs and lose after them, and the fastest loses most: -8%/yr at 0.30% cost from about 1,200 trades a year. So the backtest has no look-ahead, and the daily strategy's real-data Sharpe of 1.49 comes from real trends. This check runs as an automated test.
+
+## Where Jev's speed is used
+
+Speed only creates value when information goes stale fast and acting on it is cheap. The scalper used Jev's speed on decisions that cost ~0.46% each to act on, which is why it lost. In the trend design Jev works in three places:
+
+1. **News reflex** (`src/news-reflex.ts`). Crypto crashes after hacks, insolvencies and delistings unfold within minutes, and the AI officer only reviews every 6 h. Jev answers two typed questions about every new headline (which coin, what impact) in one ~0.3 s pass. A "severe" verdict at ≥70% confidence cuts that coin (or every coin, for market-wide news) to zero for 12 h, sold in one urgent order. It is reduce-only, ignores news older than 30 min, falls back to conservative keywords if Jev errors, and only accepts http(s) links from feeds.
+2. **Execution timing** (`src/executor.ts`). Rebalance slices wait while Jev expects a better price.
+3. **Scorecard** (`src/scorecard.ts`). Jev predicts each coin on a cadence without trading. The dashboard shows hit rate, a z-score against a coin flip, and the average move in the predicted direction by confidence, compared with the round-trip cost. A limit-order scalper is worth building only if confident calls move more than the cost.
+
 ## What "good" looks like live
 
 - The strategy is **flat or small most of the time**. Average exposure is 13% of capital. It makes its money in a few strong trends and loses little in crashes.

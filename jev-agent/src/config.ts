@@ -29,6 +29,12 @@ export const config = {
   alphaVantageKey: env("ALPHAVANTAGE_API_KEY", ""),
   newsEveryMin: num("NEWS_EVERY_MIN", 60),
   trend: {
+    variant: env("TREND_VARIANT", "1d"),
+    // Tournament winner's regime filters (see src/arena/TOURNAMENT.md); off = the original strategy.
+    filters: env("TREND_FILTERS", "on") === "on",
+    filterBtcMaDays: num("FILTER_BTC_MA", 100),
+    filterCoinMaDays: num("FILTER_COIN_MA", 50),
+    filterMinSignal: num("FILTER_MIN_SIGNAL", 0.4), // 1d | 4h-fast | 4h-same (see STRATEGY.md; switch only after npm run backtest -- --compare)
     targetVol: num("TARGET_VOL", 0.25),
     maxWeight: num("MAX_WEIGHT", 0.35),
     rebalanceUtcHour: num("REBALANCE_UTC_HOUR", 0), // daily bars close at 00:00 UTC; rebalance shortly after
@@ -38,6 +44,16 @@ export const config = {
     jevWaitConfidence: num("JEV_WAIT_CONFIDENCE", 0.65),
     aiReviewEveryHours: num("AI_REVIEW_EVERY_HOURS", 6),
   },
+  news: {
+    enabled: env("NEWS_REFLEX", "on") === "on",
+    feeds: env("NEWS_FEEDS", "https://www.coindesk.com/arc/outboundfeeds/rss/,https://cointelegraph.com/rss,https://decrypt.co/feed,https://www.theblock.co/rss.xml").split(",").map((s) => s.trim()).filter(Boolean),
+    pollSec: num("NEWS_POLL_SEC", 60),
+    maxAgeMin: num("NEWS_MAX_AGE_MIN", 30),
+    severeConfidence: num("NEWS_SEVERE_CONFIDENCE", 0.7),
+    cutTo: num("NEWS_CUT_TO", 0),
+    cutHours: num("NEWS_CUT_HOURS", 12),
+  },
+  scorecard: { enabled: env("SCORECARD", "on") === "on", everySec: num("SCORECARD_EVERY_SEC", 15) },
   telegram: { token: env("TELEGRAM_BOT_TOKEN", ""), chatId: env("TELEGRAM_CHAT_ID", "") },
   exitConfidence: num("EXIT_CONFIDENCE", 0.75),
   minHoldSec: num("MIN_HOLD_SEC", 120),

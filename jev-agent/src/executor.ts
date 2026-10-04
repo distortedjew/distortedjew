@@ -36,15 +36,18 @@ export class Executor {
 
   constructor(private o: ExecOpts, private d: ExecDeps, private now: () => number = Date.now) {}
 
-  /** Replaces any unfinished order for the symbol (the newest target wins). */
-  submit(symbol: string, side: "buy" | "sell", usd: number, reason: string, closeAll = false) {
+  /**
+   * Replaces any unfinished order for the symbol (the newest target wins).
+   * `urgent`: one slice, sent on the next tick without waiting for Jev (news cuts, where speed is the point).
+   */
+  submit(symbol: string, side: "buy" | "sell", usd: number, reason: string, closeAll = false, urgent = false) {
     const mid = this.d.mid(symbol);
     if (!mid || usd < this.o.minOrderUsd) return;
     const t = this.now();
-    const slices = Math.max(1, Math.min(this.o.slices, Math.floor(usd / this.o.minOrderUsd)));
+    const slices = urgent ? 1 : Math.max(1, Math.min(this.o.slices, Math.floor(usd / this.o.minOrderUsd)));
     this.jobs.set(symbol, {
       symbol, side, totalUsd: usd, remainingUsd: usd, closeAll, reason, createdAt: t,
-      gapMs: (this.o.windowMin * 60_000) / slices, slices, sliceIdx: 0, nextCheck: t, arrivalMid: mid,
+      gapMs: urgent ? 0 : (this.o.windowMin * 60_000) / slices, slices, sliceIdx: 0, nextCheck: t, arrivalMid: mid,
       filledQty: 0, filledNotional: 0, timedSlices: 0, forcedSlices: 0, waits: 0, failures: 0,
     });
   }

@@ -10,12 +10,17 @@ A small always-on decision agent for stocks and crypto, built on **Jev** (TypeSa
 | AI risk officer | LLM via OpenRouter (default `stealth/space-bunny-alpha`); may only **cut** a coin (x0..1) for a concrete risk | every `AI_REVIEW_EVERY_HOURS` (6) |
 | Jev executor | works each order over `EXEC_WINDOW_MIN` in slices, waiting while Jev expects a better price; the deadline always completes it | during rebalances |
 | Risk layer | exposure caps, order rate, daily-loss kill switch, $10 minimum, no shorting | every order |
+| News reflex | Jev classifies every new crypto headline (~0.3 s). On a severe threat (hack, insolvency, delisting, withdrawal halt, enforcement) it cuts that coin, or all coins for a market-wide event, immediately, for 12 h | every 60 s |
+| Jev scorecard | Jev predicts every coin's next `HORIZON_SEC` without trading; the dashboard grades hit rate, luck (z-score) and moves vs trading cost | every 15 s per coin |
 | Shadow portfolio | the same strategy without AI cuts, to measure whether the AI helps | continuously |
 
 ```bash
 npm run fetch-data   # download daily history (Binance) into data/
 npm run backtest     # rerun the evidence on your own data
+npm run fetch-data -- --interval 4h && npm run backtest -- --compare   # daily vs 4-hour variants, with a verdict
 ```
+
+Risk dial: `TARGET_VOL` / `MAX_WEIGHT` (0.25/0.35 by default; 0.5/0.5 backtested at ~45%/yr with a -30% worst drop). Candle size: `TREND_VARIANT=1d|4h-fast|4h-same`.
 
 The earlier intraday mode (Jev every 0.5 s plus an LLM plan) is `STRATEGY=scalp`. It's experimental, because fees make short-horizon trading very hard (see STRATEGY.md). With `FEED=alpaca` for stocks, the bot runs Jev alone.
 
