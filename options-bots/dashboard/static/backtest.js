@@ -123,12 +123,11 @@ const sp = (v) => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.
 
 function btResults(b, r) {
   const s = r.stats, c = botColor(b.name);
-  const beat = s.total_return - s.buy_hold_return;
   const tiles = [
     ["Total return", sp(s.total_return), cls(s.total_return), `buy &amp; hold ${sp(s.buy_hold_return)}`],
-    ["CAGR", sp(s.cagr), cls(s.cagr), `${beat >= 0 ? "beat" : "lagged"} B&amp;H by ${sp(Math.abs(beat)).replace("+", "")}`],
+    ["Same-risk B&amp;H", sp(s.same_risk_buy_hold_return), cls(s.same_risk_buy_hold_return), `${Math.round((s.same_risk_stock_share || 0) * 100)}% in ${esc(r.underlying)}, rest cash`],
     ["Max drawdown", sp(s.max_drawdown), "neg", `B&amp;H ${sp(s.buy_hold_max_drawdown)}`],
-    ["Sharpe", s.sharpe == null ? "—" : s.sharpe.toFixed(2), "", `vol ${sp(s.volatility).replace("+", "")}`],
+    ["Sharpe", s.sharpe == null ? "—" : s.sharpe.toFixed(2), "", `B&amp;H ${s.buy_hold_sharpe == null ? "—" : s.buy_hold_sharpe.toFixed(2)} · CAGR ${sp(s.cagr)}`],
     ["Win rate", pct(s.win_rate), "", `${s.wins} / ${s.trades} trades`],
     ["Profit factor", s.profit_factor == null ? "—" : s.profit_factor.toFixed(2), "", `avg ${usd(s.avg_win, true)} / ${usd(s.avg_loss, true)}`],
     ["Time in market", pct(s.exposure), "", `fees ${usd(s.fees)}`],

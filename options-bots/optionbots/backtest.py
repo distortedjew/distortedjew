@@ -352,6 +352,16 @@ def stats(curve: list[dict], bh: list[dict], trades: list[dict], exposure_days: 
         out_monthly[m] = monthly[m] / last - 1 if last else 0
         last = monthly[m]
     bh_eq = [b["v"] for b in bh]
+    # Same-risk benchmark: buy & hold scaled down (rest in cash) until its daily volatility equals the bot's.
+    # Raw buy & hold puts 100% of the money in the stock; the bots risk ~2% per trade, so this is the fair race.
+    bh_rets = [bh_eq[i] / bh_eq[i - 1] - 1 for i in range(1, len(bh_eq)) if bh_eq[i - 1]]
+    bh_mean = sum(bh_rets) / len(bh_rets) if bh_rets else 0
+    bh_sd = math.sqrt(sum((r - bh_mean) ** 2 for r in bh_rets) / (len(bh_rets) - 1)) if len(bh_rets) > 1 else 0
+    scale = sd / bh_sd if bh_sd else 0
+    matched, matched_curve = 1.0, [1.0]
+    for r in bh_rets:
+        matched *= 1 + scale * r
+        matched_curve.append(matched)
     return {
         "total_return": eq[-1] / eq[0] - 1 if eq else 0,
         "cagr": (eq[-1] / eq[0]) ** (1 / years) - 1 if eq and eq[0] > 0 and eq[-1] > 0 else None,
@@ -360,6 +370,10 @@ def stats(curve: list[dict], bh: list[dict], trades: list[dict], exposure_days: 
         "volatility": sd * math.sqrt(252),
         "buy_hold_return": bh_eq[-1] / bh_eq[0] - 1 if bh_eq else 0,
         "buy_hold_max_drawdown": max_drawdown(bh_eq),
+        "buy_hold_sharpe": bh_mean / bh_sd * math.sqrt(252) if bh_sd else None,
+        "same_risk_buy_hold_return": matched - 1,
+        "same_risk_buy_hold_max_drawdown": max_drawdown(matched_curve),
+        "same_risk_stock_share": scale,
         "trades": len(booked), "wins": len(wins),
         "win_rate": len(wins) / len(booked) if booked else None,
         "avg_win": sum(wins) / len(wins) if wins else None,
@@ -394,5 +408,7 @@ if __name__ == "__main__":
         print(f"{res['bot'].upper()} on {res['underlying']}  {res['start']} -> {res['end']}  [{res['data_source']}]")
         print(f"  return {s['total_return']:+.1%}  (buy & hold {s['buy_hold_return']:+.1%})   CAGR "
               f"{(s['cagr'] or 0):+.1%}   max drawdown {s['max_drawdown']:.1%}   Sharpe {s['sharpe'] or 0:.2f}")
+        print(f"  same-risk buy & hold {s['same_risk_buy_hold_return']:+.1%} ({s['same_risk_stock_share']:.0%} in the stock, rest cash)"
+              f"   buy & hold Sharpe {s['buy_hold_sharpe'] or 0:.2f}   buy & hold max drawdown {s['buy_hold_max_drawdown']:.1%}")
         print(f"  trades {s['trades']}  win rate {(s['win_rate'] or 0):.0%}  profit factor {s['profit_factor'] or 0:.2f}"
               f"  exposure {s['exposure']:.0%}  fees ${s['fees']:,.0f}")
