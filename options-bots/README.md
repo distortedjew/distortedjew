@@ -63,6 +63,39 @@ Click any bot (its name, avatar or "Full history, payoff & analytics") to open i
   `http://your-vps-ip:8080`. You'll be asked to log in. Open the port with
   `sudo ufw allow 8080`. For HTTPS, put Caddy or nginx in front.
 
+## Backtesting
+Each bot's detail page has a **Backtest** panel, also reachable from the "Backtest →" link on
+its card. Pick a period (1–8 years or custom dates) and your starting capital. You can change
+any strategy setting (deltas, width, take profit, stop, DTE exit, max open, spacing), the risk
+per trade and the pricing model, then press **Run**. You get:
+- total return, CAGR, max drawdown, Sharpe, win rate and profit factor, all compared with
+  buy & hold
+- an equity curve against buy & hold of the underlying
+- a monthly-returns heatmap
+- a breakdown of exit reasons
+- every trade, and the bot's day-by-day log
+- a side-by-side table of all your runs this session, for comparing settings
+
+How it works: it replays the underlying's **real daily prices** from Alpaca (using your keys
+in `.env`; it only reads market data and never trades) through the bot's **actual code**: the
+same signals, contract picking, sizing, risk checks and exits. Each day is checked twice, at
+the open and at the close.
+
+**Option prices are modelled, not historical:**
+- Black-Scholes, with implied vol = 20-day realised vol × a premium, plus put skew
+- a bid/ask spread, slippage and fees
+- no earnings blackout
+
+Real option prices, IV spikes and intraday gaps will differ, and stops are only checked
+twice a day. Use the backtest to compare settings and catch bad rules, not to predict
+profits.
+
+Changes you make in the backtest panel **don't change the live bot**. To adopt a setting,
+edit the class attributes at the top of `optionbots/bots/<name>.py` and restart that bot.
+
+From the command line: `python -m optionbots.backtest atlas --years 5`. Without Alpaca keys
+(or with `BROKER=sim`), it runs on random synthetic prices and says so clearly.
+
 ## Phone alerts (Telegram or Discord)
 The bots message you when they open a trade (🟦), close a winner (✅) or a loser (🔻),
 when a stop can't get filled, when the daily loss limit trips (⚠️), on errors (🛑), and

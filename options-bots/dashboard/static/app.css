@@ -268,3 +268,4 @@ code { font-family: "JetBrains Mono", monospace; font-size: 11px; background: va
   color: var(--text-primary); text-decoration: none; border-bottom: 2px solid var(--c); padding-bottom: 1px; }
 .details-link span { transition: transform .25s; }
 .details-link:hover span { transform: translateX(4px); }
+.card-links { display: flex; flex-wrap: wrap; gap: 6px 18px; }

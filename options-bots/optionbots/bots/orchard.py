@@ -105,6 +105,6 @@ class Orchard(BaseBot):
         change = (value - pos["entry_price"]) / abs(pos["entry_price"])
         if change >= self.take_profit:
             return f"take profit ({change:+.0%})"
-        if pos["kind"] == "csp" and change <= -self.stop_loss:
+        if pos["kind"] == "csp" and self.stop_loss and change <= -self.stop_loss:   # 0 = no stop
             return f"stop loss ({change:+.0%})"
         return None

@@ -36,7 +36,9 @@ def work_order(broker: Broker, bot: str, legs: list[Leg], qty: int, closing: boo
         if any(quotes.get(l.symbol, (0, 0))[1] <= 0 for l in legs):
             return OrderResult("unfilled", done, last_price, message="no quote for a leg")
         mid, natural = net_prices(legs, quotes)
-        price = round(mid + frac * (natural - mid), 2)
+        raw = mid + frac * (natural - mid)
+        # round toward the natural price, so each step really moves (penny-wide quotes would otherwise stay at mid)
+        price = (math.ceil(raw * 100 - 1e-6) if natural >= mid else math.floor(raw * 100 + 1e-6)) / 100
         if len(legs) == 1 and abs(price) < 0.01:
             price = math.copysign(0.01, natural or 1)
         last_price = price

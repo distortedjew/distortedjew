@@ -67,6 +67,12 @@ class BaseBot:
         """Strategy-specific exit (e.g. trend flipped). Return a reason to close."""
         return None
 
+    # ---------------------------------------------------------------- clock
+    def now(self) -> datetime:
+        """Wall-clock time in New York, or the simulated time when the broker is a backtest."""
+        clock = getattr(self.broker, "now", None)
+        return clock() if clock else datetime.now(ET)
+
     # ---------------------------------------------------------------- logging
     def event(self, msg: str, level: str = "info", alert: str | None = None, dedupe_key: str | None = None) -> None:
         """Log + store an event; with `alert` (open/win/loss/warn/error/info) also send it to your phone."""
@@ -90,7 +96,7 @@ class BaseBot:
 
     def cycle(self, now: datetime | None = None) -> int:
         """One pass. Returns seconds to sleep before the next pass."""
-        now = now or datetime.now(ET)
+        now = now or self.now()
         clock = self.broker.clock()
         open_positions = self.store.positions(self.name)
         if not clock.get("is_open"):
@@ -217,7 +223,7 @@ class BaseBot:
         if not positions:
             return
         held = {p["symbol"]: p for p in self.broker.positions()}
-        today = datetime.now(ET).date()
+        today = self.now().date()
         bars = self.completed_bars(today)
         price = self.last_price = self.broker.last_price(self.underlying)
         for pos in positions:
@@ -286,7 +292,7 @@ class BaseBot:
 
     # ---------------------------------------------------------------- option selection
     def chain(self, kind: str, min_dte: int, max_dte: int) -> list[OptionQuote]:
-        today = datetime.now(ET).date()
+        today = self.now().date()
         return self.broker.option_chain(self.underlying, kind, today + timedelta(days=min_dte),
                                         today + timedelta(days=max_dte))
 
@@ -295,7 +301,7 @@ class BaseBot:
         return q.bid > 0 and q.ask > 0 and (q.ask - q.bid) <= max(0.05, 0.20 * q.mid)
 
     def with_deltas(self, quotes: list[OptionQuote], price: float) -> list[OptionQuote]:
-        today = datetime.now(ET).date()
+        today = self.now().date()
         for q in quotes:
             if q.delta is None:
                 t = max((q.expiration - today).days, 1) / 365
@@ -303,11 +309,10 @@ class BaseBot:
                 q.delta = bs.delta(q.kind, price, q.strike, t, iv) if iv else None
         return [q for q in quotes if q.delta is not None]
 
-    @staticmethod
-    def pick_expiration(quotes: list[OptionQuote], target_dte: int) -> list[OptionQuote]:
+    def pick_expiration(self, quotes: list[OptionQuote], target_dte: int) -> list[OptionQuote]:
         if not quotes:
             return []
-        today = datetime.now(ET).date()
+        today = self.now().date()
         exps = sorted({q.expiration for q in quotes}, key=lambda e: abs((e - today).days - target_dte))
         return [q for q in quotes if q.expiration == exps[0]]
 

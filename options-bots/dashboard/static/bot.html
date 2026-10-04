@@ -51,6 +51,58 @@
   .kpis6 { grid-template-columns: repeat(2, 1fr); } .positions { grid-template-columns: minmax(0, 1fr); }
   .facts { grid-template-columns: repeat(2, 1fr); } .bar-row { grid-template-columns: 90px 1fr 64px; }
 }
+/* ---------- backtest lab ---------- */
+.bt { position: relative; overflow: hidden; }
+.bt::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, transparent, var(--c), transparent); background-size: 200% 100%; animation: sweep 3s linear infinite; }
+.bt-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.bt-badge { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; border: 1px solid color-mix(in srgb, var(--c) 60%, transparent);
+  color: var(--text-primary); background: color-mix(in srgb, var(--c) 16%, transparent); border-radius: 999px; padding: 3px 10px; }
+.bt-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 14px; }
+.seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 3px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg span { display: block; padding: 6px 12px; border-radius: 9px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-secondary); transition: background .2s, color .2s; }
+.seg input:checked + span { background: var(--c); color: #fff; box-shadow: 0 4px 14px -6px var(--c); }
+.seg input:focus-visible + span { outline: 2px solid var(--c); outline-offset: 2px; }
+.bt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 42vw), 1fr)); gap: 10px; }
+.fld { display: grid; gap: 3px; font-size: 12px; }
+.fld > span { color: var(--text-secondary); font-weight: 600; }
+.fld small { color: var(--text-muted); font-size: 10.5px; }
+.fld input { font: 600 13px "JetBrains Mono", monospace; color: var(--text-primary); background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 7px 10px; width: 100%; transition: border-color .2s, box-shadow .2s; color-scheme: inherit; }
+.fld input:focus { outline: none; border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent); }
+.fld.changed input { border-color: color-mix(in srgb, var(--c) 70%, transparent); background: color-mix(in srgb, var(--c) 10%, var(--surface-2)); }
+.bt-model { margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
+.bt-model summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+.bt-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+.btn-run { position: relative; overflow: hidden; font: 700 14px "Space Grotesk", sans-serif; letter-spacing: .02em; color: #fff; background: var(--c);
+  border: 0; border-radius: 12px; padding: 11px 22px; cursor: pointer; box-shadow: 0 10px 24px -10px var(--c); transition: transform .2s, filter .2s; }
+.btn-run:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.btn-run:disabled { opacity: .6; cursor: progress; transform: none; }
+.btn-run .btn-glow { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%); transform: translateX(-100%); animation: shine 2.8s ease-in-out infinite; }
+@keyframes shine { 60%, 100% { transform: translateX(100%); } }
+.btn-ghost { font: 600 13px "Space Grotesk", sans-serif; color: var(--text-secondary); background: transparent; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; cursor: pointer; }
+.btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); }
+.bt-progress { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 160px; font-size: 12px; }
+.bt-progress .bar { flex: 1; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.bt-progress .bar i { display: block; height: 100%; width: 0; border-radius: 999px; transition: width .35s ease;
+  background: repeating-linear-gradient(45deg, var(--c) 0 10px, color-mix(in srgb, var(--c) 70%, #fff) 10px 20px); background-size: 28px 28px; animation: barber .8s linear infinite; }
+@keyframes barber { to { background-position: 28px 0; } }
+.bt-error { margin-top: 10px; color: var(--bad); font-size: 13px; }
+.bt-res { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 16px; animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
+.bt-banner { font-size: 12px; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; line-height: 1.6; }
+.bt-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.bt-kpis .v { font-size: 18px; }
+.bt-two { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; margin-top: 6px; }
+.heat-wrap { overflow-x: auto; }
+table.heat { border-collapse: separate; border-spacing: 3px; font-size: 11px; min-width: 520px; }
+table.heat th { border: 0; text-align: center; padding: 2px; color: var(--text-muted); font-weight: 600; }
+table.heat tbody th { text-align: left; padding-right: 8px; }
+table.heat td { border: 0; padding: 6px 2px; text-align: center; border-radius: 6px; font-family: "JetBrains Mono", monospace; }
+table.heat td.cell { background: color-mix(in srgb, var(--hc) calc(var(--a) * 100%), transparent); animation: fadeIn .5s ease both; animation-delay: calc(var(--d) * 12ms); }
+.hero-actions { margin-top: 8px; }
+.fld[hidden] { display: none; }
+.bt .bar-row { grid-template-columns: 110px 1fr 128px; }
+@media (max-width: 1000px) { .bt-two { grid-template-columns: 1fr; } .bt-kpis { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
@@ -69,6 +121,7 @@
 </div>
 
 <script src="app.js"></script>
+<script src="backtest.js"></script>
 <script>
 const BOT = new URLSearchParams(location.search).get("bot") || "atlas";
 let last = null, built = false, filter = "all";
@@ -87,6 +140,7 @@ function build(b) {
         <div class="tagline">${esc(b.tagline)}</div>
         <div class="strategy">${esc(b.strategy)}</div>
         <div data-f="status"></div>
+        <div class="hero-actions"><a class="details-link" href="#backtest">Backtest this bot <span aria-hidden="true">↓</span></a></div>
       </div>
       <div class="price"><div class="k sub">${esc(b.underlying)} last seen</div><div class="v num" data-f="price">—</div><div class="sub" data-f="signal-dir"></div></div>
     </section>
@@ -119,7 +173,9 @@ function build(b) {
     <h2 style="margin:6px 2px 10px">Open positions <span class="muted" data-f="open-count"></span></h2>
     <section class="positions" data-f="positions"></section>
 
-    <section class="panel enter" style="--i:10;margin-bottom:14px">
+    ${btSection(b)}
+
+    <section class="panel enter" style="--i:11;margin-bottom:14px">
       <h2>Trade history</h2>
       <div class="filters" role="group" aria-label="Filter trades">
         <button type="button" data-filter="all" aria-pressed="true">All</button>
@@ -139,6 +195,8 @@ function build(b) {
     renderHistory(last);
   });
   built = true;
+  btInit(b);
+  if (location.hash === "#backtest") requestAnimationFrame(() => $("#backtest").scrollIntoView({ block: "start" }));
 }
 
 const F = (k) => $(`[data-f="${k}"]`);

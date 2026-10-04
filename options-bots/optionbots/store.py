@@ -41,13 +41,17 @@ def now_iso() -> str:
 
 
 class Store:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path | str, clock=None):
         self.path = path
+        self.clock = clock or (lambda: datetime.now(timezone.utc))   # a backtest passes simulated time
         self.db = sqlite3.connect(str(path), timeout=30, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.executescript(SCHEMA)
         self.db.commit()
+
+    def _now(self) -> str:
+        return self.clock().astimezone(timezone.utc).isoformat(timespec="seconds")
 
     def _exec(self, sql: str, args: tuple = ()) -> sqlite3.Cursor:
         for attempt in range(5):
@@ -63,14 +67,14 @@ class Store:
 
     # -- events / heartbeat / equity ------------------------------------------
     def event(self, bot: str, message: str, level: str = "info") -> None:
-        self._exec("INSERT INTO events(bot, ts, level, message) VALUES (?,?,?,?)", (bot, now_iso(), level, message))
+        self._exec("INSERT INTO events(bot, ts, level, message) VALUES (?,?,?,?)", (bot, self._now(), level, message))
 
     def heartbeat(self, bot: str, status: str, detail: dict) -> None:
         self._exec("INSERT OR REPLACE INTO heartbeats(bot, ts, status, detail) VALUES (?,?,?,?)",
-                   (bot, now_iso(), status, json.dumps(detail, default=str)))
+                   (bot, self._now(), status, json.dumps(detail, default=str)))
 
     def record_equity(self, equity: float) -> None:
-        minute = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
+        minute = self.clock().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M")
         self._exec("INSERT OR REPLACE INTO equity(minute, equity) VALUES (?,?)", (minute, equity))
 
     # -- key/value per bot --------------------------------------------------------
@@ -87,7 +91,7 @@ class Store:
         cur = self._exec(
             "INSERT INTO positions(bot, underlying, kind, direction, legs, qty, entry_price, max_loss, opened_at, meta)"
             " VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (bot, underlying, kind, direction, json.dumps(legs), qty, entry_price, max_loss, now_iso(), json.dumps(meta)))
+            (bot, underlying, kind, direction, json.dumps(legs), qty, entry_price, max_loss, self._now(), json.dumps(meta)))
         return cur.lastrowid
 
     def close_position(self, pid: int, exit_price: float | None, pnl: float | None, reason: str, qty_left: int = 0) -> None:
@@ -98,14 +102,14 @@ class Store:
                 "INSERT INTO positions(bot, underlying, kind, direction, legs, qty, entry_price, max_loss, opened_at,"
                 " status, closed_at, exit_price, pnl, exit_reason, meta) VALUES (?,?,?,?,?,?,?,?,?,'closed',?,?,?,?,?)",
                 (row["bot"], row["underlying"], row["kind"], row["direction"], row["legs"], closed_qty,
-                 row["entry_price"], row["max_loss"], row["opened_at"], now_iso(), exit_price, pnl, reason, row["meta"]))
+                 row["entry_price"], row["max_loss"], row["opened_at"], self._now(), exit_price, pnl, reason, row["meta"]))
             self._exec("UPDATE positions SET qty=? WHERE id=?", (qty_left, pid))
             return
         self._exec("UPDATE positions SET status='closed', closed_at=?, exit_price=?, pnl=?, exit_reason=? WHERE id=?",
-                   (now_iso(), exit_price, pnl, reason, pid))
+                   (self._now(), exit_price, pnl, reason, pid))
 
     def mark(self, pid: int, mark: float, mark_pnl: float) -> None:
-        self._exec("UPDATE positions SET mark=?, mark_pnl=?, marked_at=? WHERE id=?", (mark, mark_pnl, now_iso(), pid))
+        self._exec("UPDATE positions SET mark=?, mark_pnl=?, marked_at=? WHERE id=?", (mark, mark_pnl, self._now(), pid))
 
     def positions(self, bot: str | None = None, status: str | None = "open", limit: int = 500) -> list[dict]:
         sql, args = "SELECT * FROM positions WHERE 1=1", []

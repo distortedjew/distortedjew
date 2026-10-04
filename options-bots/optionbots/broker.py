@@ -70,11 +70,12 @@ class AlpacaBroker:
         a = self._get("/v2/account")
         return {k: float(a.get(k) or 0) for k in ("equity", "last_equity", "buying_power", "cash", "options_buying_power")}
 
-    def daily_bars(self, symbol: str, days: int = 450) -> list[Bar]:
-        start = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%dT00:00:00Z")
+    def daily_bars(self, symbol: str, days: int = 450, start: date | None = None, feed: str = "iex") -> list[Bar]:
+        since = start or (datetime.utcnow() - timedelta(days=days)).date()
+        start_s = f"{since.isoformat()}T00:00:00Z"
         bars, token = [], None
         while True:
-            params = {"timeframe": "1Day", "start": start, "limit": 10000, "adjustment": "all", "feed": "iex"}
+            params = {"timeframe": "1Day", "start": start_s, "limit": 10000, "adjustment": "all", "feed": feed}
             if token:
                 params["page_token"] = token
             res = self._get(f"/v2/stocks/{symbol}/bars", data=True, **params)

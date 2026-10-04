@@ -76,7 +76,7 @@ tickMarket(); setInterval(tickMarket, 1000);
 
 // ---- line chart ------------------------------------------------------------------
 let chartSig = {};
-function lineChart(el, series, { step = false, area = false, emptyText = "No data yet", spark = false } = {}) {
+function lineChart(el, series, { step = false, area = false, emptyText = "No data yet", spark = false, zero } = {}) {
   const pts = series.flatMap((s) => s.points);
   const sig = JSON.stringify([el.clientWidth, el.clientHeight, series.map((s) => s.points.length + ":" + (s.points.at(-1)?.y ?? ""))]);
   const key = el.id || el.dataset.key;
@@ -89,7 +89,8 @@ function lineChart(el, series, { step = false, area = false, emptyText = "No dat
   const m = spark ? { l: 2, r: 2, t: 4, b: 4 } : { l: 58, r: series.length > 1 ? 72 : 12, t: 8, b: 24 };
   const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
   let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  if (series.length > 1 || spark) { y0 = Math.min(y0, 0); y1 = Math.max(y1, 0); }
+  const withZero = zero ?? (series.length > 1 || spark);
+  if (withZero) { y0 = Math.min(y0, 0); y1 = Math.max(y1, 0); }
   if (x0 === x1) { x0 -= 3600e3; x1 += 3600e3; }
   if (y0 === y1) { y0 -= 1; y1 += 1; }
   const pad = (y1 - y0) * 0.08; y0 -= pad; y1 += pad;
@@ -106,13 +107,15 @@ function lineChart(el, series, { step = false, area = false, emptyText = "No dat
       const t = add("text", { x: m.l - 8, y: y + 4, "text-anchor": "end", "font-size": 11, fill: "var(--text-muted)", "font-family": "JetBrains Mono, monospace" });
       t.textContent = usd(v);
     }
-    for (let i = 0; i <= 3; i++) {
-      const v = x0 + (x1 - x0) * i / 3;
-      const t = add("text", { x: X(v), y: H - 6, "text-anchor": i === 0 ? "start" : i === 3 ? "end" : "middle", "font-size": 11, fill: "var(--text-muted)" });
-      t.textContent = new Date(v).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const nx = W < 480 ? 2 : 3;   // fewer date labels on narrow screens
+    for (let i = 0; i <= nx; i++) {
+      const v = x0 + (x1 - x0) * i / nx;
+      const t = add("text", { x: X(v), y: H - 6, "text-anchor": i === 0 ? "start" : i === nx ? "end" : "middle", "font-size": 11, fill: "var(--text-muted)" });
+      const longSpan = x1 - x0 > 300 * 864e5;   // multi-year charts show the year instead of the day
+      t.textContent = new Date(v).toLocaleDateString(undefined, longSpan ? { month: "short", year: "numeric" } : { month: "short", day: "numeric" });
     }
   }
-  if ((series.length > 1 || spark) && y0 < 0 && y1 > 0)
+  if (withZero && y0 < 0 && y1 > 0)
     add("line", { x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0), stroke: "var(--text-muted)", "stroke-width": 1, "stroke-dasharray": spark ? "2 3" : "", opacity: spark ? .5 : 1 });
   const defs = add("defs", {});
   series.forEach((s, si) => {

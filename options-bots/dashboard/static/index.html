@@ -150,7 +150,8 @@ function ensureCard(b, i) {
     <h3>Open positions</h3><div data-f="open"></div>
     <h3>Recent closed</h3><div data-f="recent"></div>
     <div class="rules" data-f="rules"></div>
-    <a class="details-link" href="bot.html?bot=${esc(b.name)}">Full history, payoff &amp; analytics <span aria-hidden="true">→</span></a>`;
+    <div class="card-links"><a class="details-link" href="bot.html?bot=${esc(b.name)}">Full history, payoff &amp; analytics <span aria-hidden="true">→</span></a>
+    <a class="details-link" href="bot.html?bot=${esc(b.name)}#backtest">Backtest <span aria-hidden="true">→</span></a></div>`;
   $("#bots").appendChild(card);
   return card;
 }

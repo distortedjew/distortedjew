@@ -13,13 +13,15 @@ import os
 import sqlite3
 import sys
 import threading
-from datetime import datetime, timedelta, timezone
+import uuid
+from datetime import date, datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from optionbots import backtest as bt  # noqa: E402
 from optionbots.bots import BOTS  # noqa: E402
 from optionbots.config import load_settings  # noqa: E402
 from optionbots.store import Store  # noqa: E402
@@ -117,6 +119,53 @@ def state(store: Store) -> dict:
             "equity": eq, "events": events}
 
 
+class BacktestJobs:
+    """Runs one backtest at a time in a background thread; the page polls for progress."""
+
+    def __init__(self):
+        self.jobs: dict[str, dict] = {}
+        self.busy = threading.Lock()
+
+    def start(self, req: dict) -> tuple[int, dict]:
+        name = req.get("bot")
+        if name not in BOTS:
+            return 400, {"error": "unknown bot"}
+        try:
+            end = date.fromisoformat(req["end"]) if req.get("end") else date.today() - timedelta(days=1)
+            start = date.fromisoformat(req["start"]) if req.get("start") else end - timedelta(days=int(float(req.get("years", 3)) * 365))
+            capital = float(req.get("capital", 100_000))
+            model = bt.Model(**{k: float(v) for k, v in (req.get("model") or {}).items() if k in bt.Model.__dataclass_fields__})
+            risk = float(req["risk_per_trade_pct"]) if req.get("risk_per_trade_pct") not in (None, "") else None
+            alloc = float(req["allocation_pct"]) if req.get("allocation_pct") not in (None, "") else None
+        except (ValueError, TypeError, KeyError) as e:
+            return 400, {"error": f"bad parameters: {e}"}
+        if not (date(2005, 1, 1) <= start < end) or (end - start).days > 365 * 12 or not 1_000 <= capital <= 1e9:
+            return 400, {"error": "dates must be in order, at most 12 years apart; capital 1,000 - 1,000,000,000"}
+        if not self.busy.acquire(blocking=False):
+            return 429, {"error": "another backtest is running - try again in a few seconds"}
+        jid = uuid.uuid4().hex[:12]
+        job = self.jobs[jid] = {"id": jid, "status": "running", "progress": 0.0, "bot": name}
+
+        def work():
+            try:
+                job["result"] = bt.run_backtest(name, start, end, capital, req.get("overrides") or {}, model,
+                                                risk, alloc, progress=lambda p: job.update(progress=p))
+                job["status"], job["progress"] = "done", 1.0
+            except Exception as e:     # report to the page instead of dying silently
+                job["status"], job["error"] = "error", str(e)
+            finally:
+                self.busy.release()
+
+        threading.Thread(target=work, name=f"backtest-{jid}", daemon=True).start()
+        if len(self.jobs) > 20:        # keep memory bounded
+            for old in list(self.jobs)[:-20]:
+                self.jobs.pop(old, None)
+        return 202, {"id": jid}
+
+
+JOBS = BacktestJobs()
+
+
 def make_handler(store: Store, password: str, user: str):
     lock = threading.Lock()     # one SQLite connection, many request threads
     expected = base64.b64encode(f"{user}:{password}".encode()).decode() if password else ""
@@ -134,13 +183,41 @@ def make_handler(store: Store, password: str, user: str):
             self.end_headers()
             self.wfile.write(body)
 
+        def _authorized(self) -> bool:
+            if not expected:
+                return True
+            got = self.headers.get("Authorization", "").removeprefix("Basic ")
+            if hmac.compare_digest(got, expected):
+                return True
+            self._send(401, b"login required", "text/plain", {"WWW-Authenticate": 'Basic realm="options-bots"'})
+            return False
+
+        def _json(self, code: int, obj) -> None:
+            self._send(code, json.dumps(obj, default=str).encode(), "application/json")
+
+        def do_POST(self):
+            if not self._authorized():
+                return
+            if self.path.split("?")[0] != "/api/backtest":
+                return self._send(404, b"not found", "text/plain")
+            try:
+                length = min(int(self.headers.get("Content-Length", 0)), 64_000)
+                req = json.loads(self.rfile.read(length) or b"{}")
+            except (ValueError, json.JSONDecodeError):
+                return self._json(400, {"error": "invalid JSON"})
+            code, body = JOBS.start(req if isinstance(req, dict) else {})
+            self._json(code, body)
+
         def do_GET(self):
-            if expected:
-                got = self.headers.get("Authorization", "").removeprefix("Basic ")
-                if not hmac.compare_digest(got, expected):
-                    return self._send(401, b"login required", "text/plain",
-                                      {"WWW-Authenticate": 'Basic realm="options-bots"'})
+            if not self._authorized():
+                return
             path = self.path.split("?")[0]
+            if path.startswith("/api/backtest/"):
+                job = JOBS.jobs.get(path.rsplit("/", 1)[-1])
+                return self._json(200, dict(job)) if job else self._json(404, {"error": "unknown job"})
+            if path == "/api/backtest-defaults":
+                return self._json(200, {n: {k: getattr(c, k) for k in bt.TUNABLE if hasattr(c, k)} for n, c in BOTS.items()}
+                                  | {"_model": bt.Model().__dict__})
             if path.startswith("/api/bot/"):
                 cls = BOTS.get(path.rsplit("/", 1)[-1])
                 if not cls:
