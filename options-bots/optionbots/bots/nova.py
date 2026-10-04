@@ -19,7 +19,9 @@ class Nova(BaseBot):
     max_open = 2
     min_days_between = 3
 
-    allow_bearish = 1        # 0 = only take bullish (call) spreads
+    # 0 = bullish (call) spreads only; 1 = also bearish put spreads. Off since the Oct 2026 backtests:
+    # bearish trades cut Sharpe in both 2018-22 (0.49 vs 0.70) and 2023-26 (-0.04 vs 0.23).
+    allow_bearish = 0
     long_delta, short_delta = 0.60, 0.30
     dte = (21, 45, 30)
 

@@ -19,7 +19,9 @@ class Atlas(BaseBot):
     max_open = 3
     min_days_between = 5
 
-    require_dip = 1          # 1 = enter only on a dip; 0 = any day the uptrend/calm filters pass
+    # 0 = any day the uptrend/calm filters pass; 1 = also require a dip. Off since the Oct 2026 backtests:
+    # requiring a dip cut Sharpe in both 2018-22 (-0.78 vs 0.04) and 2023-26 (0.15 vs 0.44).
+    require_dip = 0
     short_delta = 0.20
     width = 5.0
     dte = (30, 50, 40)

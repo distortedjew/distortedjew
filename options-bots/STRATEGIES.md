@@ -17,15 +17,19 @@ credit received; for debit trades it means the debit paid.
 | ORCHARD | AAPL | Premium from a quality stock you'd be fine owning | The wheel (CSP → covered call) |
 
 ## ATLAS · SPY · bull put credit spreads
-- **Enter** when SPY > 200-day SMA **and** 50-day > 200-day (uptrend), **and** it's dipped
-  (close ≤ 10-day EMA or RSI(14) < 45), **and** 20-day realised vol < 35% (not mid-crash).
+- **Enter** when SPY > 200-day SMA **and** 50-day > 200-day (uptrend), **and** 20-day realised
+  vol < 35% (not mid-crash). An optional "only on dips" filter (close ≤ 10-day EMA or RSI(14) < 45,
+  `require_dip = 1`) is **off**: in backtests it made results worse in both 2018–22 and 2023–26,
+  because it bought into selloffs that kept falling.
 - **Trade:** sell the ~0.20-delta put and buy the put $5 lower, 30–50 DTE (target 40).
 - **Exit:** +50% of credit, or when the spread costs 2× the credit (−100%), or at 21 DTE.
 - Max 3 open, at least 5 days apart.
 
 ## NOVA · QQQ · trend debit spreads
 - **Bullish:** EMA20 > EMA50, close > EMA20, MACD histogram positive and rising, RSI 50–70.
-  **Bearish:** the mirror image, with RSI 30–50.
+  **Bearish** (the mirror image, with RSI 30–50, `allow_bearish = 1`) is **off**: in backtests the
+  bearish trades lost money in both 2018–22 and 2023–26. NOVA now trades uptrends and sits out
+  downtrends.
 - **Trade:** buy the ~0.60-delta and sell the ~0.30-delta option, 21–45 DTE (target 30).
   The spread costs no more than 75% of its width.
 - **Exit:** +80%, −50%, 7 DTE, or when EMA20 crosses back through EMA50.
