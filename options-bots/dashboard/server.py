@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT))
 from optionbots import backtest as bt  # noqa: E402
 from optionbots.bots import BOTS  # noqa: E402
 from optionbots.config import load_settings  # noqa: E402
+from optionbots.notify import Notifier  # noqa: E402
 from optionbots.store import Store  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent / "static"
@@ -166,6 +167,45 @@ class BacktestJobs:
 JOBS = BacktestJobs()
 
 
+STALE_SEC = 600
+
+
+def watchdog_pass(store: Store, notifier: Notifier, stale: set[str], started: float, now: float | None = None) -> None:
+    """Alert when a bot stops sending heartbeats (crashed, stopped, or hung) and again when it recovers.
+
+    Bots heartbeat every 30-120 s around the clock, market open or not, so silence always means trouble.
+    """
+    now = now or datetime.now(timezone.utc).timestamp()
+    rows = {r["bot"]: r["ts"] for r in store.db.execute("SELECT bot, ts FROM heartbeats").fetchall()}
+    for name, cls in BOTS.items():
+        ts = rows.get(name)
+        age = now - datetime.fromisoformat(ts).timestamp() if ts else now - started
+        if age > STALE_SEC:
+            stale.add(name)
+            notifier.alert(cls.title, "error",
+                           f"no heartbeat for {age / 60:.0f} min - check: sudo systemctl status optionbot@{name}",
+                           dedupe_key=f"watchdog:{name}")
+        elif name in stale:
+            stale.discard(name)
+            notifier.alert(cls.title, "info", "heartbeat is back - running again", dedupe_key=f"watchdog-ok:{name}:{now // 60}")
+
+
+def start_watchdog(db_path: Path, notifier: Notifier) -> None:
+    if not notifier.enabled:
+        return
+    store, stale, started = Store(db_path), set(), datetime.now(timezone.utc).timestamp()
+
+    def loop():
+        while True:
+            try:
+                watchdog_pass(store, notifier, stale, started)
+            except Exception as e:     # never let the watchdog take the dashboard down
+                print(f"watchdog error: {e}", flush=True)
+            threading.Event().wait(60)
+
+    threading.Thread(target=loop, name="watchdog", daemon=True).start()
+
+
 def make_handler(store: Store, password: str, user: str):
     lock = threading.Lock()     # one SQLite connection, many request threads
     expected = base64.b64encode(f"{user}:{password}".encode()).decode() if password else ""
@@ -250,7 +290,9 @@ def main() -> None:
         raise SystemExit("Refusing to expose the dashboard without DASHBOARD_PASSWORD")
     port = int(os.environ.get("DASHBOARD_PORT", 8080))
     store = Store(settings.db_path)
-    print(f"dashboard on http://{host}:{port}", flush=True)
+    notifier = Notifier.from_env()
+    start_watchdog(settings.db_path, notifier)
+    print(f"dashboard on http://{host}:{port} (bot watchdog alerts: {'on' if notifier.enabled else 'off'})", flush=True)
     ThreadingHTTPServer((host, port), make_handler(store, password, user)).serve_forever()
 
 

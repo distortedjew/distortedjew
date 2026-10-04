@@ -85,6 +85,9 @@ class BaseBot:
     def run_forever(self) -> None:
         self.event(f"{self.title} online - trading {self.underlying} options ({self.strategy})", alert="info",
                    dedupe_key=f"{self.name}:online")
+        if self.earnings_blackout and not self.settings.alphavantage_key:
+            self.event("earnings check is OFF (no ALPHAVANTAGE_API_KEY) - trades may be held through earnings",
+                       "warn", alert="warn", dedupe_key=f"{self.name}:no-earnings-key")
         while True:
             try:
                 wait = self.cycle()
@@ -210,6 +213,7 @@ class BaseBot:
         what = "credit" if res.price < 0 else "debit"
         self.event(f"OPEN #{pid} {prop.kind} x{res.filled_qty} @ {what} {abs(res.price):.2f} - {prop.reason}",
                    alert="open")
+        self.verify_legs(prop.legs, opening=True, ref=f"#{pid}")
 
     # ---------------------------------------------------------------- exits
     def position_value(self, pos: dict, quotes: dict[str, tuple[float, float]]) -> float | None:
@@ -267,11 +271,42 @@ class BaseBot:
             self.event(f"exit #{pos['id']} ({reason}) not filled: {res.status} - will retry", "warn",
                        alert="warn", dedupe_key=f"{self.name}:exitfail:{pos['id']}")
             return
+        self.verify_legs(legs, opening=False, ref=f"#{pos['id']} exit")
         exit_value = -res.price          # closing order net price -> value of the position
         pnl = (exit_value - pos["entry_price"]) * 100 * res.filled_qty
         self.store.close_position(pos["id"], exit_value, pnl, reason, qty_left=pos["qty"] - res.filled_qty)
         self.event(f"CLOSE #{pos['id']} x{res.filled_qty} - {reason} - P&L ${pnl:+,.0f}",
                    "info" if pnl >= 0 else "warn", alert="win" if pnl >= 0 else "loss")
+
+    def verify_legs(self, legs: list[Leg], opening: bool, ref: str) -> bool:
+        """After a fill, check at the broker that every leg went the intended way.
+
+        Opening: a leg we sold must now be held short, a leg we bought held long. Closing (legs are the
+        closing order): no leg may now be held on the side we just traded into, which would mean the
+        order opened new exposure instead of closing. On a mismatch the bot pauses itself and alerts.
+        """
+        bad: list[str] = []
+        for attempt in range(3):                 # positions can lag the fill by a moment
+            held = {p["symbol"]: p["qty"] for p in self.broker.positions()}
+            bad = []
+            for l in legs:
+                qty = held.get(l.symbol, 0)
+                if opening:
+                    if qty == 0 or (qty < 0) != (l.side == "sell"):
+                        bad.append(f"{l.symbol} expected {'short' if l.side == 'sell' else 'long'}, broker shows {qty:+g}")
+                elif qty != 0 and (qty > 0) == (l.side == "buy"):
+                    bad.append(f"{l.symbol} should have been closed, broker shows {qty:+g}")
+            if not bad:
+                return True
+            self.sleep(2)
+        try:
+            (self.settings.data_dir / f"PAUSE_{self.name}").touch()
+            paused = "bot PAUSED"
+        except OSError:
+            paused = "could not create the PAUSE file - stop the bot by hand"
+        self.event(f"ORDER DIRECTION CHECK FAILED {ref}: {'; '.join(bad)} - {paused}. Check the account at Alpaca now.",
+                   "error", alert="error")
+        return False
 
     def reconcile_missing(self, pos: dict, today: date, price: float) -> None:
         """The broker no longer holds any leg: expired, assigned, or closed by hand."""

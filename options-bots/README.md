@@ -115,6 +115,20 @@ then set `DISCORD_WEBHOOK_URL` in `.env`.
 Test it with `cd /opt/options-bots && sudo -u optionbots .venv/bin/python -m optionbots.notify`,
 then restart the bots.
 
+## Safety nets
+- **Order-direction check.** After every fill, the bot re-reads its positions at Alpaca and
+  checks that each leg went the intended way: legs it sold are short, legs it bought are
+  long, and closing orders really closed. On any mismatch it creates its own
+  `data/PAUSE_<bot>` file (no new trades), logs the details and sends a 🛑 alert. Check the
+  account at Alpaca, fix it, then delete the PAUSE file.
+- **Heartbeat watchdog.** The dashboard process watches all five bots around the clock and
+  sends a 🛑 alert if one goes quiet for 10 minutes (crashed, stopped or hung). It repeats
+  every 30 minutes while the bot is down, and sends a message when it's back.
+- **Loud alert test.** `python -m optionbots.notify` prints `FAILED: ...` and exits with code
+  1 if Telegram or Discord rejects the message.
+- **Earnings check off.** VOLT and ORCHARD send a ⚠️ warning on startup if
+  `ALPHAVANTAGE_API_KEY` is empty, because they can then hold a position through earnings.
+
 ## Control
 - Pause one bot: `sudo -u optionbots touch /opt/options-bots/data/PAUSE_volt`. Pause
   all bots with `.../data/PAUSE`. A paused bot opens nothing new but still manages and

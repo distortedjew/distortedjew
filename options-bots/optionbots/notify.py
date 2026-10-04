@@ -76,15 +76,25 @@ class Notifier:
                 log.warning("alert failed: %s", e)
 
     def _post(self, msg: str) -> None:
+        """Send to every configured channel; raise if any of them failed (after trying all)."""
+        errors = []
         if self.telegram_token and self.telegram_chat:
-            r = requests.post(f"https://api.telegram.org/bot{self.telegram_token}/sendMessage", timeout=15,
-                              json={"chat_id": self.telegram_chat, "text": msg, "disable_web_page_preview": True})
-            if r.status_code >= 400:
-                log.warning("telegram %s: %s", r.status_code, r.text[:200])
+            try:
+                r = requests.post(f"https://api.telegram.org/bot{self.telegram_token}/sendMessage", timeout=15,
+                                  json={"chat_id": self.telegram_chat, "text": msg, "disable_web_page_preview": True})
+                if r.status_code >= 400:
+                    errors.append(f"telegram {r.status_code}: {r.text[:200]}")
+            except requests.RequestException as e:
+                errors.append(f"telegram: {e}")
         if self.discord_url:
-            r = requests.post(self.discord_url, json={"content": msg[:1900]}, timeout=15)
-            if r.status_code >= 400:
-                log.warning("discord %s: %s", r.status_code, r.text[:200])
+            try:
+                r = requests.post(self.discord_url, json={"content": msg[:1900]}, timeout=15)
+                if r.status_code >= 400:
+                    errors.append(f"discord {r.status_code}: {r.text[:200]}")
+            except requests.RequestException as e:
+                errors.append(f"discord: {e}")
+        if errors:
+            raise RuntimeError("; ".join(errors))
 
 
 if __name__ == "__main__":
@@ -97,5 +107,9 @@ if __name__ == "__main__":
     n = Notifier.from_env()
     if not n.enabled:
         raise SystemExit("No alert channel configured: set TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID and/or DISCORD_WEBHOOK_URL in .env")
-    n._send(f"{ICONS['info']} TEST: {' '.join(sys.argv[1:]) or 'alerts are working'}")
+    try:
+        n._send(f"{ICONS['info']} TEST: {' '.join(sys.argv[1:]) or 'alerts are working'}")
+    except Exception as e:
+        print(f"FAILED: {e}", file=sys.stderr)
+        raise SystemExit(1)
     print("sent")
