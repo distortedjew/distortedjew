@@ -1,0 +1,26 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# runtime data
+backend/data/
+*.db
+*.db-wal
+*.db-shm
+logs/
+
+# dashboard
+dashboard/node_modules/
+dashboard/dist/
+dashboard/test-results/
+dashboard/playwright-report/
+*.tsbuildinfo
+
+# env
+.env
+.env.*
+!.env.example
