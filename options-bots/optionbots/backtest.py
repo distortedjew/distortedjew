@@ -32,7 +32,7 @@ from .store import Store
 
 # Strategy knobs the backtest page may override (all numeric class attributes).
 TUNABLE = ("take_profit", "stop_loss", "exit_dte", "max_open", "min_days_between",
-           "short_delta", "long_delta", "put_delta", "call_delta", "width")
+           "short_delta", "long_delta", "put_delta", "call_delta", "width", "require_dip", "allow_bearish")
 
 
 @dataclass
@@ -396,12 +396,39 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Backtest one bot on historical daily prices (modelled option prices).")
     ap.add_argument("bot", choices=sorted(BOTS))
     ap.add_argument("--years", type=float, default=3)
+    ap.add_argument("--start", help="YYYY-MM-DD (overrides --years)")
+    ap.add_argument("--end", help="YYYY-MM-DD (default: yesterday)")
     ap.add_argument("--capital", type=float, default=100_000)
+    ap.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
+                    help=f"strategy override, repeatable; keys: {', '.join(TUNABLE)}")
+    ap.add_argument("--model", action="append", default=[], metavar="KEY=VALUE",
+                    help=f"pricing-model override, repeatable; keys: {', '.join(Model.__dataclass_fields__)}")
+    ap.add_argument("--risk", type=float, help="risk per trade (share of equity)")
+    ap.add_argument("--line", action="store_true", help="one summary line (for comparing many runs)")
     ap.add_argument("--json", action="store_true", help="print the full result as JSON")
     a = ap.parse_args()
-    end = date.today() - timedelta(days=1)
-    res = run_backtest(a.bot, end - timedelta(days=int(a.years * 365)), end, a.capital)
-    if a.json:
+
+    def pairs(items: list[str], allowed) -> dict:
+        out = {}
+        for it in items:
+            k, _, v = it.partition("=")
+            if k not in allowed or not v:
+                ap.error(f"bad override {it!r}; allowed keys: {', '.join(allowed)}")
+            out[k] = float(v)
+        return out
+
+    end = date.fromisoformat(a.end) if a.end else date.today() - timedelta(days=1)
+    start = date.fromisoformat(a.start) if a.start else end - timedelta(days=int(a.years * 365))
+    overrides = pairs(a.set, TUNABLE)
+    model = Model(**pairs(a.model, list(Model.__dataclass_fields__)))
+    res = run_backtest(a.bot, start, end, a.capital, overrides, model, a.risk)
+    if a.line:
+        s = res["stats"]
+        tag = " ".join(f"{k}={v:g}" for k, v in {**overrides, **pairs(a.model, list(Model.__dataclass_fields__))}.items()) or "live settings"
+        print(f"{res['bot'].upper():8}{res['start']}..{res['end']}  ret {s['total_return']:+6.1%}  same-risk B&H "
+              f"{s['same_risk_buy_hold_return']:+6.1%}  maxDD {s['max_drawdown']:6.1%}  Sharpe {s['sharpe'] or 0:5.2f}  "
+              f"PF {s['profit_factor'] or 0:4.2f}  win {(s['win_rate'] or 0):4.0%}  n {s['trades']:3}  | {tag}")
+    elif a.json:
         print(json.dumps(res, default=str))
     else:
         s = res["stats"]

@@ -19,6 +19,7 @@ class Atlas(BaseBot):
     max_open = 3
     min_days_between = 5
 
+    require_dip = 1          # 1 = enter only on a dip; 0 = any day the uptrend/calm filters pass
     short_delta = 0.20
     width = 5.0
     dte = (30, 50, 40)
@@ -35,7 +36,7 @@ class Atlas(BaseBot):
         dip = closes[-1] <= e10 or r14 < 45
         calm = vol < 0.35
         state["rule"] = f"uptrend={uptrend} dip={dip} calm={calm}"
-        return ("bullish" if uptrend and dip and calm else None), state
+        return ("bullish" if uptrend and (dip or not self.require_dip) and calm else None), state
 
     def propose(self, direction, price, bars):
         return self.credit_spread("put", price, self.short_delta, self.width, self.dte, "bullish",

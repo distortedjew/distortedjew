@@ -19,6 +19,7 @@ class Nova(BaseBot):
     max_open = 2
     min_days_between = 3
 
+    allow_bearish = 1        # 0 = only take bullish (call) spreads
     long_delta, short_delta = 0.60, 0.30
     dte = (21, 45, 30)
 
@@ -36,7 +37,7 @@ class Nova(BaseBot):
         c = closes[-1]
         if e20 > e50 and c > e20 and hist[-1] > 0 and hist[-1] > hist[-2] and 50 <= r <= 70:
             return "bullish", state
-        if e20 < e50 and c < e20 and hist[-1] < 0 and hist[-1] < hist[-2] and 30 <= r <= 50:
+        if self.allow_bearish and e20 < e50 and c < e20 and hist[-1] < 0 and hist[-1] < hist[-2] and 30 <= r <= 50:
             return "bearish", state
         return None, state
 

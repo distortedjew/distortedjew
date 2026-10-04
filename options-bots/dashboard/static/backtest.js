@@ -10,6 +10,8 @@ const BT_LABELS = {
   put_delta: ["Put delta", "cash-secured put"],
   call_delta: ["Call delta", "covered call"],
   width: ["Spread width $", "strike distance"],
+  require_dip: ["Require dip", "1 = enter only on dips, 0 = any uptrend day"],
+  allow_bearish: ["Allow bearish", "1 = calls and puts, 0 = bullish only"],
 };
 const MODEL_LABELS = {
   vol_premium: ["Vol premium ×", "implied vol = realised vol × this"],
