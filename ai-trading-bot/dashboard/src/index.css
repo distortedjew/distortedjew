@@ -1,0 +1,427 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+/*
+ * AI Trading Bot — design tokens ("quiet terminal").
+ *
+ * Every color is a semantic token. Tailwind's default palette is removed on purpose:
+ * use bg-surface / text-fg-muted / text-up / border-line … never raw hex or bg-red-500.
+ * Light values live on :root, dark values on .dark (the default, set before first paint
+ * by the inline script in index.html). Canvas charts read the same values from
+ * src/components/charts/chart-theme.ts — keep the two in sync.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-*: initial;
+
+  --font-sans:
+    "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:
+    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Extra type steps on top of Tailwind's scale (xs 12 · sm 14 · base 16 · lg 18 · xl 20 · 2xl 24). */
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.875rem;
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1rem;
+  --text-label--letter-spacing: 0.07em;
+  --text-dense: 0.8125rem;
+  --text-dense--line-height: 1.25rem;
+  --text-kpi: 1.625rem;
+  --text-kpi--line-height: 2rem;
+  --text-kpi--letter-spacing: -0.02em;
+
+  --breakpoint-xs: 30rem;
+  --breakpoint-3xl: 112rem;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-flash-up: flash-up 1s var(--ease-out-quart);
+  --animate-flash-down: flash-down 1s var(--ease-out-quart);
+  --animate-flash-accent: flash-accent 1.2s var(--ease-out-quart);
+  --animate-spin: spin 0.9s linear infinite;
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    70%,
+    100% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes flash-up {
+    0% {
+      color: var(--up);
+      background-color: color-mix(in oklab, var(--up) 18%, transparent);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+  @keyframes flash-down {
+    0% {
+      color: var(--down);
+      background-color: color-mix(in oklab, var(--down) 18%, transparent);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+  @keyframes flash-accent {
+    0% {
+      box-shadow:
+        0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent),
+        var(--shadow-card-v);
+    }
+    100% {
+      box-shadow:
+        0 0 0 1px transparent,
+        var(--shadow-card-v);
+    }
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+/* Theme-switching tokens: utilities reference the CSS variables directly. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-elevated: var(--elevated);
+  --color-overlay: var(--overlay);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-fg-disabled: var(--fg-disabled);
+  --color-fg-inverse: var(--fg-inverse);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-subtle: var(--line-subtle);
+
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --color-down-solid: var(--down-solid);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-accent: var(--accent);
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-solid-hover: var(--accent-solid-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-ai: var(--ai);
+
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --shadow-card: var(--shadow-card-v);
+  --shadow-popover: var(--shadow-popover-v);
+  --shadow-glow: var(--shadow-glow-v);
+}
+
+/* ---------------------------------------------------------------- light */
+:root {
+  --canvas: #f5f7fb;
+  --surface: #ffffff;
+  --surface-2: #f7f8fb;
+  --surface-3: #eef1f6;
+  --elevated: #ffffff;
+  --overlay: rgb(15 23 42 / 0.32);
+
+  --fg: #0f172a;
+  --fg-muted: #475467;
+  --fg-subtle: #667085;
+  --fg-disabled: #98a2b3;
+  --fg-inverse: #ffffff;
+
+  --line: #e4e7ee;
+  --line-strong: #d0d5dd;
+  --line-subtle: #eef0f4;
+
+  --up: #037a54;
+  --down: #c4283a;
+  --down-solid: #c62a3f;
+  --warning: #9a6700;
+  --info: #1d6fe0;
+  --accent: #4f5bd5;
+  --accent-solid: #4f5bd5;
+  --accent-solid-hover: #4350c8;
+  --accent-fg: #ffffff;
+  --ai: #7c3aed;
+
+  /* Categorical chart slots (validated: dataviz six checks, light surface #ffffff). */
+  --series-1: #2a78d6;
+  --series-2: #e87ba4;
+  --series-3: #eda100;
+  --series-4: #4a3aa7;
+  --series-5: #eb6834;
+  --series-6: #1baf7a;
+
+  --card-sheen: linear-gradient(180deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0) 100%);
+  --shadow-card-v: 0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.04);
+  --shadow-popover-v: 0 16px 40px -12px rgb(15 23 42 / 0.22), 0 2px 6px -1px rgb(15 23 42 / 0.06);
+  --shadow-glow-v: 0 0 0 1px rgb(79 91 213 / 0.25), 0 8px 24px -8px rgb(79 91 213 / 0.35);
+  --glow-top: radial-gradient(1100px 420px at 50% -160px, rgb(79 91 213 / 0.07), transparent 70%);
+}
+
+/* ----------------------------------------------------------------- dark */
+.dark {
+  --canvas: #07090d;
+  --surface: #0d1219;
+  --surface-2: #121924;
+  --surface-3: #18202c;
+  --elevated: #121823;
+  --overlay: rgb(2 4 8 / 0.66);
+
+  --fg: #e7ebf3;
+  --fg-muted: #98a2b3;
+  --fg-subtle: #7d879a;
+  --fg-disabled: #4b5466;
+  --fg-inverse: #07090d;
+
+  --line: rgb(148 163 184 / 0.1);
+  --line-strong: rgb(148 163 184 / 0.18);
+  --line-subtle: rgb(148 163 184 / 0.06);
+
+  --up: #2ebd85;
+  --down: #f6465d;
+  --down-solid: #d9304a;
+  --warning: #f0b90b;
+  --info: #4c9dff;
+  --accent: #7c8cff;
+  --accent-solid: #5865f2;
+  --accent-solid-hover: #6672f5;
+  --accent-fg: #ffffff;
+  --ai: #a78bfa;
+
+  /* Categorical chart slots (validated: dataviz six checks, dark surface #0e131b). */
+  --series-1: #3987e5;
+  --series-2: #d55181;
+  --series-3: #c98500;
+  --series-4: #9085e9;
+  --series-5: #d95926;
+  --series-6: #199e70;
+
+  --card-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.022) 0%, rgb(255 255 255 / 0) 96px);
+  --shadow-card-v: inset 0 1px 0 0 rgb(255 255 255 / 0.04), 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-popover-v:
+    0 20px 48px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(148 163 184 / 0.08), inset 0 1px 0 0 rgb(255 255 255 / 0.05);
+  --shadow-glow-v: 0 0 0 1px rgb(124 140 255 / 0.3), 0 8px 28px -8px rgb(124 140 255 / 0.45);
+  --glow-top: radial-gradient(1100px 440px at 50% -170px, rgb(124 140 255 / 0.085), transparent 70%);
+}
+
+/* ----------------------------------------------------------------- base */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--canvas);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    /* Inter: open 4/6/9 for faster digit recognition. */
+    font-feature-settings: "cv02", "cv03", "cv04";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--accent) 32%, transparent);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--accent) 75%, transparent);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* Native date/time pickers follow the theme. */
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"] {
+    color-scheme: light;
+  }
+  .dark input[type="date"],
+  .dark input[type="datetime-local"],
+  .dark input[type="time"] {
+    color-scheme: dark;
+  }
+}
+
+/* ------------------------------------------------------------ utilities */
+
+/* Numbers that update or align: monospace + tabular figures. */
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" 0;
+  letter-spacing: -0.01em;
+}
+
+/* Inter with tabular figures, for large animated values (KPI) that must not jitter. */
+@utility num-sans {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "cv02", "cv03", "cv04";
+}
+
+/* 11px uppercase section label. */
+@utility label-caps {
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
+  letter-spacing: var(--text-label--letter-spacing);
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--fg-subtle);
+}
+
+/* Card surface: lifted panel with hairline border and inner top highlight. */
+@utility surface-card {
+  background-color: var(--surface);
+  background-image: var(--card-sheen);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card-v);
+}
+
+/* Soft glass for sticky bars and overlays. */
+@utility surface-glass {
+  background-color: color-mix(in oklab, var(--surface) 74%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
+/* Elevated floating panel (popover, menu, dialog). */
+@utility surface-elevated {
+  background-color: var(--elevated);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-popover-v);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility skeleton-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    color-mix(in oklab, var(--surface-3) 85%, var(--fg) 4%) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Theme flips instantly (see lib/theme.ts). */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
+/* Radix popper content (tooltip, popover, menu, select) enter / exit. */
+@keyframes popper-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(var(--popper-shift, 2px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes popper-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+.popper-motion[data-state="open"],
+.popper-motion[data-state="delayed-open"],
+.popper-motion[data-state="instant-open"] {
+  animation: popper-in 140ms var(--ease-out-quart);
+}
+.popper-motion[data-state="closed"] {
+  animation: popper-out 100ms ease-in forwards;
+}
+.popper-motion[data-side="top"] {
+  --popper-shift: 3px;
+}
+.popper-motion[data-side="bottom"] {
+  --popper-shift: -3px;
+}
+
+/* ---------------------------------------------------------------- motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
