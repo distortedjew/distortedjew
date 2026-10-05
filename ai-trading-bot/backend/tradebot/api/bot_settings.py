@@ -6,6 +6,7 @@ Read-only fields are owned by the server environment, never by a client:
 ``PUT /api/settings`` merges the fields the client sent onto the current settings
 (fields it left out keep their values), normalizes symbols, checks the cross-field
 rules below, and saves a new version only when something actually changed.
+``restart_required`` lists saved fields the running engine reports it did not apply.
 
 Validation on top of the model's own bounds: symbols are ``BASE/QUOTE``
 (``^[A-Z0-9]{2,12}/[A-Z0-9]{2,8}$``, case-insensitive on input) and unique; the primary
@@ -34,9 +35,6 @@ READ_ONLY_FIELDS = frozenset(
         "notifications.email_configured",
     }
 )
-# The engine resubscribes its market feed and rebuilds per-symbol state on its own when
-# these change, but positions already open on a removed symbol stay managed until they
-# close; every other field applies on the engine's next settings check (~2 s).
 _MODEL_ID = re.compile(r"^[A-Za-z0-9][\w.\-]*/[\w.\-:]+$")
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -99,9 +97,7 @@ def normalize(settings: BotSettings) -> BotSettings:
 
     model = ai.model.strip()
     if not _MODEL_ID.fullmatch(model):
-        errors.append(
-            error_item(("body", "ai", "model"), "Model id must look like provider/model", ai.model)
-        )
+        errors.append(error_item(("body", "ai", "model"), "Model id must look like provider/model", ai.model))
     fallbacks: list[str] = []
     for i, raw in enumerate(ai.fallback_models):
         candidate = raw.strip()
@@ -125,7 +121,9 @@ def normalize(settings: BotSettings) -> BotSettings:
     email_to = (notifications.email_to or "").strip() or None
     if email_to is not None and not _EMAIL.fullmatch(email_to):
         errors.append(
-            error_item(("body", "notifications", "email_to"), "Not a valid email address", notifications.email_to)
+            error_item(
+                ("body", "notifications", "email_to"), "Not a valid email address", notifications.email_to
+            )
         )
     if errors:
         raise RequestValidationError(errors)
@@ -154,11 +152,31 @@ def changed_paths(before: BotSettings, after: BotSettings) -> list[str]:
     return paths
 
 
+def restart_required(settings: BotSettings, engine: EngineStatus | None, engine_online: bool) -> list[str]:
+    """Saved settings the running engine did not pick up.
+
+    The engine reports the settings version it applied plus the values it is actually
+    running with for the fields mirrored in its status. Once it has applied this version,
+    any of those that still differ need an engine restart to take effect. Before that
+    (or while the engine is offline) nothing can be said, so the list is empty.
+    """
+    if engine is None or not engine_online or engine.settings_version < settings.version:
+        return []
+    trading = settings.trading
+    mismatched = {
+        "trading.symbols": set(engine.symbols) != set(trading.symbols),
+        "trading.primary_symbol": engine.primary_symbol != trading.primary_symbol,
+        "trading.decision_timeframe": engine.decision_timeframe != trading.decision_timeframe,
+        "trading.strategy": engine.strategy != trading.strategy,
+    }
+    return [path for path, differs in mismatched.items() if differs]
+
+
 def settings_response(
     settings: BotSettings, config: EnvConfig, engine: EngineStatus | None, engine_online: bool
 ) -> SettingsResponse:
     return SettingsResponse(
         settings=with_server_fields(settings, config),
         applied_version=engine.settings_version if engine is not None and engine_online else None,
-        restart_required=[],
+        restart_required=restart_required(settings, engine, engine_online),
     )

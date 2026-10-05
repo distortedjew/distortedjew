@@ -9,7 +9,7 @@ Component states follow ``schemas.HealthState``: ``operational`` (green), ``warn
 | api | always (it is answering) | | |
 | openrouter | last request succeeded, 24 h error rate < 20 % | error rate ≥ 20 % | last request failed; *disabled* when no API key is configured (local heuristic analyst in use) |
 | market_data | feed connected, last tick < 15 s old | tick 15–60 s old, or simulated feed after a Binance fallback | feed disconnected, data stale (> 60 s) or engine offline |
-| database | queries answer in < 250 ms | slower | query failed |
+| database | queries answer in < 250 ms | slower | (a failing database fails the request: 500) |
 | websocket | broadcaster running | | broadcaster stopped |
 """
 
@@ -21,6 +21,7 @@ import threading
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import psutil
 
@@ -74,12 +75,19 @@ class ProcessMonitor:
     both counters are primed at construction so the first reading is meaningful.
     """
 
+    # Readings closer together than this are too noisy; the previous value is reported.
+    MIN_SAMPLE_SEC = 0.5
+
     def __init__(self) -> None:
         self._process = psutil.Process()
         self.started_at = datetime.fromtimestamp(self._process.create_time(), UTC)
         self._lock = threading.Lock()
         self._process.cpu_percent(None)
-        psutil.cpu_percent(None)
+        # psutil.cpu_percent() keeps its last sample per calling thread and requests run on
+        # varying worker threads, so the host figure is computed from our own samples.
+        self._cpu_times = psutil.cpu_times()
+        self._cpu_sampled_at = time.monotonic()
+        self._host_cpu = 0.0
 
     def process(self) -> ProcessStats:
         with self._lock:
@@ -95,10 +103,8 @@ class ProcessMonitor:
 
     def host(self, disk_path: Path) -> HostStats:
         memory = psutil.virtual_memory()
-        with self._lock:
-            cpu = psutil.cpu_percent(None)
         return HostStats(
-            cpu_pct=round(cpu, 1),
+            cpu_pct=round(self._host_cpu_pct(), 1),
             cpu_count=psutil.cpu_count() or 1,
             ram_used_mb=round((memory.total - memory.available) / _MB, 1),
             ram_total_mb=round(memory.total / _MB, 1),
@@ -108,6 +114,28 @@ class ProcessMonitor:
             python=platform.python_version(),
             platform=platform.platform(terse=True),
         )
+
+    def _host_cpu_pct(self) -> float:
+        """Busy share of all CPUs since the previous reading."""
+        with self._lock:
+            now = time.monotonic()
+            if now - self._cpu_sampled_at >= self.MIN_SAMPLE_SEC:
+                sample = psutil.cpu_times()
+                total = _cpu_total(sample) - _cpu_total(self._cpu_times)
+                idle = _cpu_idle(sample) - _cpu_idle(self._cpu_times)
+                if total > 0:
+                    self._host_cpu = min(100.0, max(0.0, (total - idle) / total * 100.0))
+                self._cpu_times, self._cpu_sampled_at = sample, now
+            return self._host_cpu
+
+
+def _cpu_total(times: Any) -> float:
+    # guest time is already included in user / nice on Linux
+    return sum(times) - getattr(times, "guest", 0.0) - getattr(times, "guest_nice", 0.0)
+
+
+def _cpu_idle(times: Any) -> float:
+    return times.idle + getattr(times, "iowait", 0.0)
 
 
 def _disk_pct(path: Path) -> float:
@@ -289,14 +317,7 @@ def market_data_health(status: BotStatus, newest_tick: datetime | None, now: dat
     )
 
 
-def database_health(stats: DatabaseStats | None, error: str | None = None) -> ComponentHealth:
-    if stats is None:
-        return ComponentHealth(
-            key="database",
-            name="Database",
-            state="error",
-            message=f"Database error: {error or 'unavailable'}",
-        )
+def database_health(stats: DatabaseStats) -> ComponentHealth:
     slow = stats.query_latency_ms >= SLOW_QUERY_MS
     return ComponentHealth(
         key="database",

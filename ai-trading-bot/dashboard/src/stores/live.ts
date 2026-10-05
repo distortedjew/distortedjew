@@ -19,6 +19,8 @@ export interface LiveState {
   nextRetryAt: number | null;
   connectedAt: number | null;
   reconnects: number;
+  /** The API rejected the dashboard token on the WebSocket (close 4401). */
+  unauthorized: boolean;
   /** Client time (ms) of the last frame received (throttled to ~1 s). */
   lastFrameAt: number | null;
   lastEventId: number | null;
@@ -36,6 +38,7 @@ export interface LiveState {
     nextRetryAt: number | null;
     connectedAt: number | null;
     reconnects: number;
+    unauthorized: boolean;
   }) => void;
   noteFrame: (at: number) => void;
   setHello: (hello: WsHelloData) => void;
@@ -52,6 +55,7 @@ const initial = {
   nextRetryAt: null,
   connectedAt: null,
   reconnects: 0,
+  unauthorized: false,
   lastFrameAt: null,
   lastEventId: null,
   hello: null,
@@ -79,8 +83,8 @@ export function mergeEvents(current: Event[], incoming: Event[], max = EVENT_BUF
 export const useLiveStore = create<LiveState>()((set, get) => ({
   ...initial,
 
-  setConnection: ({ status, attempt, nextRetryAt, connectedAt, reconnects }) =>
-    set({ connection: status, reconnectAttempt: attempt, nextRetryAt, connectedAt, reconnects }),
+  setConnection: ({ status, attempt, nextRetryAt, connectedAt, reconnects, unauthorized }) =>
+    set({ connection: status, reconnectAttempt: attempt, nextRetryAt, connectedAt, reconnects, unauthorized }),
 
   noteFrame: (at) => {
     const last = get().lastFrameAt;

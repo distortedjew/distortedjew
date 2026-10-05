@@ -21,7 +21,7 @@ from collections.abc import Callable, Sequence
 import numpy as np
 
 from ..schemas import TIMEFRAME_SECONDS, TIMEFRAMES, Candle, Ticker
-from .candles import Aggregator, aggregate
+from .candles import Aggregator, CandleArrays, aggregate
 from .feed import CandleEvent, Emit, Feed, MarketHistory, StatusEvent, StoredMarket, TickerEvent, TickEvent
 from .simulator import (
     DAY,
@@ -30,7 +30,6 @@ from .simulator import (
     DayBlock,
     MarketSimulator,
     MarketState,
-    MinuteArrays,
     _copy_state,
     _round,
     generate_history,
@@ -128,14 +127,14 @@ class SimulatedFeed(Feed):
         self._start_live(hist.current, end, {s: hist.minutes[s].window(end - DAY, end) for s in syms})
         return MarketHistory(candles=candles, end=end, generated=True)
 
-    def _depth_candles(self, minutes: MinuteArrays, end: int) -> dict[str, list[Candle]]:
-        out: dict[str, list[Candle]] = {}
+    def _depth_candles(self, minutes: CandleArrays, end: int) -> dict[str, CandleArrays]:
+        """Closed candles of every timeframe, each kept to its retention depth."""
+        out: dict[str, CandleArrays] = {}
         for tf in TIMEFRAMES:
             sec = TIMEFRAME_SECONDS[tf]
             days = self.minute_days if tf == "1m" else DEPTH_DAYS[tf]
             since = None if days is None else (end // DAY - days) * DAY
-            agg = minutes.aggregate(sec)
-            out[tf] = agg.window(since, end - end % sec).to_candles()
+            out[tf] = minutes.aggregate(sec).window(since, end - end % sec)
         return out
 
     def _resume(self, syms: list[str], stored: StoredMarket, end: int) -> MarketHistory:
@@ -150,8 +149,8 @@ class SimulatedFeed(Feed):
             state = MarketSimulator.initial_state(self.seed, today - 1)
             state.assets = {s: _asset_at(stored.last_1m[s].close) for s in have}
         sim = MarketSimulator(self.seed, have, state)
-        candles: dict[str, dict[str, list[Candle]]] = {}
-        gap: dict[str, list[MinuteArrays]] = {s: [] for s in have}
+        candles: dict[str, dict[str, CandleArrays]] = {}
+        gap: dict[str, list[CandleArrays]] = {s: [] for s in have}
         aligned: set[str] = set()
         day_state = _copy_state(sim.state)
         current: DayBlock | None = None
@@ -167,13 +166,13 @@ class SimulatedFeed(Feed):
                     gap[s].append(block.candles(s, RECENT_SUBSTEPS).window(lo, hi))
             current = block
         assert current is not None
-        recent: dict[str, MinuteArrays] = {}
+        recent: dict[str, CandleArrays] = {}
         for s in have:
             last = stored.last_1m[s]
             prior = sorted((c for c in stored.recent_1m.get(s, []) if c.time <= last.time), key=lambda c: c.time)
-            parts = [_arrays(prior)] if prior else [_arrays([last])]
+            parts = [CandleArrays.from_candles(prior or [last])]
             parts.extend(p for p in gap[s] if len(p))
-            combined = MinuteArrays.concat(parts)
+            combined = CandleArrays.concat(parts)
             candles[s] = _gap_candles(combined, last.time + 60, end)
             recent[s] = combined.window(end - DAY, end)
         # symbols without stored data: full history on the same market path
@@ -230,7 +229,8 @@ class SimulatedFeed(Feed):
                 continue  # stored data ends after this day: align on a later block
             regen = block.logp_open[block.index(s)] if idx < 0 else block.logp[idx, block.index(s)]
             delta = math.log(last.close) - float(regen)
-            if abs(delta) > 1e-12:
+            # the stored close is rounded to the tick: within half a tick the path already matches
+            if abs(math.exp(float(regen)) - last.close) > 0.5 * tick_size(last.close):
                 deltas[block.index(s)] = delta
                 sim.state.assets[s].logp += delta
                 day_state.assets[s].logp += delta
@@ -257,8 +257,8 @@ class SimulatedFeed(Feed):
         if not adds:
             return MarketHistory(candles={}, end=self.minute)
         end = self.minute
-        candles: dict[str, dict[str, list[Candle]]] = {}
-        recent: dict[str, MinuteArrays] = {}
+        candles: dict[str, dict[str, CandleArrays]] = {}
+        recent: dict[str, CandleArrays] = {}
         hist = generate_history(
             self.seed,
             adds,
@@ -275,7 +275,7 @@ class SimulatedFeed(Feed):
                 shift = math.log(last.close) - math.log(float(minutes.c[idx]))
                 tick = tick_size(last.close)
                 scale = math.exp(shift)
-                minutes = MinuteArrays(
+                minutes = CandleArrays(
                     minutes.t,
                     _round(minutes.o * scale, tick),
                     _round(minutes.h * scale, tick),
@@ -286,8 +286,8 @@ class SimulatedFeed(Feed):
                 hist.day_state.assets[s].logp += shift
                 gap_start = last.time + 60
                 candles[s] = {
-                    tf: [c for c in cs if c.time + TIMEFRAME_SECONDS[tf] > gap_start]
-                    for tf, cs in self._depth_candles(minutes, end).items()
+                    tf: arrays.window(gap_start - gap_start % TIMEFRAME_SECONDS[tf])
+                    for tf, arrays in self._depth_candles(minutes, end).items()
                 }
             else:
                 candles[s] = self._depth_candles(minutes, end)
@@ -312,7 +312,7 @@ class SimulatedFeed(Feed):
         self,
         block: DayBlock,
         end: int,
-        recent: dict[str, MinuteArrays],
+        recent: dict[str, CandleArrays],
         symbols: Sequence[str] | None = None,
     ) -> None:
         """Position the live reveal at minute ``end`` of ``block`` (initialising ``symbols``)."""
@@ -503,34 +503,22 @@ def _asset_at(price: float):
     return AssetState(logp=math.log(price))
 
 
-def _arrays(candles: Sequence[Candle]) -> MinuteArrays:
-    return MinuteArrays(
-        np.array([c.time for c in candles], dtype=np.int64),
-        np.array([c.open for c in candles]),
-        np.array([c.high for c in candles]),
-        np.array([c.low for c in candles]),
-        np.array([c.close for c in candles]),
-        np.array([c.volume for c in candles]),
-    )
-
-
-def _gap_candles(combined: MinuteArrays, gap_start: int, end: int) -> dict[str, list[Candle]]:
+def _gap_candles(combined: CandleArrays, gap_start: int, end: int) -> dict[str, CandleArrays]:
     """Closed candles of every timeframe touched by the gap ``[gap_start, end)``.
 
-    ``combined`` holds 1m candles from 00:00 UTC of the last stored day through the gap, so
-    every bucket that straddles the restart is rebuilt from complete minutes.
+    ``combined`` holds stored 1m candles (at least since 00:00 UTC of the last stored day)
+    followed by the regenerated gap, so every bucket straddling the restart is rebuilt from
+    complete minutes.
     """
-    out: dict[str, list[Candle]] = {}
-    minutes = combined.to_candles()
+    out: dict[str, CandleArrays] = {}
     for tf in TIMEFRAMES:
         sec = TIMEFRAME_SECONDS[tf]
-        first_bucket = gap_start - gap_start % sec
-        closed_end = end - end % sec
         if tf == "1m":
-            out[tf] = [c for c in minutes if gap_start <= c.time < end]
+            out[tf] = combined.window(gap_start, end)
             continue
-        rel = [c for c in minutes if first_bucket <= c.time < closed_end]
-        out[tf] = aggregate(rel, tf, include_partial=False) if rel else []
+        first_bucket = gap_start - gap_start % sec
+        rel = combined.window(first_bucket, end - end % sec).to_candles()
+        out[tf] = CandleArrays.from_candles(aggregate(rel, tf, include_partial=False)) if rel else CandleArrays.empty()
     return out
 
 

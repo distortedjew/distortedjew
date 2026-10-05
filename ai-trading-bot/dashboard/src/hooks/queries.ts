@@ -65,12 +65,17 @@ const SLOW_REFRESH_MS = 60_000;
 
 // ---------------------------------------------------------------- live state (WS-fed)
 
+/** Shared fetcher for GET /api/status (also used by selector hooks such as useTradingMode). */
+export function fetchStatus({ signal }: { signal?: AbortSignal }): Promise<BotStatus> {
+  return api.get<BotStatus>("/api/status", { signal, timeoutMs: 8_000 });
+}
+
 /** GET /api/status — BotStatus. Kept fresh by `status` frames (≥ every 2 s). */
 export function useStatus(options: QueryOpts = {}) {
   const fallback = useFallbackInterval();
   return useQuery({
     queryKey: queryKeys.status(),
-    queryFn: ({ signal }) => api.get<BotStatus>("/api/status", { signal, timeoutMs: 8_000 }),
+    queryFn: fetchStatus,
     refetchInterval: options.refetchInterval ?? fallback,
     enabled: options.enabled,
     staleTime: options.staleTime ?? 5_000,

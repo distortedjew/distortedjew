@@ -43,7 +43,7 @@ from dataclasses import asdict, dataclass, field
 import numpy as np
 
 from ..schemas import Candle
-from .candles import aggregate_arrays
+from .candles import CandleArrays
 from .symbols import normalize, qty_decimals, tick_size
 
 MINUTES = 1440
@@ -111,11 +111,11 @@ REGIMES: dict[str, RegimeSpec] = {
         (("range", 0.45), ("breakout_up", 0.25), ("breakout_down", 0.22), ("volatile", 0.08)),
     ),
     "bull": RegimeSpec(
-        0.009, 1.00, 56.0, 0.8, 0.6, False,
+        0.008, 1.00, 56.0, 0.8, 0.6, False,
         (("range", 0.45), ("volatile", 0.20), ("quiet", 0.15), ("bear", 0.10), ("breakout_down", 0.10)),
     ),
     "bear": RegimeSpec(
-        -0.010, 1.15, 44.0, 1.2, 0.35, False,
+        -0.0095, 1.15, 44.0, 1.2, 0.35, False,
         (("range", 0.45), ("volatile", 0.25), ("quiet", 0.10), ("bull", 0.10), ("breakout_up", 0.10)),
     ),
     "volatile": RegimeSpec(
@@ -127,7 +127,7 @@ REGIMES: dict[str, RegimeSpec] = {
         (("bull", 0.60), ("volatile", 0.20), ("range", 0.20)),
     ),
     "breakout_down": RegimeSpec(
-        -0.045, 1.50, 3.0, 2.0, 0.25, False,
+        -0.045, 1.50, 3.5, 2.0, 0.25, False,
         (("bear", 0.60), ("volatile", 0.25), ("range", 0.15)),
     ),
 }  # fmt: skip
@@ -300,7 +300,7 @@ class DayBlock:
         delta = self.logp[:, i] - start
         return start[:, None] + w - frac[None, :] * w[:, -1:] + frac[None, :] * delta[:, None]
 
-    def candles(self, symbol: str, substeps: int) -> MinuteArrays:
+    def candles(self, symbol: str, substeps: int) -> CandleArrays:
         """The day's 1m OHLCV arrays for one asset (prices rounded to the asset's tick)."""
         i = self.index(symbol)
         path = self.bridge(symbol, substeps)
@@ -313,7 +313,7 @@ class DayBlock:
         price = float(np.exp(self.logp[-1, i]))
         volume = np.round(self.volume[:, i], qty_decimals(price) + 1)
         t = self.start + np.arange(MINUTES, dtype=np.int64) * 60
-        return MinuteArrays(t, open_, high, low, close, volume)
+        return CandleArrays(t, open_, high, low, close, volume)
 
 
 def _round(values: np.ndarray, tick: float) -> np.ndarray:
@@ -324,67 +324,6 @@ def _round(values: np.ndarray, tick: float) -> np.ndarray:
 def _rng(seed: int, purpose: str, day: int, symbol: str = "", extra: int = 0) -> np.random.Generator:
     entropy = [seed & 0xFFFFFFFF, _key(purpose), day, _key(symbol) if symbol else 0, extra]
     return np.random.Generator(np.random.PCG64(np.random.SeedSequence(entropy)))
-
-
-@dataclass
-class MinuteArrays:
-    """Contiguous 1m candles as numpy arrays (time = open, unix seconds)."""
-
-    t: np.ndarray
-    o: np.ndarray
-    h: np.ndarray
-    lo: np.ndarray
-    c: np.ndarray
-    v: np.ndarray
-
-    def __len__(self) -> int:
-        return int(self.t.size)
-
-    @classmethod
-    def concat(cls, parts: Sequence[MinuteArrays]) -> MinuteArrays:
-        return cls(*(np.concatenate([getattr(p, f) for p in parts]) for f in ("t", "o", "h", "lo", "c", "v")))
-
-    def window(self, start: int | None = None, end: int | None = None) -> MinuteArrays:
-        """Candles with ``start <= time < end``."""
-        lo = 0 if start is None else int(np.searchsorted(self.t, start, side="left"))
-        hi = len(self) if end is None else int(np.searchsorted(self.t, end, side="left"))
-        return MinuteArrays(self.t[lo:hi], self.o[lo:hi], self.h[lo:hi], self.lo[lo:hi], self.c[lo:hi], self.v[lo:hi])
-
-    def aggregate(self, seconds: int) -> MinuteArrays:
-        """Higher-timeframe candles (the series must start on a bucket boundary)."""
-        if seconds == 60:
-            return self
-        factor = seconds // 60
-        return MinuteArrays(*aggregate_arrays(self.t, self.o, self.h, self.lo, self.c, self.v, factor))
-
-    def to_candles(self) -> list[Candle]:
-        return [
-            Candle.model_construct(time=t, open=o, high=h, low=lo, close=c, volume=v)
-            for t, o, h, lo, c, v in zip(
-                self.t.tolist(),
-                self.o.tolist(),
-                self.h.tolist(),
-                self.lo.tolist(),
-                self.c.tolist(),
-                self.v.tolist(),
-                strict=True,
-            )
-        ]
-
-    def rows(self, symbol: str, timeframe: str) -> list[tuple]:
-        return list(
-            zip(
-                [symbol] * len(self),
-                [timeframe] * len(self),
-                self.t.tolist(),
-                self.o.tolist(),
-                self.h.tolist(),
-                self.lo.tolist(),
-                self.c.tolist(),
-                self.v.tolist(),
-                strict=True,
-            )
-        )
 
 
 # --------------------------------------------------------------------------
@@ -582,12 +521,12 @@ class SimHistory:
     """Generated history up to ``end`` (exclusive) plus what the live feed continues from."""
 
     end: int  # unix seconds, minute-aligned: the first minute NOT in the history (the live one)
-    minutes: dict[str, MinuteArrays]  # 1m candles per symbol, from origin to end
+    minutes: dict[str, CandleArrays]  # 1m candles per symbol, from origin to end
     current: DayBlock  # the block of the day containing ``end``
     simulator: MarketSimulator  # state positioned after ``current``
     day_state: MarketState  # state at the start of ``current`` (persisted for exact restarts)
 
-    def candles(self, symbol: str, timeframe_seconds: int, since: int | None = None) -> MinuteArrays:
+    def candles(self, symbol: str, timeframe_seconds: int, since: int | None = None) -> CandleArrays:
         """Closed candles of a timeframe (the trailing partial bucket is excluded)."""
         m = self.minutes[symbol]
         agg = m.aggregate(timeframe_seconds)
@@ -618,7 +557,7 @@ def generate_history(
     end_day = end // DAY
     start_day = end_day - days if origin_day is None else origin_day
     sim = MarketSimulator(seed, symbols, start_day=start_day)
-    parts: dict[str, list[MinuteArrays]] = {s: [] for s in sim.symbols}
+    parts: dict[str, list[CandleArrays]] = {s: [] for s in sim.symbols}
     day_state = _copy_state(sim.state)
     blocks: list[DayBlock] = []
     while sim.state.day <= end_day:
@@ -645,7 +584,7 @@ def generate_history(
             if b is current:
                 arrays = arrays.window(None, end)
             parts[s].append(arrays)
-    minutes = {s: MinuteArrays.concat(p) for s, p in parts.items()}
+    minutes = {s: CandleArrays.concat(p) for s, p in parts.items()}
     return SimHistory(end=end, minutes=minutes, current=current, simulator=sim, day_state=day_state)
 
 

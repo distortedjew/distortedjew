@@ -10,6 +10,8 @@
  * - After every reconnect: sends `resume` with the last seen event id, re-sends the chart
  *   subscriptions and notifies `onReconnect` listeners (the query layer refetches everything).
  * - Chart subscriptions are ref-counted: `const off = wsManager.subscribeChart("BTC/USDT", "5m")`.
+ * - A close with code 4401 means the dashboard token is missing/wrong: status goes "offline",
+ *   `unauthorized` is set and retries slow down to the maximum backoff.
  *
  * Components should use the hooks in src/hooks/live.ts rather than this class directly.
  */
@@ -75,6 +77,8 @@ export interface WsSnapshot {
   connectedAt: number | null;
   /** Successful re-connections since start (0 on the first connection). */
   reconnects: number;
+  /** The server rejected the token (close code 4401). */
+  unauthorized: boolean;
 }
 
 type FrameHandler<T extends WsFrameType> = (data: WsFrameData<T>, frame: WsFrame<T>) => void;
@@ -82,6 +86,8 @@ type AnyHandler = (frame: WsServerMessage) => void;
 
 const OPEN = 1;
 const CONNECTING = 0;
+/** Close code the API uses for a rejected dashboard token. */
+export const WS_UNAUTHORIZED_CODE = 4401;
 
 /** `/ws` on the API origin (VITE_WS_URL overrides; absolute VITE_API_BASE is honoured). */
 export function defaultWsUrl(): string {
@@ -120,6 +126,7 @@ export class WsManager {
   private lastFrameAt: number | null = null;
   private lastEventId: number | null = null;
   private connectedAt: number | null = null;
+  private unauthorized = false;
 
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private livenessTimer: ReturnType<typeof setTimeout> | null = null;
@@ -193,6 +200,7 @@ export class WsManager {
       lastEventId: this.lastEventId,
       connectedAt: this.connectedAt,
       reconnects: this.reconnects,
+      unauthorized: this.unauthorized,
     };
   }
 
@@ -298,7 +306,7 @@ export class WsManager {
     this.socket = socket;
     socket.onopen = () => this.handleOpen(socket);
     socket.onmessage = (event) => this.handleMessage(socket, event);
-    socket.onclose = () => this.handleClose(socket);
+    socket.onclose = (event) => this.handleClose(socket, event?.code);
     socket.onerror = () => {
       /* a close event always follows */
     };
@@ -310,6 +318,7 @@ export class WsManager {
     if (socket !== this.socket) return;
     const isReconnect = this.everConnected;
     this.everConnected = true;
+    this.unauthorized = false;
     this.attempt = 0;
     this.nextRetryAt = null;
     this.connectedAt = this.opts.now();
@@ -372,7 +381,7 @@ export class WsManager {
     }
   }
 
-  private handleClose(socket: WebSocketLike): void {
+  private handleClose(socket: WebSocketLike, code?: number): void {
     if (socket !== this.socket) return;
     this.socket = null;
     this.stopPing();
@@ -380,6 +389,11 @@ export class WsManager {
     if (!this.started) {
       this.setStatus("offline");
       return;
+    }
+    if (code === WS_UNAUTHORIZED_CODE) {
+      this.unauthorized = true;
+      // No point hammering the server with a bad token: retry at the slowest pace.
+      this.attempt = Math.max(this.attempt, this.opts.offlineAfterAttempts, 10);
     }
     this.scheduleReconnect();
   }
@@ -404,7 +418,7 @@ export class WsManager {
 
   /** Status while not connected, derived from history and failure count. */
   private failureStatus(): ConnectionStatus {
-    if (this.attempt >= this.opts.offlineAfterAttempts) return "offline";
+    if (this.unauthorized || this.attempt >= this.opts.offlineAfterAttempts) return "offline";
     return this.everConnected ? "reconnecting" : "connecting";
   }
 

@@ -52,6 +52,20 @@ export type Tone = "neutral" | "muted" | "up" | "down" | "warning" | "info" | "a
 
 // ---------------------------------------------------------------- REST query params
 
+/** Sort keys accepted by GET /api/trades (`sort=`). */
+export type TradeSortKey =
+  | "closed_at"
+  | "opened_at"
+  | "pnl"
+  | "pnl_pct"
+  | "symbol"
+  | "side"
+  | "confidence"
+  | "duration"
+  | "exit_reason"
+  | "result"
+  | "strategy";
+
 /** GET /api/trades (and /api/trades/export.csv). Dates are ISO strings (YYYY-MM-DD or full ISO). */
 export interface TradeFilters {
   symbol?: string;
@@ -65,8 +79,7 @@ export interface TradeFilters {
   end?: string;
   /** Free-text search (symbol, id, entry reason). */
   q?: string;
-  /** Field to sort by, e.g. "closed_at", "pnl", "pnl_pct", "duration_sec", "ai_confidence". */
-  sort?: string;
+  sort?: TradeSortKey;
   order?: "asc" | "desc";
   limit?: number;
   offset?: number;

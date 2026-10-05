@@ -74,6 +74,7 @@ export function connectLiveSync(
       nextRetryAt: snap.nextRetryAt,
       connectedAt: snap.connectedAt,
       reconnects: snap.reconnects,
+      unauthorized: snap.unauthorized,
     });
   };
   syncConnection();

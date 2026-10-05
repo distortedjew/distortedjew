@@ -8,8 +8,11 @@
  *   const { events } = useEventFeed({ limit: 50 });  // REST history + live events, newest first
  *   const bot = useBotStatus();                      // effective bot state + heartbeat age
  */
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useMemo } from "react";
-import { useEvents, useStatus, useWatchlist } from "@/hooks/queries";
+import { fetchStatus, useEvents, useStatus, useWatchlist } from "@/hooks/queries";
+import { useFallbackInterval } from "@/hooks/use-fallback-interval";
+import { queryKeys } from "@/lib/query-keys";
 import { useNow } from "@/lib/time";
 import { wsManager } from "@/lib/ws";
 import { mergeEvents, useLiveStore } from "@/stores/live";
@@ -22,6 +25,7 @@ import type {
   Severity,
   Ticker,
   Timeframe,
+  TradingMode,
   WsCandleData,
   WsFrameData,
   WsFrameType,
@@ -40,6 +44,8 @@ export interface ConnectionInfo {
   lastFrameAt: number | null;
   connectedAt: number | null;
   reconnects: number;
+  /** The API rejected the dashboard token (open the app with ?token=…). */
+  unauthorized: boolean;
   retryNow: () => void;
 }
 
@@ -50,7 +56,17 @@ export function useConnection(): ConnectionInfo {
   const lastFrameAt = useLiveStore((s) => s.lastFrameAt);
   const connectedAt = useLiveStore((s) => s.connectedAt);
   const reconnects = useLiveStore((s) => s.reconnects);
-  return { status, attempt, nextRetryAt, lastFrameAt, connectedAt, reconnects, retryNow: retryConnection };
+  const unauthorized = useLiveStore((s) => s.unauthorized);
+  return {
+    status,
+    attempt,
+    nextRetryAt,
+    lastFrameAt,
+    connectedAt,
+    reconnects,
+    unauthorized,
+    retryNow: retryConnection,
+  };
 }
 
 function retryConnection(): void {
@@ -209,4 +225,20 @@ export function useBotStatus(): BotStatusInfo {
       ? "offline"
       : stateFromHeartbeat(heartbeatAgeSec, status.state);
   return { status, state, heartbeatAgeSec, dataAgeSec, isPending: false };
+}
+
+/**
+ * The engine's trading mode ("paper" | "live"), undefined until known. Re-renders only when the
+ * mode itself changes (not on every status frame), so the app shell can use it cheaply.
+ */
+export function useTradingMode(): TradingMode | undefined {
+  const fallback = useFallbackInterval();
+  const { data } = useQuery({
+    queryKey: queryKeys.status(),
+    queryFn: fetchStatus,
+    select: (status) => status.mode,
+    refetchInterval: fallback,
+    staleTime: 5_000,
+  });
+  return data;
 }

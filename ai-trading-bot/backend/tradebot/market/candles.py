@@ -118,6 +118,111 @@ def aggregate_arrays(
     return tuple(np.concatenate([p[i] for p in parts]) for i in range(6))
 
 
+class CandleArrays:
+    """Time-ordered OHLCV candles as numpy arrays (``t`` = open time, unix seconds).
+
+    History moves through the engine in this form (hundreds of thousands of candles on a
+    fresh simulated install); ``Candle`` objects are only built for the slices that need them.
+    """
+
+    __slots__ = ("c", "h", "lo", "o", "t", "v")
+
+    def __init__(
+        self, t: np.ndarray, o: np.ndarray, h: np.ndarray, lo: np.ndarray, c: np.ndarray, v: np.ndarray
+    ) -> None:
+        self.t = np.asarray(t, dtype=np.int64)
+        self.o, self.h, self.lo, self.c, self.v = (np.asarray(x, dtype=np.float64) for x in (o, h, lo, c, v))
+
+    def __len__(self) -> int:
+        return int(self.t.size)
+
+    @classmethod
+    def empty(cls) -> CandleArrays:
+        z = np.array([])
+        return cls(z, z, z, z, z, z)
+
+    @classmethod
+    def from_candles(cls, candles: Sequence[Candle]) -> CandleArrays:
+        if not candles:
+            return cls.empty()
+        return cls(
+            np.fromiter((c.time for c in candles), dtype=np.int64, count=len(candles)),
+            np.fromiter((c.open for c in candles), dtype=np.float64, count=len(candles)),
+            np.fromiter((c.high for c in candles), dtype=np.float64, count=len(candles)),
+            np.fromiter((c.low for c in candles), dtype=np.float64, count=len(candles)),
+            np.fromiter((c.close for c in candles), dtype=np.float64, count=len(candles)),
+            np.fromiter((c.volume for c in candles), dtype=np.float64, count=len(candles)),
+        )
+
+    @classmethod
+    def concat(cls, parts: Sequence[CandleArrays]) -> CandleArrays:
+        parts = [p for p in parts if len(p)]
+        if not parts:
+            return cls.empty()
+        return cls(*(np.concatenate([getattr(p, f) for p in parts]) for f in ("t", "o", "h", "lo", "c", "v")))
+
+    def window(self, start: int | None = None, end: int | None = None) -> CandleArrays:
+        """Candles with ``start <= time < end``."""
+        lo = 0 if start is None else int(np.searchsorted(self.t, start, side="left"))
+        hi = len(self) if end is None else int(np.searchsorted(self.t, end, side="left"))
+        return CandleArrays(self.t[lo:hi], self.o[lo:hi], self.h[lo:hi], self.lo[lo:hi], self.c[lo:hi], self.v[lo:hi])
+
+    def tail(self, n: int) -> CandleArrays:
+        if n >= len(self):
+            return self
+        return CandleArrays(self.t[-n:], self.o[-n:], self.h[-n:], self.lo[-n:], self.c[-n:], self.v[-n:])
+
+    def aggregate(self, seconds: int, base_seconds: int = 60) -> CandleArrays:
+        """Higher-timeframe candles from contiguous candles that start on a bucket boundary."""
+        if seconds == base_seconds or not len(self):
+            return self
+        factor = seconds // base_seconds
+        return CandleArrays(*aggregate_arrays(self.t, self.o, self.h, self.lo, self.c, self.v, factor))
+
+    def last(self) -> Candle | None:
+        if not len(self):
+            return None
+        return Candle(
+            time=int(self.t[-1]),
+            open=float(self.o[-1]),
+            high=float(self.h[-1]),
+            low=float(self.lo[-1]),
+            close=float(self.c[-1]),
+            volume=float(self.v[-1]),
+        )
+
+    def to_candles(self) -> list[Candle]:
+        return [
+            Candle(time=t, open=o, high=h, low=lo, close=c, volume=v)
+            for t, o, h, lo, c, v in zip(
+                self.t.tolist(),
+                self.o.tolist(),
+                self.h.tolist(),
+                self.lo.tolist(),
+                self.c.tolist(),
+                self.v.tolist(),
+                strict=True,
+            )
+        ]
+
+    def rows(self, symbol: str, timeframe: str) -> list[tuple]:
+        """``(symbol, timeframe, time, open, high, low, close, volume)`` rows for the candles table."""
+        n = len(self)
+        return list(
+            zip(
+                [symbol] * n,
+                [timeframe] * n,
+                self.t.tolist(),
+                self.o.tolist(),
+                self.h.tolist(),
+                self.lo.tolist(),
+                self.c.tolist(),
+                self.v.tolist(),
+                strict=True,
+            )
+        )
+
+
 class Aggregator:
     """Streams lower-timeframe candles into one higher timeframe."""
 

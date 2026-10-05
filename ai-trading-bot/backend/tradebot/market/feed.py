@@ -18,6 +18,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 
 from ..schemas import Candle, FeedKind, Ticker, Timeframe
+from .candles import CandleArrays
 
 
 class FeedUnavailable(RuntimeError):
@@ -67,14 +68,12 @@ class StoredMarket:
 class MarketHistory:
     """Closed candles from a feed's ``open``: ``candles[symbol][timeframe]`` in time order."""
 
-    candles: dict[str, dict[str, list[Candle]]]
+    candles: dict[str, dict[str, CandleArrays]]
     end: int  # unix seconds: the history covers candles closing at or before this time
     generated: bool = False  # simulator history created on an empty database
-    note: str | None = None
 
-    def merge(self, other: MarketHistory) -> None:
-        for sym, tfs in other.candles.items():
-            self.candles.setdefault(sym, {}).update(tfs)
+    def count(self) -> int:
+        return sum(len(a) for tfs in self.candles.values() for a in tfs.values())
 
 
 class Feed(ABC):

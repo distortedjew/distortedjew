@@ -2,7 +2,8 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-export interface SliderProps extends Omit<ComponentProps<typeof SliderPrimitive.Root>, "value" | "onValueChange" | "defaultValue"> {
+export interface SliderProps
+  extends Omit<ComponentProps<typeof SliderPrimitive.Root>, "value" | "onValueChange" | "onValueCommit" | "defaultValue"> {
   value: number;
   onValueChange: (value: number) => void;
   /** Called when the user releases the thumb. */

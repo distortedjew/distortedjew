@@ -44,7 +44,7 @@
   --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-flash-up: flash-up 1s var(--ease-out-quart);
   --animate-flash-down: flash-down 1s var(--ease-out-quart);
-  --animate-flash-accent: flash-accent 1.2s var(--ease-out-quart);
+  --animate-flash-ring: flash-ring 1.1s var(--ease-out-quart) forwards;
   --animate-spin: spin 0.9s linear infinite;
 
   @keyframes pulse-ring {
@@ -84,16 +84,12 @@
       background-color: transparent;
     }
   }
-  @keyframes flash-accent {
+  @keyframes flash-ring {
     0% {
-      box-shadow:
-        0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent),
-        var(--shadow-card-v);
+      box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 55%, transparent);
     }
     100% {
-      box-shadow:
-        0 0 0 1px transparent,
-        var(--shadow-card-v);
+      box-shadow: inset 0 0 0 1px transparent;
     }
   }
   @keyframes spin {
