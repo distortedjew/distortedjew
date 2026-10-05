@@ -115,7 +115,14 @@ def context_payload(ctx: MarketContext) -> dict[str, Any]:
             "timeframe": ctx.timeframe,
             "columns": ["time", "open", "high", "low", "close", "volume"],
             "rows": [
-                [c.time, _num(c.open, 8), _num(c.high, 8), _num(c.low, 8), _num(c.close, 8), _num(c.volume, 5)]
+                [
+                    c.time,
+                    _num(c.open, 8),
+                    _num(c.high, 8),
+                    _num(c.low, 8),
+                    _num(c.close, 8),
+                    _num(c.volume, 5),
+                ]
                 for c in ctx.candles[-RECENT_CANDLES:]
             ],
         },
@@ -143,7 +150,13 @@ def context_payload(ctx: MarketContext) -> dict[str, Any]:
             "label": ctx.mtf.alignment_label,
             "dominant": ctx.mtf.dominant,
             "timeframes": [
-                {"tf": t.timeframe, "trend": t.trend, "signal": t.signal, "rsi": t.rsi, "strength": t.strength}
+                {
+                    "tf": t.timeframe,
+                    "trend": t.trend,
+                    "signal": t.signal,
+                    "rsi": t.rsi,
+                    "strength": t.strength,
+                }
                 for t in ctx.mtf.timeframes
             ],
         }

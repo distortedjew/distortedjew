@@ -157,7 +157,7 @@
 
   --fg: #0f172a;
   --fg-muted: #475467;
-  --fg-subtle: #667085;
+  --fg-subtle: #626d81;
   --fg-disabled: #98a2b3;
   --fg-inverse: #ffffff;
 
@@ -168,8 +168,8 @@
   --up: #037a54;
   --down: #c4283a;
   --down-solid: #c62a3f;
-  --warning: #9a6700;
-  --info: #1d6fe0;
+  --warning: #916100;
+  --info: #1a68d6;
   --accent: #4f5bd5;
   --accent-solid: #4f5bd5;
   --accent-solid-hover: #4350c8;

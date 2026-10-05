@@ -28,7 +28,7 @@ export interface Column<T> {
   /** ⓘ explanation in the header. */
   info?: ReactNode;
   /** Hide this column below a breakpoint in table mode. */
-  hideBelow?: "sm" | "md" | "lg" | "xl";
+  hideBelow?: "sm" | "md" | "lg" | "xl" | "2xl";
   /**
    * Role in the stacked card layout used below `mobileBreakpoint`:
    * title / subtitle (left), value / meta (right), detail (2-column grid), hidden.
@@ -82,6 +82,7 @@ const HIDE_BELOW: Record<NonNullable<Column<unknown>["hideBelow"]>, string> = {
   md: "hidden md:table-cell",
   lg: "hidden lg:table-cell",
   xl: "hidden xl:table-cell",
+  "2xl": "hidden 2xl:table-cell",
 };
 
 function compare(a: unknown, b: unknown): number {
@@ -227,8 +228,7 @@ export function DataTable<T>({
                     aria-sort={active ? (sort?.desc ? "descending" : "ascending") : undefined}
                     className={cn(
                       "sticky top-0 z-10 h-9 border-b border-line bg-surface-2 px-3 text-[11px] font-medium tracking-[0.05em] whitespace-nowrap text-fg-subtle uppercase first:pl-4 last:pr-4",
-                      column.align === "right" && "text-right",
-                      column.align === "center" && "text-center",
+                      column.align === "right" ? "text-right" : column.align === "center" ? "text-center" : "text-left",
                       column.hideBelow && HIDE_BELOW[column.hideBelow],
                       column.headerClassName,
                     )}

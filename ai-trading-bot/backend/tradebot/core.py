@@ -10,13 +10,18 @@ transaction, the backtester just collects trades and equity.
 
 Per decision-timeframe close and symbol: update the regime (+ ``MARKET_UPDATE``), build the
 market context, run the strategy (baseline / analyst / hybrid), then — for LONG/SHORT —
-the risk manager and the broker. The complete ``AIAnalysis`` (with its risk decision and
-trade id) is in the same batch as, and ahead of, its events: ``AI_ANALYSIS``,
-``TRADE_SIGNAL``, ``RISK_CHECK``, then ``TRADE_EXECUTED`` or ``TRADE_REJECTED``.
+the risk manager and the broker. Events are queued in the order things happen:
+``AI_ANALYSIS``, ``TRADE_SIGNAL``, ``RISK_CHECK``, then the reversal's close (if any) and
+``TRADE_EXECUTED`` or ``TRADE_REJECTED``. The complete ``AIAnalysis`` (with its risk decision
+and trade id) travels in the same batch, so the store persists it in the same transaction.
 
 A live driver with a remote (LLM) analyst uses ``defer_remote_analysis``: the decision
 close returns a ``PendingDecision``; the driver awaits the analyst off the tick path and
 calls ``complete`` — risk is evaluated against the portfolio as it is at that moment.
+
+``on_candle(..., decide=False)`` is the catch-up mode after a restart: candles that arrived
+while the engine was down update indicators and regimes and let resting stops and targets
+fill (as exchange-held orders would have), but no new decisions are made for them.
 """
 
 from __future__ import annotations
@@ -34,7 +39,7 @@ from .market.candles import CandleBook
 from .market.symbols import fmt_pct, fmt_price, fmt_qty, fmt_usd, normalize
 from .mtf import MTF_TIMEFRAMES, build_report
 from .regime import RegimeTracker, classify
-from .risk import PortfolioView, RiskAlert, RiskManager, RiskState
+from .risk import Assessment, PortfolioView, RiskAlert, RiskManager, RiskState, Sizing
 from .schemas import (
     TIMEFRAME_SECONDS,
     TIMEFRAMES,
@@ -42,7 +47,6 @@ from .schemas import (
     BotSettings,
     Candle,
     EventType,
-    ExitReason,
     MTFReport,
     NotificationType,
     PortfolioState,
@@ -57,7 +61,8 @@ from .schemas import (
     Trade,
     TradingMode,
 )
-from .strategy import baseline, decide, needs_analyst
+from .strategy import baseline, needs_analyst
+from .strategy import decide as final_call
 
 AI_UNAVAILABLE_EVERY = timedelta(minutes=30)
 RECENT_TRADES = 20
@@ -112,11 +117,11 @@ class EquityRecord:
 
 @dataclass
 class Batch:
-    """Everything one core input changed, persisted atomically and in this order."""
+    """Everything one core input changed, persisted atomically."""
 
     analyses: list[AIAnalysis] = field(default_factory=list)  # insert or rewrite by id
-    closed: list[Trade] = field(default_factory=list)  # position row → trade row (same id)
     positions: list[Position] = field(default_factory=list)  # upsert open positions
+    closed: list[Trade] = field(default_factory=list)  # position row → trade row (same id)
     equity: list[EquityRecord] = field(default_factory=list)
     usage: list[UsageRecord] = field(default_factory=list)
     regimes: list[tuple[RegimeState, bool]] = field(default_factory=list)  # (state, switched)
@@ -124,12 +129,13 @@ class Batch:
     events: list[EventRecord] = field(default_factory=list)
     notifications: list[NotificationRecord] = field(default_factory=list)
     risk_state: dict | None = None  # risk bookkeeping to persist (halts, streak)
+    accounting: dict | None = None  # day / day-start equity / peak, for exact restarts
 
     def empty(self) -> bool:
         return not (
             self.analyses
-            or self.closed
             or self.positions
+            or self.closed
             or self.equity
             or self.usage
             or self.regimes
@@ -137,6 +143,7 @@ class Batch:
             or self.events
             or self.notifications
             or self.risk_state is not None
+            or self.accounting is not None
         )
 
 
@@ -145,7 +152,9 @@ class CoreSink(Protocol):
 
 
 class NullSink:
-    def write(self, batch: Batch) -> None:  # noqa: D102 - intentionally a no-op
+    """Discards everything (warm-up only cores, quick experiments)."""
+
+    def write(self, batch: Batch) -> None:
         return None
 
 
@@ -176,8 +185,9 @@ class CoreConfig:
     emit_market_updates: bool = True
     historical: bool = False  # bootstrap replay: notifications are created read
     defer_remote_analysis: bool = False  # live: remote analysts are awaited by the driver
-    narrate: bool = True
+    narrate: bool = True  # full prose in analyses (False in backtests)
     emit_records: bool = True  # False in backtests: no events / notifications / analyses
+    publish_mtf: bool = True  # live: an MTF report on every base close (replays build them lazily)
 
 
 @dataclass
@@ -232,6 +242,7 @@ class TradingCore:
         self.regimes: dict[str, RegimeTracker] = {}
         self.mtf: dict[str, MTFReport] = {}
         self._mtf_cache: dict[str, dict] = {}
+        self._mtf_dirty: set[str] = set()
         self.prices: dict[str, float] = {}
         self.latest_analysis: dict[str, AIAnalysis] = {}
         self.evaluations: list[PendingEvaluation] = []
@@ -292,7 +303,7 @@ class TradingCore:
             for pos in self.broker.positions.values():
                 if pos.symbol == book.symbol and not pos.mark:
                     pos.mark = book.last_price
-        self._update_mtf(book.symbol, None)
+        self._build_mtf(book.symbol, None)
 
     def apply_settings(self, settings: BotSettings) -> None:
         self.settings = settings
@@ -300,9 +311,13 @@ class TradingCore:
         self.broker.execution = settings.execution
         for sym in settings.trading.symbols:
             self.ensure_symbol(sym)
+        if not needs_analyst(settings.trading.strategy):
+            self.last_provider, self.last_model = "heuristic", baseline.MODEL_ID
 
     def set_analyst(self, analyst: Analyst) -> None:
         self.analyst = analyst
+        if needs_analyst(self.settings.trading.strategy):
+            self.last_provider, self.last_model = analyst.provider, analyst.model
 
     def restore(self, state: RestoredState, now: datetime) -> None:
         for p in state.positions:
@@ -343,13 +358,13 @@ class TradingCore:
     def equity(self) -> float:
         return self.cash + self.unrealized()
 
+    def position_exposure(self) -> float:
+        """Σ |notional| of open positions at their current marks."""
+        return sum(abs(p.size * (p.mark or p.entry_price)) for p in self.broker.positions.values())
+
     def exposure(self) -> float:
-        total = 0.0
-        for p in self.broker.positions.values():
-            total += abs(p.size * (p.mark or p.entry_price))
-        for o in self.broker.orders.values():
-            total += abs(o.size * o.price)
-        return total
+        """Position exposure plus the notional reserved by resting limit orders."""
+        return self.position_exposure() + sum(abs(o.size * o.price) for o in self.broker.orders.values())
 
     def drawdown_pct(self, equity: float | None = None) -> float:
         eq = self.equity() if equity is None else equity
@@ -357,25 +372,28 @@ class TradingCore:
 
     def view(self, symbol: str | None = None) -> PortfolioView:
         equity = self.equity()
-        side = None
-        on_symbol = 0.0
+        side: Side | None = None
+        on_symbol = risk_on_symbol = 0.0
         if symbol is not None:
             pos = self.broker.position_for(symbol)
             order = self.broker.order_for(symbol)
             if pos is not None:
                 side, on_symbol = pos.side, abs(pos.size * (pos.mark or pos.entry_price))
+                risk_on_symbol = pos.meta.risk_amount
             elif order is not None:
                 side, on_symbol = order.side, abs(order.size * order.price)
         return PortfolioView(
             equity=equity,
             exposure=self.exposure(),
             open_positions=len(self.broker.positions) + len(self.broker.orders),
-            open_risk=sum(p.meta.risk_amount for p in self.broker.positions.values()),
+            open_risk=sum(p.meta.risk_amount for p in self.broker.positions.values())
+            + sum(o.meta.risk_amount for o in self.broker.orders.values()),
             daily_pnl=equity - self.day_start_equity,
             drawdown_pct=self.drawdown_pct(equity),
             max_drawdown_pct=self.max_drawdown_pct,
             side_on_symbol=side,
             exposure_on_symbol=on_symbol,
+            risk_on_symbol=risk_on_symbol,
         )
 
     def positions(self, now: datetime) -> list[Position]:
@@ -383,8 +401,7 @@ class TradingCore:
 
     def portfolio(self, now: datetime) -> PortfolioState:
         equity = self.equity()
-        unrealized = equity - self.cash
-        exposure = sum(abs(p.size * (p.mark or p.entry_price)) for p in self.broker.positions.values())
+        exposure = self.position_exposure()
         start = self.config.starting_balance
         total = equity - start
         today = equity - self.day_start_equity
@@ -394,7 +411,7 @@ class TradingCore:
             equity=round(equity, 2),
             cash=round(self.cash, 2),
             realized_pnl=round(self.realized_total, 2),
-            unrealized_pnl=round(unrealized, 2),
+            unrealized_pnl=round(equity - self.cash, 2),
             total_pnl=round(total, 2),
             total_pnl_pct=round(total / start * 100.0, 4) if start else 0.0,
             today_pnl=round(today, 2),
@@ -410,6 +427,15 @@ class TradingCore:
 
     def risk_snapshot(self, now: datetime) -> RiskSnapshot:
         return self.risk.snapshot(self.view(), now)
+
+    def accounting_state(self) -> dict:
+        """The accounting numbers a restart cannot rebuild exactly from the tables alone."""
+        return {
+            "day": self.day,
+            "day_start_equity": round(self.day_start_equity, 6),
+            "peak_equity": round(self.peak_equity, 6),
+            "max_drawdown_pct": round(self.max_drawdown_pct, 6),
+        }
 
     def performance(self) -> RecentPerformance:
         trades = list(self.recent)
@@ -434,7 +460,7 @@ class TradingCore:
     def on_tick(self, symbol: str, price: float, now: datetime) -> None:
         """Live price update: mark to market, then limit fills, stops, targets and time exits."""
         sym = normalize(symbol)
-        if price <= 0:
+        if not price > 0:
             return
         self._roll_day(now)
         self.prices[sym] = price
@@ -446,8 +472,12 @@ class TradingCore:
         self._after_mark(now)
         self.flush()
 
-    def on_candle(self, symbol: str, candle: Candle) -> list[PendingDecision]:
-        """A closed base-timeframe candle: bar exits, evaluations, indicators, MTF, decisions."""
+    def on_candle(self, symbol: str, candle: Candle, *, decide: bool = True) -> list[PendingDecision]:
+        """A closed base-timeframe candle: bar exits, evaluations, indicators, MTF, decisions.
+
+        ``decide=False`` (restart catch-up) still fills stops/targets and updates regimes, but
+        makes no new trading decisions.
+        """
         sym = normalize(symbol)
         book = self.ensure_symbol(sym)
         now = _ts(candle.time + book.base_seconds)
@@ -455,8 +485,7 @@ class TradingCore:
         if last is not None and candle.time <= last:
             return []
         self._roll_day(now)
-        max_hold = self.settings.trading.max_holding_minutes
-        result = self.broker.on_bar(sym, candle, now, max_hold)
+        result = self.broker.on_bar(sym, candle, now, self.settings.trading.max_holding_minutes)
         self._handle_fills(result.filled, now)
         self._handle_expired(result.expired, now)
         for ex in result.exits:
@@ -468,10 +497,14 @@ class TradingCore:
             if pos.symbol == sym:
                 pos.mark = candle.close
         self._after_mark(now)
-        self._update_mtf(sym, now)
+        self._mtf_dirty.add(sym)
+        if self.config.publish_mtf:
+            report = self._build_mtf(sym, now)
+            if report is not None and self.config.emit_records:
+                self._batch.mtf.append(report)
         pending: list[PendingDecision] = []
         if self.decision_timeframe in closed:
-            pd = self._decision_close(sym, now)
+            pd = self._decision_close(sym, now, decide)
             if pd is not None:
                 pending.append(pd)
         self.flush()
@@ -482,6 +515,7 @@ class TradingCore:
         self._roll_day(now)
         rec = self._equity_record(now)
         self._batch.equity.append(rec)
+        self._batch.accounting = self.accounting_state()
         if include_positions and self.config.emit_records:
             self._batch.positions.extend(self.positions(now))
         self.flush()
@@ -496,6 +530,19 @@ class TradingCore:
         batch, self._batch = self._batch, Batch()
         self.sink.write(batch)
 
+    def kill_switch(self, now: datetime) -> list[Trade]:
+        """Close every position at market and cancel resting orders."""
+        closed: list[Trade] = []
+        for order in list(self.broker.orders.values()):
+            self.broker.cancel(order.id)
+            self._order_gone(order, now, "Kill switch")
+        for pos in list(self.broker.positions.values()):
+            price = self.prices.get(pos.symbol, pos.mark or pos.entry_price)
+            ex = self.broker.close(pos.id, price, now, "KILL_SWITCH")
+            self._record_exit(ex, now)
+            closed.append(ex.trade)
+        return closed
+
     # ------------------------------------------------------------------
     # internals: marks, day roll, limits
     # ------------------------------------------------------------------
@@ -508,7 +555,7 @@ class TradingCore:
             cash=round(self.cash, 4),
             realized_pnl=round(self.realized_total, 4),
             unrealized_pnl=round(equity - self.cash, 4),
-            exposure=round(sum(abs(p.size * (p.mark or p.entry_price)) for p in self.broker.positions.values()), 4),
+            exposure=round(self.position_exposure(), 4),
             drawdown_pct=round(self.drawdown_pct(equity), 4),
         )
 
@@ -516,14 +563,43 @@ class TradingCore:
         day = now.date().isoformat()
         if self.day == day:
             return
-        first = self.day is None
-        self.day = day
-        self.day_start_equity = self.equity()
-        if not first:
+        previous = self.day
+        equity = self.equity()
+        if previous is not None:
+            change = equity - self.day_start_equity
+            pct = change / self.day_start_equity * 100.0 if self.day_start_equity else 0.0
+            self._event(
+                "SYSTEM_INFO",
+                f"Daily summary · {previous}",
+                f"P&L {fmt_usd(change, signed=True)} ({fmt_pct(pct, signed=True)}) · "
+                f"{self.trades_today} trade{'s' if self.trades_today != 1 else ''} opened · "
+                f"equity {fmt_usd(equity)}",
+                now,
+                data={
+                    "component": "engine",
+                    "date": previous,
+                    "pnl": round(change, 2),
+                    "pnl_pct": round(pct, 4),
+                    "trades": self.trades_today,
+                },
+            )
             self.realized_today = 0.0
             self.trades_today = 0
+        self.day = day
+        self.day_start_equity = equity
+        self._batch.accounting = self.accounting_state()
+        halted_before = self.risk.state.daily_halt_until is not None
         if self.risk.roll_day(now):
             self._risk_dirty = True
+            if halted_before and self.risk.state.daily_halt_until is None:
+                self._event(
+                    "SYSTEM_INFO",
+                    "Trading resumed",
+                    "A new UTC day started: the daily loss limit is reset and new entries are allowed again.",
+                    now,
+                    severity="success",
+                    data={"component": "risk"},
+                )
 
     def _after_mark(self, now: datetime) -> None:
         equity = self.equity()
@@ -540,29 +616,24 @@ class TradingCore:
             if alert.kill_switch:
                 self.kill_switch(now)
 
-    def kill_switch(self, now: datetime) -> list[Trade]:
-        """Close every position at market and cancel resting orders."""
-        closed: list[Trade] = []
-        for order in list(self.broker.orders.values()):
-            self.broker.cancel(order.id)
-            self._order_gone(order, now, "Kill switch")
-        for pos in list(self.broker.positions.values()):
-            price = self.prices.get(pos.symbol, pos.mark or pos.entry_price)
-            ex = self.broker.close(pos.id, price, now, "KILL_SWITCH")
-            self._record_exit(ex, now)
-            closed.append(ex.trade)
-        return closed
-
     def _alert(self, alert: RiskAlert, now: datetime) -> None:
+        severity: Severity = "error" if alert.severity == "error" else "warning"
         self._event(
             "RISK_WARNING",
             alert.title,
             alert.message,
             now,
-            severity=alert.severity,  # type: ignore[arg-type]
+            severity=severity,
             data={"meter": alert.meter, "current": alert.current, "limit": alert.limit},
         )
-        self._notify(alert.notification, alert.title, alert.message, now, severity=alert.severity, data={"meter": alert.meter})  # type: ignore[arg-type]
+        self._notify(
+            alert.notification,
+            alert.title,
+            alert.message,
+            now,
+            severity=severity,
+            data={"meter": alert.meter, "current": alert.current, "limit": alert.limit},
+        )
 
     # ------------------------------------------------------------------
     # internals: records
@@ -594,10 +665,13 @@ class TradingCore:
     ) -> None:
         if self.config.emit_records:
             self._batch.notifications.append(
-                NotificationRecord(type_, title, message, ts, severity, data or {}, read=self.config.historical)
+                NotificationRecord(
+                    type_, title, message, ts, severity, data or {}, read=self.config.historical
+                )
             )
 
     def _record_exit(self, ex: Exit, now: datetime) -> None:
+        """Book a closed round trip: exactly one close event (STOP_LOSS, TAKE_PROFIT or TRADE_CLOSED)."""
         trade = ex.trade
         self.realized_total += trade.pnl
         self.realized_today += trade.pnl
@@ -607,7 +681,6 @@ class TradingCore:
         alerts = self.risk.on_trade_closed(trade.pnl, now)
         self._risk_dirty = True
         reason = ex.reason
-        label = _EXIT_LABEL[reason]
         msg = (
             f"Exit {fmt_price(trade.exit_price)} · P&L {fmt_usd(trade.pnl, signed=True)} "
             f"({fmt_pct(trade.pnl_pct, signed=True)}) · {trade.r_multiple:+.1f}R"
@@ -620,24 +693,32 @@ class TradingCore:
             "pnl_pct": trade.pnl_pct,
             "exit_reason": reason,
         }
-        win = trade.result == "WIN"
+        event_type: EventType
+        notif: NotificationType
+        severity: Severity
         if reason == "STOP_LOSS":
-            event_type: EventType = "STOP_LOSS"
-            title = f"Stop loss hit · {trade.symbol} {trade.side}"
-            severity: Severity = "warning"
-            notif: NotificationType = "STOP_LOSS_HIT"
+            event_type, notif, severity = "STOP_LOSS", "STOP_LOSS_HIT", "warning"
+            title = f"Stop loss hit · {trade.side} {trade.symbol}"
             notif_title = f"Stop loss hit on {trade.symbol}"
         elif reason == "TAKE_PROFIT":
-            event_type, title, severity = "TAKE_PROFIT", f"Take profit hit · {trade.symbol} {trade.side}", "success"
-            notif, notif_title = "TAKE_PROFIT_HIT", f"Take profit hit on {trade.symbol}"
+            event_type, notif, severity = "TAKE_PROFIT", "TAKE_PROFIT_HIT", "success"
+            title = f"Take profit hit · {trade.side} {trade.symbol}"
+            notif_title = f"Take profit hit on {trade.symbol}"
         else:
-            event_type = "TRADE_CLOSED"
-            title = f"{trade.symbol} {trade.side} closed ({label})"
-            severity = "error" if reason == "KILL_SWITCH" else ("success" if win else "warning")
-            notif, notif_title = "TRADE_CLOSED", f"{trade.side} {trade.symbol} closed — {label}"
+            label = _EXIT_LABEL[reason]
+            event_type, notif = "TRADE_CLOSED", "TRADE_CLOSED"
+            if reason == "KILL_SWITCH":
+                severity = "error"
+            else:
+                severity = (
+                    "success" if trade.result == "WIN" else "warning" if trade.result == "LOSS" else "info"
+                )
+            title = f"{trade.side} {trade.symbol} closed · {label}"
+            notif_title = f"{trade.side} {trade.symbol} closed ({label})"
         self._event(event_type, title, msg, now, severity=severity, symbol=trade.symbol, data=data)
         self._notify(notif, notif_title, msg, now, severity=severity, data={**data, "symbol": trade.symbol})
         self._batch.equity.append(self._equity_record(now))
+        self._batch.accounting = self.accounting_state()
         for alert in alerts:
             self._alert(alert, now)
 
@@ -695,7 +776,8 @@ class TradingCore:
         self.evaluations = keep
 
     def _replace_analysis(self, analysis: AIAnalysis) -> None:
-        if self.latest_analysis.get(analysis.symbol, analysis).id == analysis.id:
+        current = self.latest_analysis.get(analysis.symbol)
+        if current is not None and current.id == analysis.id:
             self.latest_analysis[analysis.symbol] = analysis
         for ev in self.evaluations:
             if ev.analysis.id == analysis.id:
@@ -703,18 +785,25 @@ class TradingCore:
         if self.config.emit_records:
             self._batch.analyses.append(analysis)
 
-    def _update_mtf(self, symbol: str, now: datetime | None) -> None:
+    def mtf_report(self, symbol: str, now: datetime | None = None) -> MTFReport | None:
+        """The symbol's MTF report, rebuilt first if candles arrived since the last build."""
+        if symbol in self._mtf_dirty:
+            self._build_mtf(symbol, now)
+        return self.mtf.get(symbol)
+
+    def _build_mtf(self, symbol: str, now: datetime | None) -> MTFReport | None:
         book = self.books[symbol]
         tfs = self.config.mtf_timeframes
         features = {tf: book.features(tf) for tf in tfs if tf in book.series}
         ts = now or (_ts(book.end_time) if book.end_time else datetime.now(UTC))
         report = build_report(symbol, features, ts, tfs, self._mtf_cache.setdefault(symbol, {}))
+        self._mtf_dirty.discard(symbol)
         if report is not None:
             self.mtf[symbol] = report
-            if now is not None and self.config.emit_records:
-                self._batch.mtf.append(report)
+        return report
 
     def _handle_fills(self, filled: list[OpenPosition], now: datetime) -> None:
+        """Resting limit orders that filled: they become positions now."""
         for pos in filled:
             self.trades_today += 1
             self.last_trade_at = now
@@ -797,11 +886,17 @@ class TradingCore:
             return None
         features = {}
         snapshots = {}
+        # every timeframe's snapshot goes into an LLM prompt; local analysts read features only
+        full = self.analyst.is_remote and needs_analyst(self.settings.trading.strategy)
         for t in self.context_timeframes:
             feat = book.features(t)
-            if feat is not None:
-                features[t] = feat
-                snapshots[t] = book.snapshot(t)
+            if feat is None:
+                continue
+            features[t] = feat
+            if full or t == tf:
+                snap = book.snapshot(t)
+                if snap is not None:
+                    snapshots[t] = snap
         pos = self.broker.position_for(symbol)
         regime = self.regimes[symbol].state or RegimeState(
             symbol=symbol, regime="UNKNOWN", confidence=0.0, since=None, metrics={}, updated_at=now
@@ -812,8 +907,8 @@ class TradingCore:
             ts=now,
             price=book.last_price or decision.price,
             features=features,
-            snapshots=snapshots,  # type: ignore[arg-type]
-            mtf=self.mtf.get(symbol),
+            snapshots=snapshots,
+            mtf=self.mtf_report(symbol, now),
             regime=regime,
             candles=book.candles(tf, CONTEXT_CANDLES),
             position=pos.to_schema(now) if pos is not None else None,
@@ -823,39 +918,43 @@ class TradingCore:
             narrate=self.config.narrate,
         )
 
-    def _decision_close(self, symbol: str, now: datetime) -> PendingDecision | None:
+    def _decision_close(self, symbol: str, now: datetime, decide: bool) -> PendingDecision | None:
         book = self.books[symbol]
         tf = self.decision_timeframe
         feats = book.features(tf)
-        tracker = self.regimes[symbol]
-        state, switched = tracker.update(classify(feats), now)
+        state, switched = self.regimes[symbol].update(classify(feats), now)
         if self.config.emit_records:
             self._batch.regimes.append((state, switched))
         self.last_market_update = now
-        if self.config.emit_market_updates and feats is not None:
+        if decide and self.config.emit_market_updates and feats is not None:
             change = feats.change_pct
             self._event(
                 "MARKET_UPDATE",
                 f"{symbol} {tf} close",
-                f"{fmt_price(feats.price)} ({fmt_pct(change, signed=True)}) · {state.regime.replace('_', ' ').lower()}",
+                f"{fmt_price(feats.price)} ({fmt_pct(change, signed=True)}) · "
+                f"{state.regime.replace('_', ' ').lower()}",
                 now,
                 symbol=symbol,
-                data={"timeframe": tf, "close": feats.price, "change_pct": round(change, 4) if change is not None else None},
+                data={
+                    "timeframe": tf,
+                    "close": feats.price,
+                    "change_pct": round(change, 4) if change is not None else None,
+                },
             )
-        if symbol not in self.settings.trading.symbols:
-            return None  # still managing an open position on a removed symbol, but no new calls
+        if not decide or symbol not in self.settings.trading.symbols:
+            return None  # catch-up, or still managing a position on a removed symbol: no new calls
         ctx = self.context(symbol, now)
         if ctx is None:
             return None
-        base = baseline.evaluate(ctx)
         strategy = self.settings.trading.strategy
+        base = baseline.evaluate(ctx)
         if not needs_analyst(strategy):
             self._finalize(ctx, base, base, None, now)
             return None
         if self.config.defer_remote_analysis and self.analyst.is_remote:
             return PendingDecision(symbol, ctx, base, now)
         result = self.analyst.analyze(ctx)
-        self._finalize(ctx, decide(strategy, result, base), base, result, now)
+        self._finalize(ctx, final_call(strategy, result, base), base, result, now)
         return None
 
     def complete(self, pending: PendingDecision, result: AnalystResult, now: datetime) -> AIAnalysis | None:
@@ -866,7 +965,8 @@ class TradingCore:
         pos = self.broker.position_for(pending.symbol)
         ctx.position = pos.to_schema(now) if pos is not None else None
         ctx.equity = self.equity()
-        analysis = self._finalize(ctx, decide(self.settings.trading.strategy, result, pending.baseline), pending.baseline, result, now)
+        final = final_call(self.settings.trading.strategy, result, pending.baseline)
+        analysis = self._finalize(ctx, final, pending.baseline, result, now)
         self.flush()
         return analysis
 
@@ -877,7 +977,8 @@ class TradingCore:
         base: AnalystResult,
         analyst_result: AnalystResult | None,
         now: datetime,
-    ) -> AIAnalysis:
+    ) -> AIAnalysis | None:
+        """Risk-check and execute a final call, queueing its events in the order they happen."""
         symbol = ctx.symbol
         analysis_id = self.decision_ids()
         self.last_analysis_at = now
@@ -889,13 +990,37 @@ class TradingCore:
         self._ai_health(trace, symbol, now)
 
         signal = final.signal
-        events: list[tuple[EventType, str, str, Severity, dict[str, Any]]] = []
+        self._event(
+            "AI_ANALYSIS",
+            f"{signal} {symbol} · {final.confidence:.0f}% confidence",
+            final.summary,
+            now,
+            symbol=symbol,
+            data={
+                "analysis_id": analysis_id,
+                "signal": signal,
+                "confidence": round(final.confidence, 1),
+                "provider": final.provider,
+                "model": final.model,
+            },
+        )
         trade_id: str | None = None
         risk_decision: RiskDecision
         if signal == "HOLD":
             risk_decision = self.risk.not_applicable()
         else:
             side: Side = signal  # type: ignore[assignment]
+            rr = final.risk_reward
+            self._event(
+                "TRADE_SIGNAL",
+                f"{signal} signal on {symbol}",
+                f"Confidence {final.confidence:.0f}% · entry {fmt_price(final.entry)} · SL "
+                f"{fmt_price(final.stop_loss, compact=True)} · TP {fmt_price(final.take_profit, compact=True)}"
+                + (f" · R/R {rr:.1f}" if rr is not None else ""),
+                now,
+                symbol=symbol,
+                data={"analysis_id": analysis_id, "signal": signal, "confidence": round(final.confidence, 1)},
+            )
             assessment = self.risk.assess(
                 side=side,
                 confidence=final.confidence,
@@ -909,36 +1034,24 @@ class TradingCore:
             risk_decision = assessment.decision
             if risk_decision.status == "REJECTED":
                 self._risk_dirty = True
-            rr = final.risk_reward
-            events.append(
-                (
-                    "TRADE_SIGNAL",
-                    f"{signal} signal on {symbol}",
-                    f"Confidence {final.confidence:.0f}% · entry {fmt_price(final.entry)} · SL "
-                    f"{fmt_price(final.stop_loss, compact=True)} · TP {fmt_price(final.take_profit, compact=True)}"
-                    + (f" · R/R {rr:.1f}" if rr is not None else ""),
-                    "info",
-                    {"analysis_id": analysis_id, "signal": signal, "confidence": final.confidence},
-                )
-            )
-            events.append(self._risk_event(analysis_id, risk_decision, assessment.sizing, symbol, side))
+            self._risk_event(analysis_id, assessment, symbol, side, now)
             if assessment.reverse:
                 self._reverse(symbol, now)
             if risk_decision.status == "APPROVED" and assessment.sizing is not None:
-                trade_id = self._enter(ctx, final, side, assessment.sizing.size, analysis_id, now)
+                trade_id = self._enter(ctx, final, side, assessment.sizing, analysis_id, now)
             elif risk_decision.status == "REJECTED":
-                events.append(
-                    (
-                        "TRADE_REJECTED",
-                        f"{signal} {symbol} rejected",
-                        " · ".join(risk_decision.reasons),
-                        "warning",
-                        {"analysis_id": analysis_id, "reasons": list(risk_decision.reasons)},
-                    )
+                self._event(
+                    "TRADE_REJECTED",
+                    f"{signal} {symbol} rejected",
+                    " · ".join(risk_decision.reasons),
+                    now,
+                    severity="warning",
+                    symbol=symbol,
+                    data={"analysis_id": analysis_id, "reasons": list(risk_decision.reasons)},
                 )
 
-        snapshot = ctx.snapshots[ctx.timeframe]
-        mtf = ctx.mtf.timeframes if ctx.mtf is not None else []
+        if not self.config.emit_records:
+            return None
         directional = signal != "HOLD" and None not in (final.entry, final.stop_loss, final.take_profit)
         analysis = AIAnalysis(
             id=analysis_id,
@@ -959,8 +1072,8 @@ class TradingCore:
             risks=final.risks,
             invalidation=final.invalidation,
             detailed_reasoning=final.detailed_reasoning,
-            indicators=snapshot,
-            mtf=mtf,
+            indicators=ctx.snapshots[ctx.timeframe],
+            mtf=ctx.mtf.timeframes if ctx.mtf is not None else [],
             strategy=self.settings.trading.strategy,
             baseline_signal=base.signal,
             provider=final.provider,
@@ -976,73 +1089,61 @@ class TradingCore:
         )
         self.latest_analysis[symbol] = analysis
         self._track_evaluation(analysis)
-        if self.config.emit_records:
-            self._batch.analyses.append(analysis)
-            # the analysis row precedes its events; its events precede the position's
-            self._batch.events.insert(
-                len(self._batch.events) - self._pending_entry_events,
-                EventRecord(
-                    "AI_ANALYSIS",
-                    f"{symbol}: {signal} at {final.confidence:.0f}% confidence",
-                    final.summary,
-                    now,
-                    "info",
-                    symbol,
-                    {
-                        "analysis_id": analysis_id,
-                        "signal": signal,
-                        "confidence": final.confidence,
-                        "provider": final.provider,
-                        "model": final.model,
-                    },
-                ),
-            )
-            insert_at = len(self._batch.events) - self._pending_entry_events
-            for offset, (etype, title, message, severity, data) in enumerate(events):
-                self._batch.events.insert(insert_at + offset, EventRecord(etype, title, message, now, severity, symbol, data))
-        self._pending_entry_events = 0
+        self._batch.analyses.append(analysis)
         return analysis
 
-    _pending_entry_events = 0  # events already queued by _enter/_reverse for the current decision
-
     def _risk_event(
-        self, analysis_id: str, decision: RiskDecision, sizing: Any, symbol: str, side: Side
-    ) -> tuple[EventType, str, str, Severity, dict[str, Any]]:
+        self, analysis_id: str, assessment: Assessment, symbol: str, side: Side, now: datetime
+    ) -> None:
+        decision = assessment.decision
+        sizing = assessment.sizing
         data = {"analysis_id": analysis_id, "status": decision.status, "reasons": list(decision.reasons)}
+        severity: Severity
         if decision.status == "APPROVED" and sizing is not None:
-            msg = (
+            title, severity = "Risk check passed", "success"
+            message = (
                 f"All {len(decision.checks)} checks passed · {fmt_qty(sizing.size, symbol, sizing.fill_price)} "
                 f"({fmt_usd(sizing.notional)}) · risk {fmt_usd(sizing.risk_amount)} ({fmt_pct(sizing.risk_pct)})"
             )
             if self.settings.execution.order_type == "limit":
-                msg += " · limit order"
-            return "RISK_CHECK", "Risk check passed", msg, "success", data
-        if decision.status == "NOT_APPLICABLE":
-            return "RISK_CHECK", f"Already {side} {symbol}", "Position already open in this direction; holding it", "info", data
-        failed = [c for c in decision.checks if not c.passed and c.value is not None]
-        parts = [f"{c.name}: {c.value} (needs {c.limit})" if c.limit else f"{c.name}: {c.value}" for c in failed[:3]]
-        return "RISK_CHECK", "Risk check failed", " · ".join(parts) or " · ".join(decision.reasons), "warning", data
+                message += " · limit order"
+        elif decision.status == "NOT_APPLICABLE":
+            title, severity = f"Already {side} {symbol}", "info"
+            message = "A position in this direction is already open; it is kept as is"
+        else:
+            title, severity = "Risk check failed", "warning"
+            failed = [c for c in decision.checks if not c.passed and c.value is not None]
+            parts = [
+                f"{c.name}: {c.value} (needs {c.limit})" if c.limit else f"{c.name}: {c.value}"
+                for c in failed[:3]
+            ]
+            message = " · ".join(parts) or " · ".join(decision.reasons)
+        self._event("RISK_CHECK", title, message, now, severity=severity, symbol=symbol, data=data)
 
     def _reverse(self, symbol: str, now: datetime) -> None:
         order = self.broker.order_for(symbol)
         if order is not None:
             self.broker.cancel(order.id)
             self._order_gone(order, now, "Cancelled by an opposite signal")
-            self._pending_entry_events += 1
         pos = self.broker.position_for(symbol)
         if pos is not None:
-            before = len(self._batch.events)
             ex = self.broker.close(pos.id, self.prices.get(symbol, pos.mark), now, "SIGNAL_REVERSAL")
             self._record_exit(ex, now)
-            self._pending_entry_events += len(self._batch.events) - before
 
-    def _enter(self, ctx: MarketContext, final: AnalystResult, side: Side, size: float, analysis_id: str, now: datetime) -> str | None:
+    def _enter(
+        self,
+        ctx: MarketContext,
+        final: AnalystResult,
+        side: Side,
+        sizing: Sizing,
+        analysis_id: str,
+        now: datetime,
+    ) -> str | None:
+        """Open the position (market) or rest a limit order; returns the position id once filled."""
         assert final.stop_loss is not None and final.take_profit is not None
-        sizing_risk = self.risk.per_unit_loss(self.risk.fill_estimate(side, ctx.price, final.entry or ctx.price), final.stop_loss) * size
-        equity = self.equity()
         meta = EntryMeta(
-            risk_amount=sizing_risk,
-            risk_pct=sizing_risk / equity * 100.0 if equity > 0 else 0.0,
+            risk_amount=sizing.risk_amount,
+            risk_pct=sizing.risk_pct,
             strategy=self.settings.trading.strategy,
             regime=ctx.regime.regime,
             order_type=self.settings.execution.order_type,
@@ -1050,58 +1151,76 @@ class TradingCore:
             ai_confidence=round(final.confidence, 1),
             entry_reason=final.summary[:280],
         )
-        before = len(self._batch.events)
         if self.settings.execution.order_type == "limit" and final.entry is not None:
             placed = self.broker.place_limit(
-                ctx.symbol, side, size, final.entry, ctx.price, final.stop_loss, final.take_profit, now, meta
+                ctx.symbol,
+                side,
+                sizing.size,
+                final.entry,
+                ctx.price,
+                final.stop_loss,
+                final.take_profit,
+                now,
+                meta,
             )
             if isinstance(placed, LimitOrder):
                 return None
             pos = placed
         else:
-            pos = self.broker.open_market(ctx.symbol, side, size, ctx.price, final.stop_loss, final.take_profit, now, meta)
+            pos = self.broker.open_market(
+                ctx.symbol, side, sizing.size, ctx.price, final.stop_loss, final.take_profit, now, meta
+            )
         self.trades_today += 1
         self.last_trade_at = now
         self._executed_records(pos, now, analysis_id)
-        self._pending_entry_events += len(self._batch.events) - before
         if self.config.emit_records:
             self._batch.positions.append(pos.to_schema(now))
         return pos.id
 
     def _ai_health(self, result: AnalystResult, symbol: str, now: datetime) -> None:
-        """API_ERROR per failing analysis, AI_UNAVAILABLE at most every 30 min, SYSTEM_INFO on recovery."""
+        """API_ERROR per troubled analysis, AI_UNAVAILABLE at most every 30 min, SYSTEM_INFO on recovery."""
         if result.errors:
-            last = result.errors[-1]
-            model, _, error = last.partition(": ")
-            answered = result.provider == "openrouter" and result.fallback_reason is None and result.signal is not None
-            ok = answered and not (result.signal == "HOLD" and result.confidence == 0.0 and result.reasons[:1] and "unavailable" in result.summary.lower())
+            model, _, error = result.errors[-1].partition(": ")
+            if result.failed:
+                title, severity = "OpenRouter request failed", "error"
+                message = f"{model}: {error}" + (
+                    " · answered by heuristic-v1" if result.fallback_reason else ""
+                )
+            else:
+                title, severity = "OpenRouter request retried", "warning"
+                message = f"{model}: {error} · answered after {len(result.usage)} request(s)"
             self._event(
                 "API_ERROR",
-                "OpenRouter request failed" if not ok else "OpenRouter request retried",
-                f"{model}: {error}" + (" — answered by heuristic-v1" if result.fallback_reason else ""),
+                title,
+                message,
                 now,
-                severity="warning" if ok else "error",
+                severity=severity,  # type: ignore[arg-type]
                 symbol=symbol,
                 data={"provider": "openrouter", "model": model, "error": error},
             )
-        degraded = result.fallback_reason is not None or (
-            result.provider == "openrouter" and bool(result.errors) and result.confidence == 0.0 and result.signal == "HOLD"
-        )
-        if degraded:
-            if not self._ai_failing or self._ai_notified_at is None or now - self._ai_notified_at >= AI_UNAVAILABLE_EVERY:
+        if result.failed:
+            if self._ai_notified_at is None or now - self._ai_notified_at >= AI_UNAVAILABLE_EVERY:
+                tail = (
+                    " The local heuristic answers meanwhile."
+                    if result.fallback_reason
+                    else " The bot holds until it answers again."
+                )
                 self._notify(
                     "AI_UNAVAILABLE",
                     "AI analyst unavailable",
-                    (result.fallback_reason or "OpenRouter did not answer")
-                    + (". The local heuristic is answering meanwhile." if result.fallback_reason else "."),
+                    (result.fallback_reason or "OpenRouter did not answer.").rstrip(".") + "." + tail,
                     now,
                     severity="warning",
-                    data={"provider": "openrouter"},
+                    data={
+                        "provider": "openrouter",
+                        "model": result.errors[-1].partition(": ")[0] if result.errors else None,
+                    },
                 )
                 self._ai_notified_at = now
             self._ai_failing = True
         elif result.provider == "openrouter" and self._ai_failing:
             self._ai_failing = False
+            self._ai_notified_at = None
             self._event(
                 "SYSTEM_INFO",
                 "AI analyst recovered",

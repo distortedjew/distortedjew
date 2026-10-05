@@ -91,7 +91,9 @@ def estimate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> flo
     option = _price(model)
     if option is None or option.prompt_price_per_mtok is None or option.completion_price_per_mtok is None:
         return None
-    return (prompt_tokens * option.prompt_price_per_mtok + completion_tokens * option.completion_price_per_mtok) / 1e6
+    return (
+        prompt_tokens * option.prompt_price_per_mtok + completion_tokens * option.completion_price_per_mtok
+    ) / 1e6
 
 
 def model_options() -> list[AIModelOption]:

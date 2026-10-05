@@ -12,8 +12,8 @@
 from __future__ import annotations
 
 from ..ai import levels
-from ..ai.heuristic import lower_first
 from ..ai.base import AnalystResult, MarketContext
+from ..ai.heuristic import lower_first
 from ..market.symbols import fmt_pct, fmt_price
 from ..schemas import Side
 
@@ -59,14 +59,22 @@ def evaluate(ctx: MarketContext) -> AnalystResult:
         filters = [
             (price > f.ema21, f"Close above EMA 21 ({fmt_price(f.ema21)})", "Close below EMA 21"),
             (hist > 0, "MACD histogram positive", "MACD histogram not positive"),
-            (45.0 <= rsi <= 70.0, f"RSI {rsi:.0f} inside the 45–70 long band", f"RSI {rsi:.0f} outside the 45–70 long band"),
+            (
+                45.0 <= rsi <= 70.0,
+                f"RSI {rsi:.0f} inside the 45–70 long band",
+                f"RSI {rsi:.0f} outside the 45–70 long band",
+            ),
         ]
         trend_text = "EMA 21 above EMA 50 (long-only trend filter)"
     else:
         filters = [
             (price < f.ema21, f"Close below EMA 21 ({fmt_price(f.ema21)})", "Close above EMA 21"),
             (hist < 0, "MACD histogram negative", "MACD histogram not negative"),
-            (30.0 <= rsi <= 55.0, f"RSI {rsi:.0f} inside the 30–55 short band", f"RSI {rsi:.0f} outside the 30–55 short band"),
+            (
+                30.0 <= rsi <= 55.0,
+                f"RSI {rsi:.0f} inside the 30–55 short band",
+                f"RSI {rsi:.0f} outside the 30–55 short band",
+            ),
         ]
         trend_text = "EMA 21 below EMA 50 (short-only trend filter)"
     failed = [bad for ok, _good, bad in filters if not ok]

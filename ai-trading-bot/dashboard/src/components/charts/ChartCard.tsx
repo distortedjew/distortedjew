@@ -70,7 +70,15 @@ export function ChartCard({
 
   let body: ReactNode;
   if (loading) body = <SkeletonChart height={height} />;
-  else if (error) body = <ErrorState error={error} onRetry={onRetry} compact={height < 160} className="h-full" />;
+  else if (error)
+    body =
+      height < 160 ? (
+        <div className="flex h-full items-center px-2">
+          <ErrorState error={error} onRetry={onRetry} compact className="w-full" />
+        </div>
+      ) : (
+        <ErrorState error={error} onRetry={onRetry} className="h-full" />
+      );
   else if (empty) {
     const props: EmptyStateProps = typeof empty === "object" ? empty : { title: "No data for this period yet" };
     body = <EmptyState size="sm" {...props} className={cn("h-full", props.className)} />;

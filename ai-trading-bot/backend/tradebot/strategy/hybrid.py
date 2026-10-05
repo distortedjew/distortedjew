@@ -22,7 +22,9 @@ def combine(analyst: AnalystResult, baseline: AnalystResult) -> AnalystResult:
             )
         return analyst
     if baseline.signal == "HOLD":
-        conflict = f"Baseline does not confirm the {analyst.signal} (it holds: {baseline.reasons[0].rstrip('.')})"
+        conflict = (
+            f"Baseline does not confirm the {analyst.signal} (it holds: {baseline.reasons[0].rstrip('.')})"
+        )
     else:
         conflict = f"Baseline disagrees: it signals {baseline.signal}"
     # confidence of standing aside falls as the analyst's conviction rises

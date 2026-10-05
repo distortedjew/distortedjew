@@ -42,7 +42,6 @@ from dataclasses import asdict, dataclass, field
 
 import numpy as np
 
-from ..schemas import Candle
 from .candles import CandleArrays
 from .symbols import normalize, qty_decimals, tick_size
 
@@ -186,7 +185,9 @@ def asset_spec(symbol: str) -> AssetSpec:
 
 def _season_curves() -> tuple[np.ndarray, np.ndarray, float, float]:
     hour = np.arange(MINUTES) / 60.0
-    vol = 1.0 + 0.22 * np.cos(2 * np.pi * (hour - 15.0) / 24.0) + 0.06 * np.cos(4 * np.pi * (hour - 9.0) / 24.0)
+    vol = (
+        1.0 + 0.22 * np.cos(2 * np.pi * (hour - 15.0) / 24.0) + 0.06 * np.cos(4 * np.pi * (hour - 9.0) / 24.0)
+    )
     volume = 1.0 + 0.45 * np.cos(2 * np.pi * (hour - 15.0) / 24.0)
     # normalise over a week (5 weekdays + 2 quieter weekend days)
     vol_norm = math.sqrt((5 * np.mean(vol**2) + 2 * np.mean((0.82 * vol) ** 2)) / 7)
@@ -334,7 +335,9 @@ def _rng(seed: int, purpose: str, day: int, symbol: str = "", extra: int = 0) ->
 class MarketSimulator:
     """Generates the market one UTC day at a time from a ``MarketState``."""
 
-    def __init__(self, seed: int, symbols: Sequence[str], state: MarketState | None = None, *, start_day: int = 0):
+    def __init__(
+        self, seed: int, symbols: Sequence[str], state: MarketState | None = None, *, start_day: int = 0
+    ):
         self.seed = int(seed)
         self.specs: dict[str, AssetSpec] = {}
         self.state = state if state is not None else self.initial_state(self.seed, start_day)
@@ -567,10 +570,7 @@ def generate_history(
     minutes_today = (end - current.start) // 60
     if anchor:
         last_minute = minutes_today - 1
-        if last_minute >= 0:
-            last = current.logp[last_minute]
-        else:
-            last = current.logp_open
+        last = current.logp[last_minute] if last_minute >= 0 else current.logp_open
         deltas = np.array([math.log(sim.specs[s].price) for s in sim.symbols]) - last
         for b in blocks:
             b.shift(deltas)

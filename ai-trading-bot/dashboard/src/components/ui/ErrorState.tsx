@@ -1,4 +1,4 @@
-import { RotateCw, TriangleAlert } from "lucide-react";
+import { Hourglass, RotateCw, TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { ApiError, describeError } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -17,34 +17,39 @@ export interface ErrorStateProps {
   className?: string;
 }
 
+/** 503 "engine has not published state yet" is a wait, not a failure: render it calmly. */
+function isWaiting(error: unknown): boolean {
+  return error instanceof ApiError && error.isEngineUnavailable;
+}
+
 /**
- * Graceful failure: what went wrong in plain language, plus a retry.
+ * Graceful failure: what went wrong in plain language, plus a retry. A 503 from an endpoint
+ * whose live state the engine has not published yet renders as a neutral "waiting" state.
  *
  *   if (query.error) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
  */
-export function ErrorState({
-  error,
-  title = "Couldn't load this data",
-  description,
-  onRetry,
-  retrying,
-  compact,
-  className,
-}: ErrorStateProps) {
+export function ErrorState({ error, title, description, onRetry, retrying, compact, className }: ErrorStateProps) {
+  const waiting = isWaiting(error);
+  const heading = title ?? (waiting ? "Waiting for the trading engine" : "Couldn't load this data");
   const message = description ?? (error ? describeError(error) : "Something went wrong.");
-  const code = error instanceof ApiError && error.status ? `HTTP ${error.status}` : null;
+  const code = !waiting && error instanceof ApiError && error.status ? `HTTP ${error.status}` : null;
+  const Icon = waiting ? Hourglass : TriangleAlert;
 
   if (compact) {
     return (
       <div
-        role="alert"
+        role={waiting ? "status" : "alert"}
         className={cn(
-          "flex items-center gap-2.5 rounded-lg border border-down/20 bg-down/[0.06] px-3 py-2 text-dense",
+          "flex items-center gap-2.5 rounded-lg border px-3 py-2 text-dense",
+          waiting ? "border-line bg-fg/[0.03]" : "border-down/20 bg-down/[0.06]",
           className,
         )}
       >
-        <TriangleAlert className="size-3.5 shrink-0 text-down" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-fg-muted">{message}</span>
+        <Icon className={cn("size-3.5 shrink-0", waiting ? "text-fg-subtle" : "text-down")} aria-hidden />
+        <span className="min-w-0 flex-1 truncate text-fg-muted">
+          {waiting && title === undefined ? <span className="font-medium text-fg">{heading}. </span> : null}
+          {message}
+        </span>
         {onRetry ? (
           <Button size="xs" variant="ghost" leftIcon={RotateCw} onClick={onRetry} loading={retrying}>
             Retry
@@ -55,12 +60,20 @@ export function ErrorState({
   }
 
   return (
-    <div role="alert" className={cn("flex flex-col items-center justify-center gap-3 px-6 py-10 text-center", className)}>
-      <div className="flex size-10 items-center justify-center rounded-xl bg-down/10 text-down ring-1 ring-down/20 ring-inset">
-        <TriangleAlert className="size-5" strokeWidth={1.75} aria-hidden />
+    <div
+      role={waiting ? "status" : "alert"}
+      className={cn("flex flex-col items-center justify-center gap-3 px-6 py-10 text-center", className)}
+    >
+      <div
+        className={cn(
+          "flex size-10 items-center justify-center rounded-xl ring-1 ring-inset",
+          waiting ? "bg-fg/[0.04] text-fg-subtle ring-line" : "bg-down/10 text-down ring-down/20",
+        )}
+      >
+        <Icon className="size-5" strokeWidth={1.75} aria-hidden />
       </div>
       <div className="max-w-md space-y-1">
-        <p className="text-sm font-medium text-fg">{title}</p>
+        <p className="text-sm font-medium text-fg">{heading}</p>
         <p className="text-dense leading-5 text-fg-subtle">{message}</p>
         {code ? <p className="font-mono text-2xs text-fg-disabled">{code}</p> : null}
       </div>

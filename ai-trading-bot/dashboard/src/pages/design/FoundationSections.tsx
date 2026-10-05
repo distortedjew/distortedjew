@@ -11,6 +11,7 @@ import {
   FEED_META,
   HEALTH_STATE_META,
   NOTIFICATION_TYPE_META,
+  ORDER_TYPE_META,
   REGIME_META,
   RISK_METER_STATUS_META,
   RISK_STATUS_META,
@@ -31,6 +32,7 @@ import { Kbd } from "@/components/ui/Kbd";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { BotStatusPill } from "@/components/layout/BotStatusPill";
 import { ConnectionBadge } from "@/components/layout/ConnectionIndicator";
+import { LiveTag } from "@/components/layout/LiveTag";
 import { LiveTradingBanner } from "@/components/layout/LiveTradingBanner";
 import { TradingModeBadge } from "@/components/layout/TradingModeBadge";
 
@@ -135,7 +137,8 @@ export function TypographySection() {
             <div className="label-caps">Section label · 11 / 500 caps</div>
           </div>
           <div className="space-y-3">
-            <div className="num-sans text-kpi font-semibold">$10,482.31</div>
+            <div className="text-kpi font-semibold">$10,482.31</div>
+            <div className="text-xs text-fg-subtle">KPI · 26 / 600 Inter, proportional figures</div>
             <div className="num text-lg">97,123.45 · 3,450.12 · 165.25</div>
             <div className="num text-dense text-fg-muted">0.0412 BTC · +1.24R · 14:32:05</div>
             <div className="font-mono text-xs text-fg-subtle">[14:32:05] AI_ANALYSIS BTC/USDT LONG 78%</div>
@@ -170,6 +173,7 @@ export function StatusSection() {
             <TradingModeBadge mode={undefined} />
           </div>
           <div className="flex flex-wrap items-center gap-4">
+            <LiveTag />
             <ConnectionBadge status="live" />
             <ConnectionBadge status="connecting" />
             <ConnectionBadge status="reconnecting" />
@@ -247,6 +251,7 @@ const ENUMS: { kind: EnumKind; values: string[] }[] = [
   { kind: "trend", values: Object.keys(TREND_META) },
   { kind: "emaAlignment", values: Object.keys(EMA_ALIGNMENT_META) },
   { kind: "strategy", values: Object.keys(STRATEGY_META) },
+  { kind: "orderType", values: Object.keys(ORDER_TYPE_META) },
   { kind: "exitReason", values: Object.keys(EXIT_REASON_META) },
   { kind: "result", values: Object.keys(TRADE_RESULT_META) },
   { kind: "riskStatus", values: Object.keys(RISK_STATUS_META) },

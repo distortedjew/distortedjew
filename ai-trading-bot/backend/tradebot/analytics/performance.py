@@ -64,11 +64,12 @@ _EPOCH_ORDINAL = date(1970, 1, 1).toordinal()
 
 RANGE_SECONDS: dict[str, int] = {"24h": DAY, "7d": 7 * DAY, "30d": 30 * DAY, "90d": 90 * DAY}
 MAX_CURVE_POINTS = 1_000
-# Long ranges are reduced to the high, low and last equity of each time bucket before the
-# statistics run: drawdowns and day / month closes stay exact while a year of minute
-# snapshots shrinks to a few thousand points. Bucket sizes divide a day evenly.
+# Long ranges are reduced to a handful of points per time bucket before the statistics run
+# (``compress_extremes``): drawdowns and day / month closes stay exact while a year of
+# minute snapshots shrinks to tens of thousands of points. Bucket sizes divide a day evenly.
 _BUCKET_SIZES = (60, 120, 300, 600, 900, 1_800, 3_600)
-_TARGET_BUCKETS = 6_000
+_TARGET_BUCKETS = 3_000
+_COMPRESS_ABOVE = 4 * _TARGET_BUCKETS
 
 KPI_CACHE_SECONDS = 5.0
 EXIT_REASONS: tuple[ExitReason, ...] = typing.get_args(ExitReason)
@@ -483,29 +484,51 @@ class PortfolioKpiService:
 
 
 def compress_extremes(points: Sequence[tuple[int, float]], bucket: int) -> list[tuple[int, float]]:
-    """Keep the high, the low and the last point of every ``bucket``-second window.
+    """Reduce a time-ordered series to at most six points per ``bucket``-second window.
 
-    Peaks and troughs survive in time order, so the maximum drawdown of the result equals
-    that of the input, and the last point of every day / month is kept as well.
+    Each window keeps its first, last, highest and lowest point, plus its deepest point
+    below the running peak of the whole series and, when that peak lies in the same window,
+    the peak itself (a peak set in an earlier window is that window's highest point, kept
+    already). Every trough therefore keeps the peak it is measured from: the result has
+    exactly the input's maximum drawdown, the same first and last point and, when
+    ``bucket`` divides a day, the same daily and monthly closes.
     """
     out: list[tuple[int, float]] = []
     key: int | None = None
-    hi = lo = last = (0, 0.0)
+    peak: tuple[int, float] | None = None
+    first = last = high = low = trough_peak = (0, 0.0)
+    trough: tuple[int, float] | None = None
+    trough_ratio = 1.0
+
+    def flush() -> None:
+        kept = {first, last, high, low}
+        if trough is not None:
+            kept.add(trough)
+            if trough_peak[0] // bucket == key:
+                kept.add(trough_peak)
+        out.extend(sorted(kept))
+
     for point in points:
+        if peak is None or point[1] > peak[1]:
+            peak = point
         k = point[0] // bucket
         if k != key:
             if key is not None:
-                out.extend(sorted({hi, lo, last}))
+                flush()
             key = k
-            hi = lo = last = point
-            continue
-        if point[1] > hi[1]:
-            hi = point
-        if point[1] < lo[1]:
-            lo = point
-        last = point
+            first = last = high = low = point
+            trough, trough_ratio = None, 1.0
+        else:
+            last = point
+            if point[1] > high[1]:
+                high = point
+            if point[1] < low[1]:
+                low = point
+        ratio = point[1] / peak[1] if peak[1] > 0 else 1.0
+        if ratio < trough_ratio:
+            trough, trough_peak, trough_ratio = point, peak, ratio
     if key is not None:
-        out.extend(sorted({hi, lo, last}))
+        flush()
     return out
 
 
@@ -587,18 +610,20 @@ def build_performance_report(
         "SELECT equity FROM equity_snapshots WHERE time <= ? ORDER BY time DESC LIMIT 1", (start_t,)
     )
     starting_equity = base["equity"] if base else starting_balance
-    raw = [
-        (r[0], r[1])
-        for r in db.read(
-            "SELECT time, equity FROM equity_snapshots WHERE time > ? AND time <= ? ORDER BY time",
-            (start_t, now_t),
-        )
+    points: list[tuple[int, float]] = [
+        (start_t, starting_equity),
+        *(
+            (r[0], r[1])
+            for r in db.read(
+                "SELECT time, equity FROM equity_snapshots WHERE time > ? AND time <= ? ORDER BY time",
+                (start_t, now_t),
+            )
+        ),
     ]
-    if len(raw) > 2 * _TARGET_BUCKETS:
-        raw = compress_extremes(raw, _bucket_for(now_t - start_t))
-    points: list[tuple[int, float]] = [(start_t, starting_equity), *raw]
     if live_equity is not None and points[-1][0] < now_t:
         points.append((now_t, live_equity))
+    if len(points) > _COMPRESS_ABOVE:
+        points = compress_extremes(points, _bucket_for(now_t - start_t))
 
     trades = [
         Trade.model_validate_json(r["payload"])

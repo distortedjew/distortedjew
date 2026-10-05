@@ -231,7 +231,14 @@ def run_backtest_job(db_path: str, job_id: str, runner: Runner | None = None) ->
     """Process-pool entry point: run one queued job to completion. Top-level, so picklable."""
     db = Database(db_path)
     try:
-        _run_job(db, job_id, runner or _default_runner())
+        if runner is None:
+            try:
+                runner = _default_runner()
+            except ImportError as exc:
+                log.error("Backtester unavailable: %s", exc)
+                _fail(db, job_id, f"Backtester unavailable: {exc}")
+                return
+        _run_job(db, job_id, runner)
     finally:
         db.close()
 

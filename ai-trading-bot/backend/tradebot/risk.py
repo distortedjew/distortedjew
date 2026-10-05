@@ -8,12 +8,17 @@ Checks, in order: direction allowed (shorts toggle) · trading not halted · con
 ``min_ai_confidence`` · valid levels (correct sides, stop 0.1–10 % away) · risk/reward ≥
 ``min_risk_reward`` · open positions < ``max_positions`` · no same-direction position on the
 symbol (an opposite one is reversed when confidence ≥ minimum + 10) · exposure after entry ≤
-``max_exposure_pct`` · daily loss + this trade's risk ≤ ``max_daily_loss_usd`` · notional ≥ $10.
+``max_exposure_pct`` · today's loss + the open risk of the other positions + this trade's risk
+≤ ``max_daily_loss_usd`` · notional ≥ $10.
+
+Counting open risk in the daily budget is deliberate: BTC, ETH and SOL move together, so
+three positions that each risk 1 % can all stop out within minutes. Budgeting them up front
+keeps the kill switch an emergency brake (gaps, slippage) instead of a daily event.
 
 Sizing: ``risk_per_trade_pct`` of equity divided by the per-unit loss at the stop — the stop
 distance plus entry/exit fees and exit slippage, so a stopped trade loses about one R — capped
-by ``max_position_pct`` of equity and by the remaining exposure headroom. The effective risk is
-what gets recorded.
+by ``max_position_pct`` of equity, by the remaining exposure headroom and by what is left of
+the daily loss budget. The effective risk is what gets recorded.
 
 Halts: the daily loss limit (equity-based: realized + change in unrealized since 00:00 UTC)
 closes everything (kill switch) and halts until the next UTC day; 80 % of it raises a warning
@@ -63,7 +68,7 @@ R_POSITIONS = "Max open positions reached"
 R_SAME = "Position already open"
 R_OPPOSITE = "Opposite position open"
 R_EXPOSURE = "Exposure limit exceeded"
-R_DAILY = "Daily loss budget exceeded"
+R_DAILY = "Daily loss limit reached"
 R_NOTIONAL = "Position size below minimum"
 R_HOLD = "HOLD signal"
 
@@ -89,6 +94,7 @@ class PortfolioView:
     max_drawdown_pct: float  # worst observed, <= 0
     side_on_symbol: Side | None = None  # open position or resting order on the decision symbol
     exposure_on_symbol: float = 0.0  # what a reversal would free up
+    risk_on_symbol: float = 0.0  # open risk a reversal would free up
 
 
 @dataclass(slots=True)
@@ -98,7 +104,10 @@ class Sizing:
     risk_amount: float
     risk_pct: float
     fill_price: float
-    capped_by: str | None  # None, "max position" or "exposure headroom"
+    capped_by: str | None  # None, "max position", "exposure headroom" or "daily loss budget"
+    exposure_headroom: float = 0.0  # quote currency left under max_exposure_pct before this trade
+    risk_budget: float = 0.0  # daily loss budget left before this trade (quote currency)
+    committed: float = 0.0  # today's loss + open risk of the other positions
 
 
 @dataclass(slots=True)
@@ -172,7 +181,11 @@ _METER_MESSAGES: dict[str, dict[str, str]] = {
         "critical": "NEAR DRAWDOWN LIMIT",
         "breached": "DRAWDOWN LIMIT REACHED — ENTRIES PAUSED",
     },
-    "exposure": {"warning": "EXPOSURE HIGH", "critical": "NEAR EXPOSURE LIMIT", "breached": "EXPOSURE LIMIT REACHED"},
+    "exposure": {
+        "warning": "EXPOSURE HIGH",
+        "critical": "NEAR EXPOSURE LIMIT",
+        "breached": "EXPOSURE LIMIT REACHED",
+    },
     "positions": {
         "warning": "POSITION SLOTS FILLING",
         "critical": "LAST POSITION SLOT",
@@ -219,7 +232,9 @@ class RiskManager:
         self.trading = trading
         self.state = state or RiskState()
 
-    def update_settings(self, risk: RiskSettings, execution: ExecutionSettings, trading: TradingSettings) -> None:
+    def update_settings(
+        self, risk: RiskSettings, execution: ExecutionSettings, trading: TradingSettings
+    ) -> None:
         self.risk, self.execution, self.trading = risk, execution, trading
 
     # ------------------------------------------------------------------
@@ -282,7 +297,11 @@ class RiskManager:
                     kill_switch=True,
                 )
             )
-        elif daily_loss >= DAILY_WARNING_FRACTION * limit and not st.daily_warning_sent and st.daily_halt_until is None:
+        elif (
+            daily_loss >= DAILY_WARNING_FRACTION * limit
+            and not st.daily_warning_sent
+            and st.daily_halt_until is None
+        ):
             st.daily_warning_sent = True
             alerts.append(
                 RiskAlert(
@@ -302,7 +321,11 @@ class RiskManager:
             st.dd_trigger_equity = None  # new peak re-arms the drawdown halt
         dd_limit = self.risk.max_drawdown_pct
         paused = st.drawdown_until is not None and st.drawdown_until > now
-        if dd >= dd_limit and not paused and (st.dd_trigger_equity is None or view.equity < st.dd_trigger_equity):
+        if (
+            dd >= dd_limit
+            and not paused
+            and (st.dd_trigger_equity is None or view.equity < st.dd_trigger_equity)
+        ):
             st.drawdown_until = now + DRAWDOWN_PAUSE
             st.dd_trigger_equity = view.equity
             alerts.append(
@@ -377,10 +400,15 @@ class RiskManager:
         exposure = view.exposure - (view.exposure_on_symbol if reverse else 0.0)
         headroom = max(0.0, equity * self.risk.max_exposure_pct / 100.0 - exposure)
         cap_exposure = headroom / fill
+        committed = max(0.0, -view.daily_pnl) + view.open_risk - (view.risk_on_symbol if reverse else 0.0)
+        budget = max(0.0, self.risk.max_daily_loss_usd - committed)
+        cap_budget = budget / unit if unit > 0 else 0.0
         if cap_position < size:
             size, capped_by = cap_position, "max position"
         if cap_exposure < size:
             size, capped_by = cap_exposure, "exposure headroom"
+        if cap_budget < size:
+            size, capped_by = cap_budget, "daily loss budget"
         decimals = qty_decimals(fill)
         size = math.floor(size * 10**decimals) / 10**decimals
         notional = size * fill
@@ -392,6 +420,9 @@ class RiskManager:
             risk_pct=round(risk_amount / equity * 100.0, 4) if equity > 0 else 0.0,
             fill_price=fill,
             capped_by=capped_by,
+            exposure_headroom=headroom,
+            risk_budget=budget,
+            committed=committed,
         )
 
     def assess(
@@ -411,7 +442,9 @@ class RiskManager:
         checks: list[RiskCheck] = []
         reasons: list[str] = []
 
-        def add(name: str, passed: bool, reason: str, value: str | None, limit: str | None, detail: str | None) -> None:
+        def add(
+            name: str, passed: bool, reason: str, value: str | None, limit: str | None, detail: str | None
+        ) -> None:
             checks.append(RiskCheck(name=name, passed=passed, value=value, limit=limit, detail=detail))
             if not passed and reason not in reasons:
                 reasons.append(reason)
@@ -434,7 +467,9 @@ class RiskManager:
             R_HALTED,
             "Halted" if halt_reason else "Active",
             "Active",
-            f"{halt_reason} — resumes {halted_until:%Y-%m-%d %H:%M} UTC" if halt_reason and halted_until else None,
+            f"{halt_reason} — resumes {halted_until:%Y-%m-%d %H:%M} UTC"
+            if halt_reason and halted_until
+            else None,
         )
         # 3. confidence
         add(
@@ -451,7 +486,10 @@ class RiskManager:
         levels_ok = (
             stop is not None
             and target is not None
-            and ((side == "LONG" and stop < fill and target > fill) or (side == "SHORT" and stop > fill and target < fill))
+            and (
+                (side == "LONG" and stop < fill and target > fill)
+                or (side == "SHORT" and stop > fill and target < fill)
+            )
         )
         stop_pct = abs(fill - stop) / fill * 100.0 if stop is not None and fill > 0 else None
         in_range = stop_pct is not None and MIN_STOP_PCT <= stop_pct <= MAX_STOP_PCT
@@ -522,10 +560,9 @@ class RiskManager:
             sizing = self.size(side, fill, stop, view, reverse=reverse)
             exposure_after = view.exposure - (view.exposure_on_symbol if reverse else 0.0) + sizing.notional
             exp_pct = exposure_after / view.equity * 100.0
-            headroom_left = sizing.size > 0
             add(
                 "Exposure after entry",
-                headroom_left and exp_pct <= r.max_exposure_pct + 1e-6,
+                sizing.exposure_headroom > 0 and exp_pct <= r.max_exposure_pct + 1e-6,
                 R_EXPOSURE,
                 fmt_pct(exp_pct, decimals=0),
                 f"≤ {r.max_exposure_pct:.0f}%",
@@ -534,11 +571,13 @@ class RiskManager:
             daily_loss = max(0.0, -view.daily_pnl)
             add(
                 "Daily loss budget",
-                daily_loss + sizing.risk_amount <= r.max_daily_loss_usd + 1e-9,
+                sizing.risk_budget > 0
+                and sizing.committed + sizing.risk_amount <= r.max_daily_loss_usd + 1e-6,
                 R_DAILY,
-                fmt_usd(daily_loss + sizing.risk_amount),
+                fmt_usd(sizing.committed + sizing.risk_amount),
                 f"≤ {fmt_usd(r.max_daily_loss_usd)}",
-                f"Today's loss {fmt_usd(daily_loss)} + this trade's risk {fmt_usd(sizing.risk_amount)}",
+                f"Today's loss {fmt_usd(daily_loss)} + open risk {fmt_usd(sizing.committed - daily_loss)} "
+                f"+ this trade's risk {fmt_usd(sizing.risk_amount)}",
             )
             add(
                 "Minimum notional",
@@ -551,7 +590,13 @@ class RiskManager:
         else:
             for name in ("Exposure after entry", "Daily loss budget", "Minimum notional"):
                 checks.append(
-                    RiskCheck(name=name, passed=False, value=None, limit=None, detail="Not evaluated: no valid stop to size from")
+                    RiskCheck(
+                        name=name,
+                        passed=False,
+                        value=None,
+                        limit=None,
+                        detail="Not evaluated: no valid stop to size from",
+                    )
                 )
 
         approved = all(c.passed for c in checks)
@@ -595,9 +640,19 @@ class RiskManager:
             make_meter("exposure", "Exposure", exposure_pct, r.max_exposure_pct, "pct"),
             make_meter("positions", "Open positions", view.open_positions, r.max_positions, "count"),
             make_meter(
-                "consecutive_losses", "Consecutive losses", st.consecutive_losses, r.max_consecutive_losses, "count"
+                "consecutive_losses",
+                "Consecutive losses",
+                st.consecutive_losses,
+                r.max_consecutive_losses,
+                "count",
             ),
-            make_meter("daily_risk", "Daily risk (loss + open risk)", daily_loss + view.open_risk, r.max_daily_loss_usd, "usd"),
+            make_meter(
+                "daily_risk",
+                "Daily risk (loss + open risk)",
+                daily_loss + view.open_risk,
+                r.max_daily_loss_usd,
+                "usd",
+            ),
         ]
         reason, until = self.halt_status(now)
         warnings: list[str] = []

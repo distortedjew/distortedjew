@@ -93,6 +93,14 @@ export class ApiError extends Error {
     return this.status === 404;
   }
 
+  /**
+   * 503: the trading engine has not published this live state yet (fresh install, engine not
+   * started). Not a failure of the dashboard — show a calm "waiting" state; it clears by itself.
+   */
+  get isEngineUnavailable(): boolean {
+    return this.kind === "http" && this.status === 503;
+  }
+
   /** True for errors worth retrying (network, timeout, 5xx, 429). */
   get isTransient(): boolean {
     return this.kind !== "http" || this.status >= 500 || this.status === 429 || this.status === 408;
@@ -121,6 +129,8 @@ export function describeError(error: unknown): string {
     if (error.kind === "timeout") return "The API took too long to respond.";
     if (error.isUnauthorized)
       return "Not authorized. Open the dashboard with ?token=<DASHBOARD_TOKEN> in the URL.";
+    if (error.isEngineUnavailable)
+      return "The trading engine hasn't published this data yet. It appears automatically once the engine is running.";
     if (error.status >= 500) return `The API returned an error (${error.status}). ${error.detail}`.trim();
     return error.detail;
   }

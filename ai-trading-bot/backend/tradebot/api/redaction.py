@@ -28,7 +28,8 @@ _TEXTUAL_TYPES = ("application/json", "text/")
 
 
 class Redactor:
-    """Replaces every configured secret (raw, JSON-escaped and URL-encoded forms)."""
+    """Replaces every configured secret in each form a response could carry it: raw,
+    JSON-escaped (UTF-8 or ASCII), URL-encoded and CSV-quoted (``"`` doubled)."""
 
     def __init__(self, secrets: Iterable[str]):
         needles: set[str] = set()
@@ -38,7 +39,9 @@ class Redactor:
                 continue
             needles.add(value)
             needles.add(json.dumps(value, ensure_ascii=False)[1:-1])
+            needles.add(json.dumps(value)[1:-1])
             needles.add(quote(value, safe=""))
+            needles.add(value.replace('"', '""'))
         self._needles = sorted(needles, key=len, reverse=True)
         self._byte_needles = [n.encode() for n in self._needles]
 

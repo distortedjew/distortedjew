@@ -11,6 +11,8 @@
  *   label those series directly or offer a table view.
  * - `up` / `down` = profit / loss, bull / bear (a polarity pair, CVD ΔE only ~6): ALWAYS pair with
  *   a sign, ▲/▼ or position (above/below zero) — never color alone.
+ * - `deemphasis` + `accent` = the emphasis form: context in gray, the one thing that matters
+ *   (the current period on a stat-tile sparkline, the highlighted series) in the accent.
  * - Grid and axes are solid hairlines one step off the surface; never dashed.
  */
 import { useTheme, type ThemeMode } from "@/lib/theme";
@@ -39,6 +41,8 @@ export interface ChartTheme {
   upFill: string;
   downFill: string;
   neutral: string;
+  /** De-emphasis gray for context marks (stat-tile sparklines, "the rest" in an emphasis chart); ≥ 3:1. */
+  deemphasis: string;
   accent: string;
   ai: string;
   warning: string;
@@ -87,6 +91,7 @@ export const CHART_THEMES: Record<ThemeMode, ChartTheme> = {
     upFill: "rgba(46, 189, 133, 0.10)",
     downFill: "rgba(246, 70, 93, 0.10)",
     neutral: "#7d879a",
+    deemphasis: "#646e80",
     accent: "#7c8cff",
     ai: "#a78bfa",
     warning: "#f0b90b",
@@ -102,8 +107,8 @@ export const CHART_THEMES: Record<ThemeMode, ChartTheme> = {
       bbMiddle: "rgba(152, 162, 179, 0.3)",
       bbFill: "rgba(152, 162, 179, 0.05)",
     },
-    volumeUp: "rgba(46, 189, 133, 0.32)",
-    volumeDown: "rgba(246, 70, 93, 0.32)",
+    volumeUp: "rgba(46, 189, 133, 0.24)",
+    volumeDown: "rgba(246, 70, 93, 0.24)",
     fontFamily: FONT_SANS,
     monoFamily: FONT_MONO,
     fontSize: 11,
@@ -114,7 +119,7 @@ export const CHART_THEMES: Record<ThemeMode, ChartTheme> = {
     canvas: "#f5f7fb",
     text: "#0f172a",
     textMuted: "#475467",
-    axis: "#667085",
+    axis: "#626d81",
     axisLine: "#d0d5dd",
     grid: "#eef0f4",
     crosshair: "rgba(71, 84, 103, 0.45)",
@@ -125,10 +130,11 @@ export const CHART_THEMES: Record<ThemeMode, ChartTheme> = {
     upFill: "rgba(14, 159, 110, 0.10)",
     downFill: "rgba(229, 72, 77, 0.10)",
     neutral: "#98a2b3",
+    deemphasis: "#8a94a6",
     accent: "#4f5bd5",
     ai: "#7c3aed",
     warning: "#d99a00",
-    info: "#1d6fe0",
+    info: "#1a68d6",
     series: LIGHT_SERIES,
     overlays: {
       ema9: LIGHT_SERIES[0],
@@ -140,8 +146,8 @@ export const CHART_THEMES: Record<ThemeMode, ChartTheme> = {
       bbMiddle: "rgba(71, 84, 103, 0.25)",
       bbFill: "rgba(71, 84, 103, 0.05)",
     },
-    volumeUp: "rgba(14, 159, 110, 0.28)",
-    volumeDown: "rgba(229, 72, 77, 0.28)",
+    volumeUp: "rgba(14, 159, 110, 0.22)",
+    volumeDown: "rgba(229, 72, 77, 0.22)",
     fontFamily: FONT_SANS,
     monoFamily: FONT_MONO,
     fontSize: 11,

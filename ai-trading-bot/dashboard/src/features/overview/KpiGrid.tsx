@@ -43,6 +43,8 @@ export function KpiGrid({ className }: { className?: string }) {
     );
   }
 
+  const asOf = data ? Date.parse(data.updated_at) : undefined;
+
   return (
     <div className={cn("grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4", className)}>
       {KPI_ORDER.map((key, index) => {
@@ -55,6 +57,7 @@ export function KpiGrid({ className }: { className?: string }) {
             loading={isPending}
             valueSuffix={suffixFor(key, data)}
             nullHint={nullHintFor(key, data)}
+            asOf={asOf !== undefined && Number.isFinite(asOf) ? asOf : undefined}
             hero={hero && isMobile}
             compact={isMobile && !hero}
             className={cn(hero ? "col-span-2 sm:col-span-1" : "col-span-1")}

@@ -9,7 +9,7 @@ import { DeltaBadge } from "@/components/ui/DeltaBadge";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { formatKpiValue, type KpiDefinition } from "@/features/overview/kpi-definitions";
+import { formatKpiValue, sparkLabels, type KpiDefinition } from "@/features/overview/kpi-definitions";
 
 export interface KpiCardProps {
   definition: KpiDefinition;
@@ -20,6 +20,8 @@ export interface KpiCardProps {
   valueSuffix?: ReactNode;
   /** Shown as the value's tooltip when the API returns null (e.g. "No losing trades yet"). */
   nullHint?: string;
+  /** When the sparkline's last point was measured (ms epoch) — anchors the hover labels. */
+  asOf?: number;
   /** Larger presentation (phones: Equity and Today's P&L lead full width). */
   hero?: boolean;
   /** Compact presentation for the 2-column phone grid. */
@@ -28,10 +30,21 @@ export interface KpiCardProps {
 }
 
 /**
- * One KPI tile: label + ⓘ, animated value, ▲/▼ change vs the previous period, and a
- * sparkline. The card outline flashes softly when the value updates.
+ * One KPI tile (dataviz stat-tile contract): label + ⓘ, animated value, ▲/▼ change vs the named
+ * previous period (colored by direction × whether up is good), and a quiet sparkline with the
+ * current period in the accent. The outline flashes softly when the value updates.
  */
-export function KpiCard({ definition, kpi, loading, valueSuffix, nullHint, hero, compact, className }: KpiCardProps) {
+export function KpiCard({
+  definition,
+  kpi,
+  loading,
+  valueSuffix,
+  nullHint,
+  asOf,
+  hero,
+  compact,
+  className,
+}: KpiCardProps) {
   const value = kpi?.value ?? null;
 
   // Flash the card when the value changes (derived during render; no effect needed).
@@ -44,6 +57,7 @@ export function KpiCard({ definition, kpi, loading, valueSuffix, nullHint, hero,
 
   const tone = definition.signedValue ? toneOf(value) : "neutral";
   const format = (n: number) => formatKpiValue(definition.format, n);
+  const sparkline = kpi?.sparkline ?? [];
 
   const info = (
     <span className="block space-y-1">
@@ -69,10 +83,11 @@ export function KpiCard({ definition, kpi, loading, valueSuffix, nullHint, hero,
     );
   }
 
+  // Proportional figures on stat-tile values (tabular figures are for aligned columns).
   const valueNode = (
     <span
       className={cn(
-        "num-sans font-semibold tracking-[-0.02em] whitespace-nowrap",
+        "font-sans font-semibold tracking-[-0.02em] whitespace-nowrap",
         compact ? "text-lg leading-6" : hero ? "text-[28px] leading-9" : "text-kpi",
         TONE_TEXT[tone],
         tone === "neutral" && "text-fg",
@@ -80,6 +95,46 @@ export function KpiCard({ definition, kpi, loading, valueSuffix, nullHint, hero,
     >
       <AnimatedNumber value={value} format={format} />
     </span>
+  );
+
+  const valueRow = (
+    <div className="flex min-w-0 items-baseline gap-2">
+      {value === null && nullHint ? (
+        <Tooltip content={nullHint}>
+          <span tabIndex={0} className="rounded-sm">
+            {valueNode}
+          </span>
+        </Tooltip>
+      ) : (
+        valueNode
+      )}
+      {valueSuffix ? <span className={cn("num text-xs whitespace-nowrap", TONE_TEXT[tone])}>{valueSuffix}</span> : null}
+    </div>
+  );
+
+  const deltaRow = (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+      <DeltaBadge
+        change={kpi?.change}
+        changePct={definition.showChangePct ? kpi?.change_pct : undefined}
+        format={definition.deltaFormat}
+        invert={definition.invertDelta}
+      />
+      {kpi?.comparison_label ? <span className="truncate text-[11px] text-fg-subtle">{kpi.comparison_label}</span> : null}
+    </div>
+  );
+
+  const sparklineNode = (
+    <Sparkline
+      data={sparkline}
+      height={compact ? 26 : 38}
+      variant={definition.sparkVariant}
+      tone="deemphasis"
+      highlightLast
+      formatValue={format}
+      labels={asOf !== undefined ? sparkLabels(definition, sparkline.length, asOf) : undefined}
+      aria-label={`${definition.label}: ${definition.sparkWindow}`}
+    />
   );
 
   return (
@@ -100,43 +155,21 @@ export function KpiCard({ definition, kpi, loading, valueSuffix, nullHint, hero,
         <InfoTooltip content={info} label={`About ${definition.label}`} />
       </header>
 
-      <div className={cn("flex min-w-0 items-end justify-between gap-3", compact && "flex-col items-stretch gap-1.5")}>
-        <div className="min-w-0 space-y-1.5">
-          <div className="flex min-w-0 items-baseline gap-2">
-            {value === null && nullHint ? (
-              <Tooltip content={nullHint}>
-                <span tabIndex={0} className="rounded-sm">
-                  {valueNode}
-                </span>
-              </Tooltip>
-            ) : (
-              valueNode
-            )}
-            {valueSuffix ? <span className={cn("num text-xs whitespace-nowrap", TONE_TEXT[tone])}>{valueSuffix}</span> : null}
+      {compact ? (
+        <>
+          {valueRow}
+          {deltaRow}
+          <div className="mt-0.5">{sparklineNode}</div>
+        </>
+      ) : (
+        <>
+          <div className="flex min-w-0 items-end justify-between gap-3">
+            <div className="min-w-0">{valueRow}</div>
+            <div className={cn("shrink-0", hero ? "w-[44%] max-w-52" : "w-[40%] max-w-48")}>{sparklineNode}</div>
           </div>
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
-            <DeltaBadge
-              change={kpi?.change}
-              changePct={definition.showChangePct ? kpi?.change_pct : undefined}
-              format={definition.deltaFormat}
-              invert={definition.invertDelta}
-            />
-            {kpi?.comparison_label ? (
-              <span className="truncate text-[11px] text-fg-subtle">{kpi.comparison_label}</span>
-            ) : null}
-          </div>
-        </div>
-        <div className={cn("shrink-0", compact ? "w-full" : hero ? "w-[42%] max-w-44" : "w-[38%] max-w-36")}>
-          <Sparkline
-            data={kpi?.sparkline ?? []}
-            height={compact ? 24 : 36}
-            variant={definition.sparkVariant}
-            tone={definition.sparkTone}
-            formatValue={format}
-            aria-label={`${definition.label}: ${definition.sparkWindow}`}
-          />
-        </div>
-      </div>
+          {deltaRow}
+        </>
+      )}
     </section>
   );
 }

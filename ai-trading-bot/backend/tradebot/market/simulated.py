@@ -111,12 +111,9 @@ class SimulatedFeed(Feed):
         self.symbols = syms
         now_minute = int(self.clock()) // 60 * 60
         have = [s for s in syms if s in stored.last_1m]
-        if not have:
-            history = self._fresh(syms, now_minute)
-        else:
-            history = self._resume(syms, stored, now_minute)
+        history = self._resume(syms, stored, now_minute) if have else self._fresh(syms, now_minute)
         self.connected = True
-        self.message = "Simulated market (deterministic, seed %d)" % self.seed
+        self.message = f"Simulated market (deterministic, seed {self.seed})"
         return history
 
     def _fresh(self, syms: list[str], end: int) -> MarketHistory:
@@ -169,7 +166,9 @@ class SimulatedFeed(Feed):
         recent: dict[str, CandleArrays] = {}
         for s in have:
             last = stored.last_1m[s]
-            prior = sorted((c for c in stored.recent_1m.get(s, []) if c.time <= last.time), key=lambda c: c.time)
+            prior = sorted(
+                (c for c in stored.recent_1m.get(s, []) if c.time <= last.time), key=lambda c: c.time
+            )
             parts = [CandleArrays.from_candles(prior or [last])]
             parts.extend(p for p in gap[s] if len(p))
             combined = CandleArrays.concat(parts)
@@ -178,7 +177,11 @@ class SimulatedFeed(Feed):
         # symbols without stored data: full history on the same market path
         if new:
             hist = generate_history(
-                self.seed, new, end, max(HISTORY_DAYS, self.minute_days + 1), origin_day=self._origin(state, end)
+                self.seed,
+                new,
+                end,
+                max(HISTORY_DAYS, self.minute_days + 1),
+                origin_day=self._origin(state, end),
             )
             for s in new:
                 candles[s] = self._depth_candles(hist.minutes[s], end)
@@ -442,7 +445,9 @@ class SimulatedFeed(Feed):
             for tf, agg in self._aggs[s].items():
                 base = agg.forming
                 if base is None:
-                    candle = forming.model_copy(update={"time": self.minute - self.minute % TIMEFRAME_SECONDS[tf]})
+                    candle = forming.model_copy(
+                        update={"time": self.minute - self.minute % TIMEFRAME_SECONDS[tf]}
+                    )
                 else:
                     candle = Candle.model_construct(
                         time=base.time,
@@ -518,11 +523,17 @@ def _gap_candles(combined: CandleArrays, gap_start: int, end: int) -> dict[str, 
             continue
         first_bucket = gap_start - gap_start % sec
         rel = combined.window(first_bucket, end - end % sec).to_candles()
-        out[tf] = CandleArrays.from_candles(aggregate(rel, tf, include_partial=False)) if rel else CandleArrays.empty()
+        out[tf] = (
+            CandleArrays.from_candles(aggregate(rel, tf, include_partial=False))
+            if rel
+            else CandleArrays.empty()
+        )
     return out
 
 
-def _regenerate(seed: int, day_state: MarketState, symbols: Sequence[str]) -> tuple[DayBlock, MarketSimulator]:
+def _regenerate(
+    seed: int, day_state: MarketState, symbols: Sequence[str]
+) -> tuple[DayBlock, MarketSimulator]:
     sim = MarketSimulator(seed, symbols, _copy_state(day_state))
     block = sim.next_day()
     return block, sim

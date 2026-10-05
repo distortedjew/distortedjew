@@ -1,7 +1,9 @@
 """``heuristic-v1``: the local, transparent analyst (no network, deterministic).
 
-Nine factors on the decision timeframe each score the evidence in [-1, +1] (positive =
-bullish) and carry a fixed weight:
+Two layers decide a call.
+
+**Evidence.** Nine factors on the decision timeframe each score the evidence in [-1, +1]
+(positive = bullish) and carry a fixed weight:
 
 =============  ======  ==========================================================
 factor         weight  reads
@@ -17,14 +19,34 @@ adx            0.09    ADX strength in the direction of the DIs
 mtf            0.16    share of timeframes agreeing (1h/15m/5m/1m)
 =============  ======  ==========================================================
 
-The weighted mean ``S`` is adjusted for the regime (dampened in ranges and volatility
-shocks, boosted with a confirming trend or breakout, cut when counter-trend) and for the 1h
-trend. ``|S| ≥ 0.45`` gives LONG/SHORT, otherwise HOLD. Confidence maps ``|S|`` linearly
-from 60 (at the threshold) to 90 (at 1.0), minus penalties for an RSI extreme against the
-trade, a weak ADX and thin volume, clamped to 50–90: it is a monotone evidence score, never
-certainty. The shadow evaluation of every signal measures how well it is calibrated.
-Levels come from ``levels.plan`` (ATR / swing stop with the round-trip-cost floor,
-regime-dependent R target).
+Their weighted mean ``S`` is adjusted for the regime (dampened in ranges and volatility
+shocks, boosted with a confirming trend, cut when counter-trend) and for the 1h trend. It is
+the evidence summary behind every call's reasons, risks and narrative.
+
+**Setups.** The composite alone never trades. On intraday bars momentum by itself is mostly
+noise after costs, and a stretched move tends to retrace part of itself over the next hours,
+so chasing it is the classic way to lose. A LONG/SHORT call needs one of two textbook setups:
+
+- *Trend pullback* — the 4h trend is established (EMA 21 at least 0.5 ATR(4h) away from EMA
+  50) and price is still on the trend's side of the 4h EMA 50: buy a pullback (decision-
+  timeframe RSI ≤ 42 and price in the lower 30 % of the Bollinger band), or sell a rally in a
+  downtrend (mirror image). Target 2R.
+- *Range reversion* — no 4h trend and a RANGING / LOW_VOLATILITY regime: fade a stretched move
+  at a Bollinger band (LONG at %B ≤ 0.05 with RSI ≤ 35, SHORT at %B ≥ 0.95 with RSI ≥ 65)
+  unless the 1h trend pushes the same way as the stretch. Target 1.6R.
+
+HIGH_VOLATILITY, BREAKOUT (until it holds or fails) and UNKNOWN regimes stand aside.
+
+**Confidence** is a monotone evidence score in 50–90, never a claim of certainty: pullbacks
+start at 58 and gain up to 10 for the depth of the pullback, up to 10 for the strength of the
+4h trend, 4 when the MACD histogram is already turning back with the trend and 2 when the 1h
+trend agrees; range fades start at 56 and gain up to 26 for how stretched the move is.
+Penalties apply for strong short-term momentum against a pullback, a rising ADX inside a range
+and thin volume. The shadow evaluation of every signal (TP before SL within the holding
+horizon) measures how well it is calibrated.
+
+Levels come from ``levels.plan``: an ATR / swing stop with the round-trip-cost floor and the
+setup's R target.
 """
 
 from __future__ import annotations
@@ -35,11 +57,10 @@ from dataclasses import dataclass
 from ..indicators import Features
 from ..market.symbols import fmt_pct, fmt_price
 from ..mtf import ema_alignment
-from ..schemas import HEURISTIC_MODEL_ID, Regime, Side, Signal
+from ..schemas import HEURISTIC_MODEL_ID, Regime, Side
 from . import levels
 from .base import AnalystResult, MarketContext
 
-ENTRY_THRESHOLD = 0.45
 WEIGHTS: dict[str, float] = {
     "trend": 0.20,
     "ema200": 0.05,
@@ -115,7 +136,9 @@ def _slope(f: Features) -> Factor | None:
     if abs(n) < 0.05:
         return Factor("slope", 0.0, "EMA 21 flat over the last 5 bars")
     word = "rising" if slope > 0 else "falling"
-    return Factor("slope", math.tanh(2.0 * n), f"EMA 21 {word} ({fmt_pct(slope, signed=True, decimals=3)} over 5 bars)")
+    return Factor(
+        "slope", math.tanh(2.0 * n), f"EMA 21 {word} ({fmt_pct(slope, signed=True, decimals=3)} over 5 bars)"
+    )
 
 
 def _momentum(f: Features) -> Factor | None:
@@ -163,9 +186,15 @@ def _volume(f: Features) -> tuple[Factor | None, str | None]:
     direction = (f.price > f.open) - (f.price < f.open)
     if ratio >= 1.3 and direction:
         kind = "bullish" if direction > 0 else "bearish"
-        return Factor("volume", direction * min(1.0, (ratio - 1.0) / 1.2), f"Volume {ratio:.1f}× its 20-bar average on a {kind} candle"), None
+        return Factor(
+            "volume",
+            direction * min(1.0, (ratio - 1.0) / 1.2),
+            f"Volume {ratio:.1f}× its 20-bar average on a {kind} candle",
+        ), None
     if ratio < 0.6:
-        return Factor("volume", 0.0, f"Volume only {ratio:.1f}× its 20-bar average"), f"Thin volume ({ratio:.1f}× the 20-bar average)"
+        return Factor(
+            "volume", 0.0, f"Volume only {ratio:.1f}× its 20-bar average"
+        ), f"Thin volume ({ratio:.1f}× the 20-bar average)"
     return Factor("volume", 0.0, f"Volume {ratio:.1f}× its 20-bar average"), None
 
 
@@ -175,7 +204,9 @@ def _bollinger(f: Features, regime: Regime) -> Factor | None:
         return None
     if regime in RANGE_REGIMES:
         if b >= 1.0:
-            return Factor("bollinger", -0.8, "Price above the upper Bollinger band inside a range (stretched)")
+            return Factor(
+                "bollinger", -0.8, "Price above the upper Bollinger band inside a range (stretched)"
+            )
         if b >= 0.9:
             return Factor("bollinger", -0.4, "Price pressing the upper Bollinger band inside a range")
         if b <= 0.0:
@@ -202,7 +233,11 @@ def _adx(f: Features) -> Factor | None:
     else:
         label = "shows no real trend"
     cmp = ">" if direction > 0 else "<"
-    return Factor("adx", direction * strength, f"ADX {f.adx:.0f} {label} (+DI {f.plus_di:.0f} {cmp} −DI {f.minus_di:.0f})")
+    return Factor(
+        "adx",
+        direction * strength,
+        f"ADX {f.adx:.0f} {label} (+DI {f.plus_di:.0f} {cmp} −DI {f.minus_di:.0f})",
+    )
 
 
 def _mtf(ctx: MarketContext) -> Factor | None:
@@ -226,6 +261,51 @@ def _mtf(ctx: MarketContext) -> Factor | None:
 # --------------------------------------------------------------------------
 
 
+HTF = "4h"  # the timeframe whose trend the bot trades with
+HTF_FLAT_ATR = 0.5  # 4h EMA 21/50 closer than this many 4h ATRs: no higher-timeframe trend
+PULLBACK_RSI = 42.0  # longs need RSI at or below this on the decision timeframe (shorts: 100 - it)
+PULLBACK_PCT_B = 0.3  # longs need price in the lower 30 % of the Bollinger band (shorts: upper 30 %)
+RANGE_PCT_B = 0.05
+RANGE_RSI = 35.0
+PULLBACK_R = 2.0
+RANGE_R = 1.6
+
+
+@dataclass(slots=True)
+class Setup:
+    """A tradable pattern for the current market (or why there is none)."""
+
+    side: Side | None
+    kind: str  # "trend pullback", "range reversion" or "" when standing aside
+    text: str  # the setup (or the reason for standing aside), as a reason bullet
+    confidence: float = 0.0
+    notes: list[str] | None = None
+    r_multiple: float | None = None
+    context: str | None = None  # higher-timeframe reading, as an extra reason bullet
+
+
+def _mtf_trend(ctx: MarketContext, timeframe: str) -> int:
+    if ctx.mtf is None:
+        return 0
+    tf = next((t for t in ctx.mtf.timeframes if t.timeframe == timeframe), None)
+    if tf is None:
+        return 0
+    return 1 if tf.trend == "BULL" else -1 if tf.trend == "BEAR" else 0
+
+
+def higher_trend(ctx: MarketContext) -> tuple[int, float]:
+    """(direction, separation) of the 4h trend: EMA 21 vs EMA 50 in 4h ATRs; 0 when flat or warming up."""
+    h = ctx.features.get(HTF)
+    if h is None or h.ema21 is None or h.ema50 is None or not h.atr:
+        return 0, 0.0
+    sep = (h.ema21 - h.ema50) / h.atr
+    if sep >= HTF_FLAT_ATR:
+        return 1, sep
+    if sep <= -HTF_FLAT_ATR:
+        return -1, sep
+    return 0, sep
+
+
 class HeuristicAnalyst:
     """Deterministic multi-factor analyst; see the module docstring for the model."""
 
@@ -244,7 +324,6 @@ class HeuristicAnalyst:
         if f.ema50 is None or f.macd_hist is None or f.rsi is None or f.atr is None:
             return self._warming_up(ctx)
         regime = ctx.regime.regime
-        notes: list[str] = []
         vol_factor, vol_note = _volume(f)
         factors = [
             x
@@ -263,86 +342,164 @@ class HeuristicAnalyst:
         ]
         total_w = sum(x.weight for x in factors)
         raw = sum(x.weight * x.score for x in factors) / total_w if total_w else 0.0
-        score, adjust_notes = self._adjust(ctx, raw)
-        notes.extend(adjust_notes)
+        score, notes = self._adjust(ctx, raw)
         if vol_note:
             notes.append(vol_note)
-
-        signal: Signal = "HOLD"
-        if score >= ENTRY_THRESHOLD:
-            signal = "LONG"
-        elif score <= -ENTRY_THRESHOLD:
-            signal = "SHORT"
-
-        if signal == "HOLD":
-            return self._hold(ctx, factors, raw, score, notes)
-        side: Side = signal  # type: ignore[assignment]
-        confidence, penalty_notes = self._confidence(f, side, score)
+        setup = self._setup(ctx, f)
+        if setup.side is None:
+            return self._hold(ctx, factors, raw, score, setup, notes)
+        side = setup.side
+        confidence, penalty_notes = self._penalties(f, side, setup)
+        notes.extend(setup.notes or [])
         notes.extend(penalty_notes)
-        trade = levels.plan(ctx, side)
-        return self._trade(ctx, side, factors, raw, score, confidence, trade, notes)
+        trade = levels.plan(ctx, side, r_multiple=setup.r_multiple)
+        return self._trade(ctx, side, factors, raw, score, setup, confidence, trade, notes)
 
     # -- scoring -------------------------------------------------------------
 
     def _adjust(self, ctx: MarketContext, raw: float) -> tuple[float, list[str]]:
         regime = ctx.regime.regime
-        f = ctx.decision
         s = raw
         notes: list[str] = []
-        if regime in RANGE_REGIMES:
+        if regime in RANGE_REGIMES or regime == "HIGH_VOLATILITY":
             s *= 0.85
-        elif regime == "HIGH_VOLATILITY":
-            s *= 0.85
-            notes.append("High-volatility regime: wider swings and gap risk")
         elif regime == "TRENDING_BULLISH":
-            if s > 0:
-                s *= 1.1
-            else:
-                s *= 0.75
-                if s <= -0.2:
-                    notes.append("Counter-trend: the regime is TRENDING_BULLISH")
+            s = s * 1.1 if s > 0 else s * 0.75
         elif regime == "TRENDING_BEARISH":
-            if s < 0:
-                s *= 1.1
-            else:
-                s *= 0.75
-                if s >= 0.2:
-                    notes.append("Counter-trend: the regime is TRENDING_BEARISH")
-        elif regime == "BREAKOUT":
-            up = (f.bb_pct_b or 0.5) > 0.5
-            s *= 1.1 if (s > 0) == up else 0.8
-        if ctx.mtf is not None:
-            tf_1h = next((t for t in ctx.mtf.timeframes if t.timeframe == "1h"), None)
-            if tf_1h is not None and ((s > 0 and tf_1h.trend == "BEAR") or (s < 0 and tf_1h.trend == "BULL")):
-                s *= 0.8
-                if abs(s) >= 0.3:
-                    notes.append(f"Against the 1h trend ({tf_1h.trend})")
+            s = s * 1.1 if s < 0 else s * 0.75
+        tf_1h = _mtf_trend(ctx, "1h")
+        if tf_1h and (s > 0) != (tf_1h > 0) and abs(s) > 1e-9:
+            s *= 0.8
+            if abs(s) >= 0.3:
+                notes.append(f"Against the 1h trend ({'BULL' if tf_1h > 0 else 'BEAR'})")
         return _clamp(s), notes
 
-    @staticmethod
-    def _confidence(f: Features, side: Side, score: float) -> tuple[float, list[str]]:
-        conf = 60.0 + (abs(score) - ENTRY_THRESHOLD) * 55.0
+    def _setup(self, ctx: MarketContext, f: Features) -> Setup:
+        regime = ctx.regime.regime
+        if regime == "HIGH_VOLATILITY":
+            return Setup(None, "", "High-volatility regime: standing aside until the swings calm down")
+        if regime == "UNKNOWN":
+            return Setup(None, "", "Regime not established yet: standing aside")
+        if regime == "BREAKOUT":
+            return Setup(None, "", "Breakout in progress: waiting for it to hold or fail before acting")
+        direction, sep = higher_trend(ctx)
+        if direction:
+            return self._pullback_setup(ctx, f, direction, sep)
+        if regime in RANGE_REGIMES:
+            return self._range_setup(ctx, f, sep)
+        return Setup(None, "", f"No {HTF} trend to join and no range to fade: standing aside")
+
+    def _pullback_setup(self, ctx: MarketContext, f: Features, direction: int, sep: float) -> Setup:
+        side: Side = "LONG" if direction > 0 else "SHORT"
+        label = f"{HTF} uptrend" if direction > 0 else f"{HTF} downtrend"
+        context = f"{HTF} EMA 21 {abs(sep):.1f} ATR {'above' if direction > 0 else 'below'} EMA 50 ({label})"
+        h = ctx.features[HTF]
+        if h.ema50 is not None and (ctx.price - h.ema50) * direction < 0:
+            word = "below" if direction > 0 else "above"
+            return Setup(None, "", f"Price is back {word} the {HTF} EMA 50: the {label} is in question")
+        rsi = f.rsi if f.rsi is not None else 50.0
+        pct_b = f.bb_pct_b if f.bb_pct_b is not None else 0.5
+        # mirror shorts onto the long side so one set of thresholds serves both
+        rsi_l = rsi if direction > 0 else 100.0 - rsi
+        pct_b_l = pct_b if direction > 0 else 1.0 - pct_b
+        if rsi_l > PULLBACK_RSI or pct_b_l > PULLBACK_PCT_B:
+            if rsi_l >= 60.0:
+                text = f"Price extended with the {label} (RSI {rsi:.0f}): waiting for a pullback"
+            else:
+                text = f"{label.capitalize()} without a pullback to buy yet (RSI {rsi:.0f}, %B {pct_b:.2f})"
+            if direction < 0 and rsi_l < 60.0:
+                text = f"{label.capitalize()} without a rally to sell yet (RSI {rsi:.0f}, %B {pct_b:.2f})"
+            return Setup(None, "", text, context=context)
+        depth = 0.5 * _clamp((PULLBACK_RSI - rsi_l) / 12.0, 0.0, 1.0) + 0.5 * _clamp(
+            (PULLBACK_PCT_B - pct_b_l) / 0.4, 0.0, 1.0
+        )
+        strength = _clamp((abs(sep) - HTF_FLAT_ATR) / 1.5, 0.0, 1.0)
+        conf = 58.0 + 10.0 * depth + 10.0 * strength
         notes: list[str] = []
-        if f.rsi is not None and ((side == "LONG" and f.rsi >= 75) or (side == "SHORT" and f.rsi <= 25)):
-            conf -= 6.0
-            word = "overbought" if side == "LONG" else "oversold"
-            notes.append(f"RSI {f.rsi:.0f} is {word}: pullback risk")
-        if f.adx is not None and f.adx < 18:
+        turning = (
+            f.macd_hist is not None
+            and f.macd_hist_prev is not None
+            and (f.macd_hist - f.macd_hist_prev) * direction > 0
+        )
+        if turning:
+            conf += 4.0
+        else:
+            notes.append("Short-term momentum still points against the trade")
+        if _mtf_trend(ctx, "1h") == direction:
+            conf += 2.0
+        move = "pullback" if direction > 0 else "rally"
+        text = f"Trend pullback: {move} in a {label} (RSI {rsi:.0f}, %B {pct_b:.2f} on {ctx.timeframe})" + (
+            ", momentum turning" if turning else ""
+        )
+        return Setup(side, "trend pullback", text, conf, notes, PULLBACK_R, context)
+
+    def _range_setup(self, ctx: MarketContext, f: Features, sep: float) -> Setup:
+        pct_b = f.bb_pct_b
+        rsi = f.rsi
+        if pct_b is None or rsi is None:
+            return Setup(None, "", "Range regime without Bollinger readings yet")
+        context = f"No {HTF} trend (EMA 21 within {HTF_FLAT_ATR:g} ATR of EMA 50)"
+        if pct_b <= RANGE_PCT_B and rsi <= RANGE_RSI:
+            side: Side = "LONG"
+            stretch = 0.5 * _clamp((RANGE_PCT_B - pct_b) / 0.25, 0.0, 1.0) + 0.5 * _clamp(
+                (RANGE_RSI - rsi) / 15.0, 0.0, 1.0
+            )
+            where = "lower"
+        elif pct_b >= 1.0 - RANGE_PCT_B and rsi >= 100.0 - RANGE_RSI:
+            side = "SHORT"
+            stretch = 0.5 * _clamp((pct_b - (1.0 - RANGE_PCT_B)) / 0.25, 0.0, 1.0) + 0.5 * _clamp(
+                (rsi - (100.0 - RANGE_RSI)) / 15.0, 0.0, 1.0
+            )
+            where = "upper"
+        else:
+            return Setup(
+                None,
+                "",
+                f"Range regime with price inside the bands (%B {pct_b:.2f}): nothing to fade",
+                context=context,
+            )
+        sign = 1 if side == "LONG" else -1
+        trend_1h = _mtf_trend(ctx, "1h")
+        if trend_1h == -sign:
+            return Setup(
+                None,
+                "",
+                f"Price is stretched at the {where} band, but the 1h trend pushes the same way: no fade",
+                context=context,
+            )
+        conf = 56.0 + 26.0 * stretch + (3.0 if trend_1h == sign else 0.0)
+        text = (
+            f"Range reversion: price stretched at the {where} Bollinger band (%B {pct_b:.2f}, RSI {rsi:.0f})"
+        )
+        return Setup(side, "range reversion", text, conf, [], RANGE_R, context)
+
+    @staticmethod
+    def _penalties(f: Features, side: Side, setup: Setup) -> tuple[float, list[str]]:
+        conf = setup.confidence
+        notes: list[str] = []
+        against = (
+            (f.minus_di or 0.0) > (f.plus_di or 0.0)
+            if side == "LONG"
+            else (f.plus_di or 0.0) > (f.minus_di or 0.0)
+        )
+        if setup.kind == "trend pullback" and f.adx is not None and f.adx >= 35 and against:
             conf -= 5.0
-            notes.append(f"Weak trend strength (ADX {f.adx:.0f})")
+            notes.append(f"Strong short-term momentum against the trade (ADX {f.adx:.0f})")
+        if setup.kind == "range reversion" and f.adx is not None and f.adx >= 25:
+            conf -= 4.0
+            notes.append(f"ADX {f.adx:.0f}: the range may be turning into a trend")
         if f.volume_ratio is not None and f.volume_ratio < 0.6:
             conf -= 3.0
         return round(_clamp(conf, 50.0, 90.0), 1), notes
 
     # -- results ---------------------------------------------------------------
 
-    def _result(self, ctx: MarketContext, **kw) -> AnalystResult:
+    def _result(self, **kw) -> AnalystResult:
         return AnalystResult(provider="heuristic", model=HEURISTIC_MODEL_ID, **kw)
 
     def _warming_up(self, ctx: MarketContext) -> AnalystResult:
         f = ctx.decision
         return self._result(
-            ctx,
             signal="HOLD",
             confidence=50.0,
             entry=None,
@@ -357,22 +514,29 @@ class HeuristicAnalyst:
         )
 
     def _hold(
-        self, ctx: MarketContext, factors: list[Factor], raw: float, score: float, notes: list[str]
+        self,
+        ctx: MarketContext,
+        factors: list[Factor],
+        raw: float,
+        score: float,
+        setup: Setup,
+        notes: list[str],
     ) -> AnalystResult:
-        confidence = round(_clamp(80.0 - abs(score) * 50.0, 50.0, 80.0), 1)
+        confidence = round(_clamp(80.0 - abs(score) * 40.0, 50.0, 80.0), 1)
         lean = "bullish" if score > 0.1 else "bearish" if score < -0.1 else "neutral"
         ranked = sorted(factors, key=lambda x: -abs(x.weight * x.score))
-        reasons = [x.text for x in ranked if abs(x.score) >= 0.1][:4] or ["No factor shows a clear edge"]
-        reasons.insert(0, f"Composite score {score:+.2f} is inside the ±{ENTRY_THRESHOLD:.2f} no-trade band")
-        risks = list(notes)
-        regime = ctx.regime.regime
+        reasons = [
+            setup.text,
+            *([setup.context] if setup.context else []),
+            *[x.text for x in ranked if abs(x.score) >= 0.1][:3],
+        ]
+        regime = ctx.regime.regime.replace("_", " ").lower()
         summary = (
-            f"No clear edge on {ctx.symbol} {ctx.timeframe}: evidence leans {lean} (score {score:+.2f}) "
-            f"in a {regime.replace('_', ' ').lower()} market, so the bot stands aside."
+            f"No trade on {ctx.symbol} {ctx.timeframe}: {lower_first(setup.text)}. "
+            f"Evidence leans {lean} (score {score:+.2f}) in a {regime} market."
         )
-        detailed = self._narrative(ctx, factors, raw, score, None, None, notes) if ctx.narrate else summary
+        detailed = self._narrative(ctx, factors, raw, score, setup, None, notes) if ctx.narrate else summary
         return self._result(
-            ctx,
             signal="HOLD",
             confidence=confidence,
             entry=None,
@@ -380,7 +544,7 @@ class HeuristicAnalyst:
             take_profit=None,
             summary=summary,
             reasons=reasons[:5],
-            risks=risks[:4],
+            risks=notes[:4],
             invalidation=None,
             detailed_reasoning=detailed,
         )
@@ -392,6 +556,7 @@ class HeuristicAnalyst:
         factors: list[Factor],
         raw: float,
         score: float,
+        setup: Setup,
         confidence: float,
         trade: levels.TradePlan,
         notes: list[str],
@@ -400,22 +565,22 @@ class HeuristicAnalyst:
         supporting = sorted(
             (x for x in factors if x.score * sign > 0.05), key=lambda x: -abs(x.weight * x.score)
         )
-        opposing = sorted((x for x in factors if x.score * sign < -0.15), key=lambda x: -abs(x.weight * x.score))
-        reasons = [x.text for x in supporting][:6]
+        opposing = sorted(
+            (x for x in factors if x.score * sign < -0.15), key=lambda x: -abs(x.weight * x.score)
+        )
+        reasons = [setup.text, *([setup.context] if setup.context else []), *(x.text for x in supporting)][:6]
+        reasons.append(f"Stop {fmt_pct(trade.stop_pct)} away ({trade.basis}), target {trade.r_multiple:.1f}R")
         risks = [*notes, *(x.text for x in opposing)][:5]
-        stop_basis = f"Stop {fmt_pct(trade.stop_pct)} away ({trade.basis})"
-        reasons.append(stop_basis)
         inval = levels.invalidation(ctx, side, trade.stop_loss)
         drivers = ", ".join(lower_first(x.text) for x in supporting[:2]) or "aligned indicators"
         word = "Long" if side == "LONG" else "Short"
         summary = (
-            f"{word} {ctx.symbol}: {drivers}. Entry {fmt_price(trade.entry)}, stop "
+            f"{word} {ctx.symbol} on a {setup.kind}: {drivers}. Entry {fmt_price(trade.entry)}, stop "
             f"{fmt_price(trade.stop_loss, compact=True)}, target {fmt_price(trade.take_profit, compact=True)} "
             f"({trade.risk_reward:.1f}R) at {confidence:.0f}% confidence."
         )
-        detailed = self._narrative(ctx, factors, raw, score, side, trade, notes) if ctx.narrate else summary
+        detailed = self._narrative(ctx, factors, raw, score, setup, trade, notes) if ctx.narrate else summary
         return self._result(
-            ctx,
             signal=side,
             confidence=confidence,
             entry=trade.entry,
@@ -434,7 +599,7 @@ class HeuristicAnalyst:
         factors: list[Factor],
         raw: float,
         score: float,
-        side: Side | None,
+        setup: Setup,
         trade: levels.TradePlan | None,
         notes: list[str],
     ) -> str:
@@ -459,31 +624,38 @@ class HeuristicAnalyst:
         if adx_text:
             vol_bits.append(adx_text)
         p3 = (
-            f"Regime: {reg.regime.replace('_', ' ').lower()} ({reg.confidence:.0f}% confidence); "
-            + ", ".join(vol_bits)
+            f"Regime: {reg.regime.replace('_', ' ').lower()} ({reg.confidence:.0f}% confidence)"
+            + (": " + ", ".join(vol_bits) if vol_bits else "")
             + "."
         )
         if ctx.mtf is not None:
             tfs = ", ".join(f"{t.timeframe} {t.trend.lower()}" for t in ctx.mtf.timeframes)
-            p4 = f"Multi-timeframe: {ctx.mtf.alignment_label.lower()} ({tfs})."
+            direction, sep = higher_trend(ctx)
+            h4 = (
+                f"; {HTF} EMA 21 {abs(sep):.1f} ATR {'above' if sep >= 0 else 'below'} EMA 50"
+                + (" (no trend)" if direction == 0 else "")
+                if HTF in ctx.features
+                else ""
+            )
+            p4 = f"Multi-timeframe: {ctx.mtf.alignment_label.lower()} ({tfs}{h4})."
         else:
             p4 = "Multi-timeframe: not enough data yet."
-        if side is not None and trade is not None:
+        if setup.side is not None and trade is not None:
             cost = ctx.round_trip_cost_pct
             p5 = (
-                f"Plan: {side.lower()} at {fmt_price(trade.entry)} with the stop at {fmt_price(trade.stop_loss)} "
-                f"({fmt_pct(trade.stop_pct)} away, {trade.basis}) and the target at {fmt_price(trade.take_profit)} "
-                f"({trade.r_multiple:.1f}R for a {reg.regime.replace('_', ' ').lower()} market). The stop is "
-                f"{trade.stop_pct / cost:.1f}× the {fmt_pct(cost)} round-trip cost, so fees and slippage "
-                f"do not dominate the outcome."
+                f"Setup: {lower_first(setup.text)}. Plan: {setup.side.lower()} at {fmt_price(trade.entry)} with the "
+                f"stop at {fmt_price(trade.stop_loss)} ({fmt_pct(trade.stop_pct)} away, {trade.basis}) and the target "
+                f"at {fmt_price(trade.take_profit)} ({trade.r_multiple:.1f}R for a "
+                f"{reg.regime.replace('_', ' ').lower()} market). The stop is {trade.stop_pct / cost:.1f}× the "
+                f"{fmt_pct(cost)} round-trip cost, so fees and slippage do not dominate the outcome."
             )
             if notes:
                 p5 += " Watch: " + "; ".join(lower_first(n) for n in notes) + "."
         else:
             p5 = (
-                f"Decision: the composite score {score:+.2f} (before regime adjustment {raw:+.2f}) is inside the "
-                f"±{ENTRY_THRESHOLD:.2f} band, so there is no trade. A close beyond EMA 21 with the MACD histogram "
-                f"turning in the same direction would change the view."
+                f"Decision: {lower_first(setup.text)}. The bot joins an established {HTF} trend only on a "
+                f"pullback, and fades a stretched move at a band only inside a range; neither is in place, so it "
+                f"stands aside."
             )
-        p6 = f"Composite score {score:+.2f} from {len(factors)} weighted factors (threshold ±{ENTRY_THRESHOLD:.2f})."
+        p6 = f"Composite score {score:+.2f} (before regime adjustment {raw:+.2f}) from {len(factors)} weighted factors."
         return "\n\n".join(p for p in (p1, p2, p3, p4, p5, p6) if p)

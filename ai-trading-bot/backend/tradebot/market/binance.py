@@ -26,7 +26,17 @@ import websockets
 
 from ..schemas import TIMEFRAME_SECONDS, TIMEFRAMES, Candle, Ticker
 from .candles import CandleArrays
-from .feed import CandleEvent, Emit, Feed, FeedUnavailable, MarketHistory, StatusEvent, StoredMarket, TickerEvent, TickEvent
+from .feed import (
+    CandleEvent,
+    Emit,
+    Feed,
+    FeedUnavailable,
+    MarketHistory,
+    StatusEvent,
+    StoredMarket,
+    TickerEvent,
+    TickEvent,
+)
 from .symbols import from_exchange, normalize, to_exchange
 
 log = logging.getLogger(__name__)
@@ -126,7 +136,11 @@ class BinanceRest:
         end: int | None = None,
         limit: int = KLINE_PAGE,
     ) -> list[list[Any]]:
-        params: dict[str, Any] = {"symbol": to_exchange(symbol), "interval": interval, "limit": min(limit, KLINE_PAGE)}
+        params: dict[str, Any] = {
+            "symbol": to_exchange(symbol),
+            "interval": interval,
+            "limit": min(limit, KLINE_PAGE),
+        }
         if start is not None:
             params["startTime"] = int(start) * 1000
         if end is not None:
@@ -164,7 +178,9 @@ class BinanceRest:
         want = limit or KLINE_PAGE
         cursor_end = end
         while len(rows) < want:
-            page = await self.klines(client, symbol, interval, end=cursor_end, limit=min(KLINE_PAGE, want - len(rows)))
+            page = await self.klines(
+                client, symbol, interval, end=cursor_end, limit=min(KLINE_PAGE, want - len(rows))
+            )
             if not page:
                 break
             rows = page + rows
@@ -230,7 +246,9 @@ class BinanceFeed(Feed):
     def _now_minute(self) -> int:
         return int(self.clock()) // 60 * 60
 
-    async def _backfill(self, client: httpx.AsyncClient, symbols: Sequence[str], stored: StoredMarket) -> MarketHistory:
+    async def _backfill(
+        self, client: httpx.AsyncClient, symbols: Sequence[str], stored: StoredMarket
+    ) -> MarketHistory:
         now = self.clock()
         candles: dict[str, dict[str, CandleArrays]] = {}
         for sym in symbols:

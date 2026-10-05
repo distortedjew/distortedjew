@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useStatus, useWatchlist } from "@/hooks/queries";
+import { useSymbols } from "@/hooks/queries";
 import { useTicker } from "@/hooks/live";
 import { cn } from "@/lib/cn";
 import { formatPct, splitSymbol, toneOf } from "@/lib/format";
@@ -24,9 +24,7 @@ function TickerChip({ symbol }: { symbol: string }) {
 
 /** Live mini tickers for the traded symbols (wide screens, in the nav row). */
 export function TickerStrip({ className }: { className?: string }) {
-  const { data: status } = useStatus();
-  const { data: watchlist } = useWatchlist();
-  const symbols = status?.engine?.symbols ?? watchlist?.map((t) => t.symbol) ?? [];
+  const { symbols } = useSymbols();
   if (symbols.length === 0) return null;
   return (
     <div className={cn("flex items-center gap-0.5", className)} aria-label="Live prices">

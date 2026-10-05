@@ -24,7 +24,17 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 
 from .analytics.metrics import classify
-from .schemas import Candle, ExecutionSettings, ExitReason, OrderType, Position, Regime, Side, StrategyName, Trade
+from .schemas import (
+    Candle,
+    ExecutionSettings,
+    ExitReason,
+    OrderType,
+    Position,
+    Regime,
+    Side,
+    StrategyName,
+    Trade,
+)
 
 
 def new_position_id() -> str:
@@ -302,7 +312,9 @@ class PaperBroker:
 
     # -- exits -------------------------------------------------------------------
 
-    def close(self, pos_id: str, price: float, now: datetime, reason: ExitReason, *, at_market: bool = True) -> Exit:
+    def close(
+        self, pos_id: str, price: float, now: datetime, reason: ExitReason, *, at_market: bool = True
+    ) -> Exit:
         """Close at ``price`` (market closes pay slippage, targets/stops pass their own fill)."""
         pos = self.positions.pop(pos_id)
         fill = self._slipped(price, buying=pos.side == "SHORT") if at_market else price
@@ -356,10 +368,22 @@ class PaperBroker:
         for order in [o for o in self.orders.values() if o.symbol == symbol]:
             if now >= order.expires_at:
                 out.expired.append(self.orders.pop(order.id))
-            elif (order.side == "LONG" and price <= order.price) or (order.side == "SHORT" and price >= order.price):
+            elif (order.side == "LONG" and price <= order.price) or (
+                order.side == "SHORT" and price >= order.price
+            ):
                 self.orders.pop(order.id)
                 out.filled.append(
-                    self._fill(order.id, symbol, order.side, order.size, order.price, order.stop_loss, order.take_profit, now, order.meta)
+                    self._fill(
+                        order.id,
+                        symbol,
+                        order.side,
+                        order.size,
+                        order.price,
+                        order.stop_loss,
+                        order.take_profit,
+                        now,
+                        order.meta,
+                    )
                 )
         for pos in [p for p in self.positions.values() if p.symbol == symbol]:
             pos.mark = price
@@ -382,28 +406,53 @@ class PaperBroker:
         """
         out = BarResult()
         bar_open = datetime.fromtimestamp(bar.time, now.tzinfo)
+        filled_now: set[str] = set()
         for order in [o for o in self.orders.values() if o.symbol == symbol and o.created_at <= bar_open]:
             touched = bar.low <= order.price if order.side == "LONG" else bar.high >= order.price
             if touched:
                 self.orders.pop(order.id)
                 fill = min(bar.open, order.price) if order.side == "LONG" else max(bar.open, order.price)
-                pos = self._fill(order.id, symbol, order.side, order.size, fill, order.stop_loss, order.take_profit, now, order.meta)
+                pos = self._fill(
+                    order.id,
+                    symbol,
+                    order.side,
+                    order.size,
+                    fill,
+                    order.stop_loss,
+                    order.take_profit,
+                    now,
+                    order.meta,
+                )
                 pos.opened_at = bar_open if bar_open > order.created_at else order.created_at
                 out.filled.append(pos)
+                filled_now.add(pos.id)
                 # the rest of the fill bar may already have hit the stop (conservative)
                 stopped = bar.low <= pos.stop_loss if pos.side == "LONG" else bar.high >= pos.stop_loss
                 pos.observe(bar.high, bar.low)
                 if stopped:
-                    out.exits.append(self.close(pos.id, self._stop_fill(pos, pos.stop_loss), now, "STOP_LOSS", at_market=False))
+                    out.exits.append(
+                        self.close(
+                            pos.id, self._stop_fill(pos, pos.stop_loss), now, "STOP_LOSS", at_market=False
+                        )
+                    )
             elif now >= order.expires_at:
                 out.expired.append(self.orders.pop(order.id))
-        for pos in [p for p in self.positions.values() if p.symbol == symbol and p.opened_at <= bar_open]:
+        # a limit filled inside this bar was already judged against its stop above; its target is
+        # not, because the bar does not tell whether the high came before or after the dip
+        held = [
+            p
+            for p in self.positions.values()
+            if p.symbol == symbol and p.opened_at <= bar_open and p.id not in filled_now
+        ]
+        for pos in held:
             long = pos.side == "LONG"
             hit_stop = bar.low <= pos.stop_loss if long else bar.high >= pos.stop_loss
             hit_target = bar.high >= pos.take_profit if long else bar.low <= pos.take_profit
             if hit_stop:
                 pos.observe(bar.high, bar.low)
-                out.exits.append(self.close(pos.id, self._stop_fill(pos, bar.open), now, "STOP_LOSS", at_market=False))
+                out.exits.append(
+                    self.close(pos.id, self._stop_fill(pos, bar.open), now, "STOP_LOSS", at_market=False)
+                )
             elif hit_target:
                 pos.observe(bar.high, bar.low)
                 out.exits.append(self.close(pos.id, pos.take_profit, now, "TAKE_PROFIT", at_market=False))

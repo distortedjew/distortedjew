@@ -165,7 +165,9 @@ class CandleArrays:
         """Candles with ``start <= time < end``."""
         lo = 0 if start is None else int(np.searchsorted(self.t, start, side="left"))
         hi = len(self) if end is None else int(np.searchsorted(self.t, end, side="left"))
-        return CandleArrays(self.t[lo:hi], self.o[lo:hi], self.h[lo:hi], self.lo[lo:hi], self.c[lo:hi], self.v[lo:hi])
+        return CandleArrays(
+            self.t[lo:hi], self.o[lo:hi], self.h[lo:hi], self.lo[lo:hi], self.c[lo:hi], self.v[lo:hi]
+        )
 
     def tail(self, n: int) -> CandleArrays:
         if n >= len(self):
@@ -324,7 +326,9 @@ class CandleBook:
     backtest. ``warm_up`` seeds the book from stored history without side effects.
     """
 
-    def __init__(self, symbol: str, base: str = "1m", timeframes: Sequence[str] | None = None, maxlen: int = 600):
+    def __init__(
+        self, symbol: str, base: str = "1m", timeframes: Sequence[str] | None = None, maxlen: int = 600
+    ):
         self.symbol = symbol
         self.base = base
         self.base_seconds = TIMEFRAME_SECONDS[base]

@@ -183,9 +183,13 @@ class OpenRouterClient:
                 timeout=httpx.Timeout(timeout, connect=min(10.0, timeout)),
             )
         except httpx.TimeoutException as exc:
-            raise OpenRouterError("timeout", f"request timed out after {timeout:.0f} s", retryable=True) from exc
+            raise OpenRouterError(
+                "timeout", f"request timed out after {timeout:.0f} s", retryable=True
+            ) from exc
         except httpx.HTTPError as exc:
-            raise OpenRouterError("network", self.scrub(f"network error ({type(exc).__name__})"), retryable=True) from exc
+            raise OpenRouterError(
+                "network", self.scrub(f"network error ({type(exc).__name__})"), retryable=True
+            ) from exc
 
         try:
             data = resp.json()
@@ -348,7 +352,9 @@ def repair_reply(data: dict[str, Any], ctx: MarketContext) -> tuple[dict[str, An
         if not levels.levels_valid(side, entry, stop, target):
             plan = levels.plan(ctx, side)
             entry, stop, target = plan.entry, plan.stop_loss, plan.take_profit
-            notes.append("Model levels were missing or on the wrong side; the risk engine set ATR-based levels")
+            notes.append(
+                "Model levels were missing or on the wrong side; the risk engine set ATR-based levels"
+            )
             invalidation = invalidation or levels.invalidation(ctx, side, stop)
     fields = {
         "signal": signal,
@@ -445,9 +451,23 @@ class OpenRouterAnalyst:
                     )
                 except OpenRouterError as exc:
                     latency = (time.monotonic() - t0) * 1000.0
-                    cost = exc.cost if exc.cost is not None else (estimate_cost(model, exc.prompt_tokens, exc.completion_tokens) or 0.0)
+                    cost = (
+                        exc.cost
+                        if exc.cost is not None
+                        else (estimate_cost(model, exc.prompt_tokens, exc.completion_tokens) or 0.0)
+                    )
                     usage.append(
-                        UsageRecord(ts, "openrouter", model, False, latency, exc.prompt_tokens, exc.completion_tokens, cost, exc.message)
+                        UsageRecord(
+                            ts,
+                            "openrouter",
+                            model,
+                            False,
+                            latency,
+                            exc.prompt_tokens,
+                            exc.completion_tokens,
+                            cost,
+                            exc.message,
+                        )
                     )
                     errors.append(f"{model}: {exc.message}")
                     log.warning("OpenRouter %s failed (attempt %d): %s", model, attempt + 1, exc.message)
@@ -484,7 +504,9 @@ class OpenRouterAnalyst:
                         )
                     )
                     errors.append(f"{model}: {message}")
-                    log.warning("OpenRouter %s returned an unparseable reply (attempt %d)", model, attempt + 1)
+                    log.warning(
+                        "OpenRouter %s returned an unparseable reply (attempt %d)", model, attempt + 1
+                    )
                     if attempt >= s.retry_count or time.monotonic() - started > self.max_total_sec:
                         break
                     await self._sleep(self._backoff(attempt, None))
@@ -519,7 +541,9 @@ class OpenRouterAnalyst:
                 break
         return self._failed(ctx, usage, errors, time.monotonic() - started)
 
-    def _failed(self, ctx: MarketContext, usage: list[UsageRecord], errors: list[str], elapsed: float) -> AnalystResult:
+    def _failed(
+        self, ctx: MarketContext, usage: list[UsageRecord], errors: list[str], elapsed: float
+    ) -> AnalystResult:
         last = errors[-1] if errors else "no reply"
         reason = f"OpenRouter unavailable after {len(usage)} request(s): {last}"
         if self.settings.heuristic_fallback:
@@ -531,6 +555,7 @@ class OpenRouterAnalyst:
             result.prompt_tokens = sum(u.prompt_tokens for u in usage)
             result.completion_tokens = sum(u.completion_tokens for u in usage)
             result.cost_usd = round(sum(u.cost_usd for u in usage), 8)
+            result.failed = True
             return result
         return AnalystResult(
             signal="HOLD",
@@ -551,4 +576,5 @@ class OpenRouterAnalyst:
             cost_usd=round(sum(u.cost_usd for u in usage), 8),
             usage=usage,
             errors=errors,
+            failed=True,
         )

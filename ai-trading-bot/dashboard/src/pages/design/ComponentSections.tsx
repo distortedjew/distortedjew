@@ -15,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ApiError } from "@/lib/api";
 import { formatDate, formatDateTime, formatDuration, formatPnl, formatPrice, formatR, formatSize, formatUsd, splitSymbol } from "@/lib/format";
 import { TIMEFRAMES } from "@/lib/constants";
 import type { Kpi, PortfolioKpis, Position, Timeframe } from "@/types";
@@ -45,6 +46,7 @@ import {
   CardFooter,
   CardHeader,
   Checkbox,
+  ConfidenceMeter,
   ConfirmDialog,
   CopyButton,
   DataTable,
@@ -87,6 +89,7 @@ import {
   Spinner,
   StatGrid,
   Switch,
+  SymbolLabel,
   Tabs,
   TabsContent,
   TabsList,
@@ -99,6 +102,7 @@ import {
 import { KpiCard } from "@/features/overview/KpiCard";
 import { KPI_DEFINITIONS, KPI_ORDER } from "@/features/overview/kpi-definitions";
 import { Section } from "@/pages/design/FoundationSections";
+import { LightweightSample } from "@/pages/design/LightweightSample";
 import {
   NULL_KPI,
   SAMPLE_COMPARISON,
@@ -241,7 +245,7 @@ export function NumbersSection() {
             label="AnimatedNumber"
             value={
               <div className="flex items-center gap-2">
-                <AnimatedNumber value={equity} format={(n) => formatUsd(n)} className="num-sans text-lg font-semibold" />
+                <AnimatedNumber value={equity} format={(n) => formatUsd(n)} className="text-lg font-semibold" />
                 <Button size="xs" onClick={() => setEquity((e) => Math.round((e + (Math.random() - 0.45) * 300) * 100) / 100)}>
                   Update
                 </Button>
@@ -266,6 +270,30 @@ export function NumbersSection() {
                 <DeltaBadge change={-1.32} format="pp" />
                 <DeltaBadge change={-0.08} format="ratio" variant="pill" />
                 <DeltaBadge change={0} format="count" />
+              </div>
+            }
+          />
+          <KeyValue
+            label="ConfidenceMeter (threshold 65 %)"
+            mono={false}
+            value={
+              <div className="flex flex-col items-start gap-2">
+                <ConfidenceMeter value={82} threshold={65} />
+                <ConfidenceMeter value={58} threshold={65} />
+                <ConfidenceMeter value={74} threshold={65} variant="bar" className="w-40" />
+                <ConfidenceMeter value={91} variant="text" />
+              </div>
+            }
+          />
+          <KeyValue
+            label="SymbolLabel"
+            mono={false}
+            value={
+              <div className="flex flex-col items-start gap-2">
+                <SymbolLabel symbol="BTC/USDT" size="lg" />
+                <SymbolLabel symbol="ETH/USDT" />
+                <SymbolLabel symbol="SOL/USDT" size="sm" />
+                <SymbolLabel symbol="BTC/USDT" monogram={false} quote={false} />
               </div>
             }
           />
@@ -320,9 +348,21 @@ export function KpiSection() {
 
 export function SparklineSection() {
   return (
-    <Section id="sparklines" title="Sparklines" description="Colored by trend; bars by sign; hover for values.">
+    <Section
+      id="sparklines"
+      title="Sparklines"
+      description="Stat tiles: de-emphasis gray with the current period in the accent. Ticker rows: colored by direction. Bars by sign. Hover for values."
+    >
       <Card>
         <CardBody className="grid gap-6 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KeyValue
+            label="Stat tile · line"
+            value={<Sparkline data={walk(30, 100, 4, 0.6, 2)} tone="deemphasis" highlightLast height={38} formatValue={(v) => formatPrice(v)} />}
+          />
+          <KeyValue
+            label="Stat tile · bars"
+            value={<Sparkline data={SAMPLE_KPIS.today_pnl.sparkline} variant="bars" tone="deemphasis" highlightLast height={38} formatValue={(v) => formatPnl(v)} />}
+          />
           <KeyValue label="Up trend" value={<Sparkline data={walk(30, 100, 4, 0.6, 2)} formatValue={(v) => formatPrice(v)} />} />
           <KeyValue label="Down trend" value={<Sparkline data={walk(30, 100, 4, -0.6, 8)} formatValue={(v) => formatPrice(v)} />} />
           <KeyValue label="Daily P&L bars" value={<Sparkline data={SAMPLE_KPIS.today_pnl.sparkline} variant="bars" formatValue={(v) => formatPnl(v)} />} />
@@ -342,7 +382,8 @@ export function ChartsSection() {
   const anim = useChartAnimation();
   return (
     <Section id="charts" title="Analytics charts (Recharts)" description="Theme tokens, solid hairline grid, 2px lines, ~10 % area wash, ≤ 24px bars, value-first tooltips.">
-      <div className="grid gap-4 xl:grid-cols-2">
+      <LightweightSample />
+      <div className="grid items-start gap-4 xl:grid-cols-2">
         <ChartCard
           title="Equity curve"
           subtitle="Sample · 60 days"
@@ -441,12 +482,7 @@ const positionColumns: Column<Position>[] = [
     header: "Symbol",
     mobile: "title",
     sortValue: (p) => p.symbol,
-    cell: (p) => (
-      <span className="flex items-center gap-2">
-        <span className="font-medium text-fg">{splitSymbol(p.symbol).base}</span>
-        <span className="text-xs text-fg-subtle">/{splitSymbol(p.symbol).quote}</span>
-      </span>
-    ),
+    cell: (p) => <SymbolLabel symbol={p.symbol} />,
   },
   { id: "side", header: "Side", mobile: "subtitle", cell: (p) => <EnumBadge kind="side" value={p.side} size="xs" /> },
   { id: "size", header: "Size", align: "right", mobileLabel: "Size", sortValue: (p) => p.notional, cell: (p) => <span className="num">{formatSize(p.size, splitSymbol(p.symbol).base)}</span>, hideBelow: "lg" },
@@ -462,6 +498,15 @@ const positionColumns: Column<Position>[] = [
     cell: (p) => <PnlText value={p.unrealized_pnl} pct={p.unrealized_pnl_pct} />,
   },
   { id: "r", header: "R", align: "right", mobile: "meta", sortValue: (p) => p.r_multiple, cell: (p) => <span className="num text-fg-muted">{formatR(p.r_multiple)}</span> },
+  {
+    id: "confidence",
+    header: "AI",
+    align: "right",
+    info: "AI confidence at entry; the tick marks the 65 % trading threshold.",
+    sortValue: (p) => p.ai_confidence,
+    cell: (p) => <ConfidenceMeter value={p.ai_confidence} threshold={65} />,
+    hideBelow: "2xl",
+  },
   { id: "age", header: "Open for", align: "right", sortValue: (p) => p.duration_sec, cell: (p) => <span className="num text-fg-muted">{formatDuration(p.duration_sec)}</span>, hideBelow: "xl" },
   { id: "regime", header: "Regime", cell: (p) => <EnumBadge kind="regime" value={p.regime} size="xs" short />, hideBelow: "xl" },
 ];
@@ -546,6 +591,11 @@ export function FeedbackSection() {
         </Card>
         <Card>
           <ErrorState error={new Error("Can't reach the API server.")} onRetry={() => {}} />
+        </Card>
+        <Card>
+          <ErrorState
+            error={new ApiError({ status: 503, kind: "http", detail: "Trading engine has not published state yet", path: "/api/portfolio" })}
+          />
         </Card>
         <Card className="space-y-3 p-4">
           <ErrorState compact error={new Error("Request timed out after 15 s")} onRetry={() => {}} />

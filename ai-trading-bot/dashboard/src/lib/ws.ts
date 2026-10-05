@@ -179,13 +179,17 @@ export class WsManager {
     this.setStatus("offline");
   }
 
-  /** Retry right away (e.g. the "Retry now" button), keeping the backoff counter. */
+  /**
+   * Retry right away (e.g. the "Retry now" button, the tab becoming visible, the browser coming
+   * back online), keeping the backoff counter. No-op while a socket is open or still opening
+   * (a stuck attempt is bounded by the liveness timeout).
+   */
   reconnectNow(): void {
     if (!this.started) {
       this.start();
       return;
     }
-    if (this.socket && this.socket.readyState === OPEN) return;
+    if (this.socket && (this.socket.readyState === OPEN || this.socket.readyState === CONNECTING)) return;
     this.clearReconnectTimer();
     this.dropSocket();
     this.open();

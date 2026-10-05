@@ -15,6 +15,7 @@ from typing import Any, Literal, TypeVar
 
 from pydantic import BaseModel
 
+from ..analytics import metrics
 from ..config import VERSION, EnvConfig
 from ..db import Database, iso, parse_iso, row_to_event, row_to_notification, utcnow
 from ..schemas import (
@@ -539,37 +540,31 @@ def count_candles_between(db: Database, symbol: str, timeframe: str, start: int,
 
 
 def regime_performance(db: Database, symbol: str) -> list[RegimePerformance]:
-    """Bot results on ``symbol`` grouped by the regime each trade was opened in."""
-    rows = {
-        r["regime"]: r
-        for r in db.read(
-            "SELECT regime, COUNT(*) AS n, COALESCE(SUM(result = 'WIN'), 0) AS wins, AVG(pnl_pct) AS avg_pct, "
-            "SUM(pnl) AS pnl, COALESCE(SUM(CASE WHEN pnl > 0 THEN pnl END), 0) AS gross_profit, "
-            "COALESCE(SUM(CASE WHEN pnl < 0 THEN -pnl END), 0) AS gross_loss "
-            "FROM trades WHERE symbol = ? GROUP BY regime",
-            (symbol,),
-        )
-    }
+    """Bot results on ``symbol`` grouped by the regime each trade was opened in.
+
+    Every regime is listed (``UNKNOWN`` only when trades carry it), with the shared
+    WIN rule and profit factor from :mod:`tradebot.analytics.metrics`.
+    """
+    by_regime: dict[str, list[tuple[float, float]]] = {}
+    for r in db.read("SELECT regime, pnl, pnl_pct FROM trades WHERE symbol = ?", (symbol,)):
+        by_regime.setdefault(r["regime"], []).append((r["pnl"], r["pnl_pct"]))
     out: list[RegimePerformance] = []
     for regime in REGIMES:
-        row = rows.get(regime)
-        if row is None:
-            if regime == "UNKNOWN":
-                continue
-            out.append(RegimePerformance(regime=regime, trades=0, wins=0, total_pnl=0.0))
+        rows = by_regime.get(regime, [])
+        if not rows and regime == "UNKNOWN":
             continue
-        trades = int(row["n"])
+        pnls = [pnl for pnl, _ in rows]
+        wins = sum(1 for pnl in pnls if metrics.classify(pnl) == "WIN")
+        profit_factor = metrics.profit_factor(pnls)
         out.append(
             RegimePerformance(
                 regime=regime,
-                trades=trades,
-                wins=int(row["wins"]),
-                win_rate=round(row["wins"] / trades * 100.0, 2),
-                avg_trade_pct=round(row["avg_pct"], 4),
-                total_pnl=round(row["pnl"], 2),
-                profit_factor=round(row["gross_profit"] / row["gross_loss"], 3)
-                if row["gross_loss"] > 1e-12
-                else None,
+                trades=len(rows),
+                wins=wins,
+                win_rate=round(wins / len(rows) * 100.0, 2) if rows else None,
+                avg_trade_pct=round(sum(pct for _, pct in rows) / len(rows), 4) if rows else None,
+                total_pnl=round(sum(pnls), 2),
+                profit_factor=round(profit_factor, 3) if profit_factor is not None else None,
             )
         )
     return out

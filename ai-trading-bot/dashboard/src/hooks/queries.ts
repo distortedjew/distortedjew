@@ -191,6 +191,25 @@ export function useSettings(options: QueryOpts = {}) {
   });
 }
 
+/**
+ * The symbols the engine trades and its primary symbol (from the live status; the watchlist is
+ * the fallback while the engine is offline). Use for symbol pickers and default selections.
+ *
+ *   const { symbols, primary } = useSymbols();
+ *   const [symbol, setSymbol] = useUrlState("symbol", primary ?? "BTC/USDT");
+ */
+export function useSymbols(): { symbols: string[]; primary: string | undefined; isPending: boolean } {
+  const status = useStatus();
+  const watchlist = useWatchlist();
+  const engine = status.data?.engine;
+  const symbols = engine?.symbols?.length ? engine.symbols : (watchlist.data?.map((t) => t.symbol) ?? []);
+  return {
+    symbols,
+    primary: engine?.primary_symbol ?? symbols[0],
+    isPending: status.isPending && watchlist.isPending,
+  };
+}
+
 // ---------------------------------------------------------------- history / analytics
 
 /** GET /api/positions/{id}?timeframe= — one position with candles + markers. */

@@ -54,7 +54,9 @@ def load_history(
                 return candles, "binance"
         except (httpx.HTTPError, ValueError, KeyError, IndexError) as exc:
             log.info("backtest history: Binance unavailable (%s); using the simulator", type(exc).__name__)
-    return simulated_history(sym, timeframe, start_ts, end_ts, cfg.sim_seed if seed is None else seed), "simulated"
+    return simulated_history(
+        sym, timeframe, start_ts, end_ts, cfg.sim_seed if seed is None else seed
+    ), "simulated"
 
 
 def _binance(symbol: str, timeframe: str, start: int, end: int, rest_url: str) -> list[Candle]:

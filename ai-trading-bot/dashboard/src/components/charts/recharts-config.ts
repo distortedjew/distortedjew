@@ -20,7 +20,8 @@ import { useReducedMotion } from "framer-motion";
 import { formatCompact, formatDate, formatNumber, formatPct, formatTime, formatUsd } from "@/lib/format";
 import type { ChartTheme } from "@/components/charts/chart-theme";
 
-export const CHART_MARGIN = { top: 8, right: 8, bottom: 0, left: 0 } as const;
+/** Right margin leaves room for the last x tick label (centered on the last point). */
+export const CHART_MARGIN = { top: 8, right: 16, bottom: 0, left: 0 } as const;
 
 /** Rounded data end, square at the baseline: [topLeft, topRight, bottomRight, bottomLeft]. */
 export const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
@@ -81,7 +82,7 @@ export const tickFormatters = {
   /** Values already in percent units. */
   pct: (v: number) => formatPct(v, { decimals: Math.abs(v) >= 10 ? 0 : 1 }),
   pctSigned: (v: number) => formatPct(v, { decimals: Math.abs(v) >= 10 ? 0 : 1, signed: true }),
-  number: (v: number) => formatNumber(v, Math.abs(v) >= 100 ? 0 : 2),
+  number: (v: number) => formatNumber(v, Number.isInteger(v) || Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 10 ? 1 : 2),
   compact: (v: number) => formatCompact(v),
   /** Unix seconds → "Oct 4". */
   dateFromUnix: (v: number) => formatDate(v * 1_000),

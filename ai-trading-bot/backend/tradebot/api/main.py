@@ -77,6 +77,7 @@ def create_app(config: EnvConfig | None = None, db: Database | None = None) -> F
         description=DESCRIPTION,
         docs_url="/api/docs",
         redoc_url=None,
+        swagger_ui_oauth2_redirect_url="/api/docs/oauth2-redirect",
         openapi_url="/api/openapi.json",
         lifespan=lifespan,
     )

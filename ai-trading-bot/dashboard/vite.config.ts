@@ -31,6 +31,8 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    // Deterministic local-time formatting in tests.
+    env: { TZ: "UTC" },
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
     css: false,

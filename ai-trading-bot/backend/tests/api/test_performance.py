@@ -88,7 +88,9 @@ def test_seven_day_report(history: Database) -> None:
 
 
 def test_all_starts_at_the_first_activity(history: Database) -> None:
-    report = build_performance_report(history, "all", starting_balance=10_000.0, live_equity=10_302.0, now=NOW)
+    report = build_performance_report(
+        history, "all", starting_balance=10_000.0, live_equity=10_302.0, now=NOW
+    )
     assert report.starting_equity == 10_000.0
     assert report.equity_curve[0].time == f.ts(utc(1, 0))
     assert report.stats.total_trades == 4
@@ -110,12 +112,14 @@ def test_empty_history_reports_the_starting_balance(db: Database) -> None:
     assert len(report.equity_curve) == 1 and report.by_symbol == [] and report.by_exit_reason == []
 
 
-def random_walk(start: int, count: int, step: int = 60, seed: int = 7) -> list[tuple[int, float]]:
+def random_walk(
+    start: int, count: int, step: int = 60, seed: int = 7, drift: float = 0.0, volatility: float = 0.0008
+) -> list[tuple[int, float]]:
     rng = random.Random(seed)
     equity = 10_000.0
     points = []
     for i in range(count):
-        equity *= 1 + rng.gauss(0, 0.0008)
+        equity *= 1 + rng.gauss(drift, volatility)
         points.append((start + i * step, round(equity, 4)))
     return points
 
@@ -123,11 +127,35 @@ def random_walk(start: int, count: int, step: int = 60, seed: int = 7) -> list[t
 def test_compression_keeps_drawdown_and_day_closes_exact() -> None:
     points = random_walk(f.ts(utc(1, 0)), 20_000)
     compressed = compress_extremes(points, 600)
-    assert len(compressed) <= 3 * (20_000 * 60 // 600 + 1) < len(points)
+    windows = 20_000 * 60 // 600 + 1
+    assert len(compressed) <= 6 * windows and len(compressed) < len(points) / 2
     assert [t for t, _ in compressed] == sorted({t for t, _ in compressed})
+    assert set(compressed) <= set(points)
     assert metrics.max_drawdown([e for _, e in compressed]) == metrics.max_drawdown([e for _, e in points])
     assert metrics.daily_closes(compressed) == metrics.daily_closes(points)
     assert compressed[0] == points[0] and compressed[-1] == points[-1]
+
+
+def test_compression_keeps_a_peak_that_is_not_an_extreme_of_its_window() -> None:
+    # The worst fall, 100 -> 90 (-10 %), happens inside the second window, whose first,
+    # highest and last points are other ones: dropping the 100 would report -7.2 %.
+    points = [(0, 95.0), (600, 97.0), (630, 100.0), (660, 90.0), (720, 105.0), (780, 104.0)]
+    compressed = compress_extremes(points, 600)
+    assert metrics.max_drawdown([e for _, e in compressed])[0] == pytest.approx(-10.0)
+    assert compressed == points
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_compression_is_exact_on_choppy_rising_series(seed: int) -> None:
+    # A rising, choppy curve sets new all-time highs in the middle of windows, then dips:
+    # the case where keeping only each window's extremes loses the worst drawdown.
+    points = random_walk(0, 3_000, step=37, seed=seed, drift=0.001, volatility=0.003)
+    for bucket in (300, 900, 3_600):
+        compressed = compress_extremes(points, bucket)
+        assert metrics.max_drawdown([e for _, e in compressed]) == metrics.max_drawdown(
+            [e for _, e in points]
+        )
+        assert compressed[0] == points[0] and compressed[-1] == points[-1]
 
 
 def test_long_ranges_are_compressed_without_changing_the_numbers(db: Database) -> None:

@@ -24,8 +24,13 @@ const STYLE: Record<ConnectionStatus, string> = {
   offline: "text-down",
 };
 
-/** "LIVE ●" / "RECONNECTING…" / "OFFLINE" (pure view of the trigger). */
+/**
+ * "LIVE ●" / "RECONNECTING…" / "OFFLINE" (pure view of the trigger). `compact` (phones) keeps
+ * "LIVE" and "OFFLINE" but shows only the spinner while (re)connecting — the connection banner
+ * under the top bar spells that state out — and drops to the dot alone below 375 px.
+ */
 export function ConnectionBadge({ status, compact, className }: { status: ConnectionStatus; compact?: boolean; className?: string }) {
+  const pending = status === "connecting" || status === "reconnecting";
   return (
     <span
       className={cn(
@@ -34,8 +39,8 @@ export function ConnectionBadge({ status, compact, className }: { status: Connec
         className,
       )}
     >
-      {status === "connecting" || status === "reconnecting" ? <Spinner className="size-3" label={LABEL[status]} /> : null}
-      <span className={cn(compact && status === "live" && "max-xs:sr-only")}>{LABEL[status]}</span>
+      {pending ? <Spinner className="size-3" label={LABEL[status]} /> : null}
+      <span className={cn(compact && (pending ? "sr-only" : "max-[374px]:sr-only"))}>{LABEL[status]}</span>
       {status === "live" ? <StatusDot tone="up" pulse size="xs" /> : null}
       {status === "offline" ? <StatusDot tone="down" size="xs" /> : null}
     </span>

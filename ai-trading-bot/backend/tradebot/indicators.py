@@ -35,6 +35,7 @@ Definitions (period defaults in brackets):
 from __future__ import annotations
 
 import math
+from bisect import bisect_left, bisect_right, insort
 from collections import deque
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -363,7 +364,9 @@ def _columns(candles: Sequence[Candle]) -> tuple[np.ndarray, ...]:
     return t, o, h, lo, cl, v
 
 
-def _overlay_arrays(candles: Sequence[Candle], timeframe: str | None) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+def _overlay_arrays(
+    candles: Sequence[Candle], timeframe: str | None
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     t, _o, h, lo, c, v = _columns(candles)
     upper, middle, lower = bollinger(c)
     arrays = {f"ema{p}": ema(c, p) for p in EMA_PERIODS}
@@ -536,12 +539,32 @@ class Features:
     swing_low: float | None
 
 
-def _rank(values: deque[float], x: float) -> float | None:
-    """Percentile rank (0-100) of x among values (fraction of values <= x)."""
-    if len(values) < 20:
-        return None
-    below = sum(1 for v in values if v <= x)
-    return below / len(values) * 100.0
+class RankWindow:
+    """The last ``size`` values, kept sorted too, for O(log n) percentile ranks."""
+
+    __slots__ = ("_items", "_sorted", "size")
+
+    def __init__(self, size: int) -> None:
+        self.size = size
+        self._items: deque[float] = deque()
+        self._sorted: list[float] = []
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def push(self, x: float) -> None:
+        if len(self._items) == self.size:
+            old = self._items.popleft()
+            del self._sorted[bisect_left(self._sorted, old)]
+        self._items.append(x)
+        insort(self._sorted, x)
+
+    def rank(self, x: float) -> float | None:
+        """Percentile rank (0-100) of x: the share of stored values <= x (None below 20 values)."""
+        n = len(self._sorted)
+        if n < 20:
+            return None
+        return bisect_right(self._sorted, x) / n * 100.0
 
 
 class IndicatorState:
@@ -585,8 +608,8 @@ class IndicatorState:
         self._ema50_hist: deque[float] = deque(maxlen=11)
         self._hist_hist: deque[float] = deque(maxlen=2)
         self._adx_hist: deque[float] = deque(maxlen=2)
-        self._atr_pct_hist: deque[float] = deque(maxlen=RANK_HISTORY)
-        self._bbw_hist: deque[float] = deque(maxlen=RANK_HISTORY)
+        self._atr_pct_hist = RankWindow(RANK_HISTORY)
+        self._bbw_hist = RankWindow(RANK_HISTORY)
         self._bbw_recent: deque[float] = deque(maxlen=20)
         self._highs: deque[float] = deque(maxlen=SWING_LOOKBACK)
         self._lows: deque[float] = deque(maxlen=SWING_LOOKBACK)
@@ -598,7 +621,7 @@ class IndicatorState:
         return {p: e.value for p, e in self._emas.items()}
 
     def update(self, candle: Candle) -> None:
-        o, h, lo, c, v = candle.open, candle.high, candle.low, candle.close, candle.volume
+        h, lo, c, v = candle.high, candle.low, candle.close, candle.volume
         prev = self.last
         self.prev_close = prev.close if prev is not None else None
         self.bars += 1
@@ -635,11 +658,11 @@ class IndicatorState:
         if e50 is not None:
             self._ema50_hist.append(e50)
         if self.atr is not None and c > 0:
-            self._atr_pct_hist.append(self.atr / c * 100.0)
+            self._atr_pct_hist.push(self.atr / c * 100.0)
         if self.bb is not None and self.bb[1] > 0:
             width = (self.bb[0] - self.bb[2]) / self.bb[1] * 100.0
-            self._bbw_hist.append(width)
-            rank = _rank(self._bbw_hist, width)
+            self._bbw_hist.push(width)
+            rank = self._bbw_hist.rank(width)
             if rank is not None:
                 self._bbw_recent.append(rank)
         self._highs.append(h)
@@ -768,7 +791,7 @@ class IndicatorState:
             macd_hist_prev=self._hist_hist[-1] if self._hist_hist else None,
             atr=self.atr,
             atr_pct=atr_pct,
-            atr_pct_rank=_rank(self._atr_pct_hist, atr_pct) if atr_pct is not None else None,
+            atr_pct_rank=self._atr_pct_hist.rank(atr_pct) if atr_pct is not None else None,
             adx=self.adx,
             adx_prev=self._adx_hist[-1] if self._adx_hist else None,
             plus_di=self.plus_di,
@@ -777,7 +800,7 @@ class IndicatorState:
             bb_middle=bb[1] if bb else None,
             bb_lower=bb[2] if bb else None,
             bb_width_pct=width,
-            bb_width_rank=_rank(self._bbw_hist, width) if width is not None else None,
+            bb_width_rank=self._bbw_hist.rank(width) if width is not None else None,
             squeeze_rank=min(self._bbw_recent) if self._bbw_recent else None,
             bb_pct_b=pct_b,
             vwap=self.vwap,

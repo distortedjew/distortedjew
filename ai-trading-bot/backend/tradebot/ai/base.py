@@ -109,6 +109,8 @@ class AnalystResult:
     fallback_reason: str | None = None
     usage: list[UsageRecord] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)  # sanitized API errors met while answering
+    # the remote analyst produced no answer of its own (heuristic fallback or an outage HOLD)
+    failed: bool = False
 
     @property
     def risk_reward(self) -> float | None:
