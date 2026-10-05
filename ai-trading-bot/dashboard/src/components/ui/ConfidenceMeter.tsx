@@ -45,7 +45,10 @@ export function ConfidenceMeter({ value, threshold, variant = "inline", classNam
       aria-valuemax={100}
       aria-valuenow={Math.round(pct)}
       aria-label={title}
-      className={cn("relative block h-1 overflow-hidden rounded-full bg-ai/15", variant === "inline" ? "w-10" : "w-full")}
+      className={cn(
+        "relative block h-1 overflow-hidden rounded-full bg-ai/15",
+        variant === "inline" ? "w-10" : "w-full",
+      )}
     >
       <span
         className={cn(
@@ -75,7 +78,7 @@ export function ConfidenceMeter({ value, threshold, variant = "inline", classNam
 
   return (
     <span className={cn("inline-flex items-center gap-2", className)} title={title}>
-      <span className={cn("num min-w-[3ch] text-right", below ? "text-fg-subtle" : "text-ai")}>{label}</span>
+      <span className={cn("min-w-[3ch] text-right num", below ? "text-fg-subtle" : "text-ai")}>{label}</span>
       {meter}
     </span>
   );

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { isNum, toneOf } from "@/lib/format";
 import { TONE_TEXT } from "@/lib/tones";
@@ -29,10 +29,37 @@ export interface KpiCardProps {
   className?: string;
 }
 
+/** Live KPIs tick about once a second; the outline flash is reserved for changes worth noticing. */
+const FLASH_MIN_INTERVAL_MS = 6_000;
+
+/**
+ * Soft outline flash when the displayed value changes — at most once per FLASH_MIN_INTERVAL_MS
+ * so a value that ticks every second (equity, P&L) never strobes. Imperative: no re-render.
+ */
+function useUpdateFlash(display: string | null) {
+  const ringRef = useRef<HTMLSpanElement>(null);
+  const previous = useRef(display);
+  const lastFlash = useRef(0);
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = display;
+    if (before === null || display === null || before === display) return;
+    const now = performance.now();
+    if (now - lastFlash.current < FLASH_MIN_INTERVAL_MS) return;
+    lastFlash.current = now;
+    const ring = ringRef.current;
+    if (!ring) return;
+    ring.classList.remove("animate-flash-ring");
+    void ring.offsetWidth; // restart the CSS animation
+    ring.classList.add("animate-flash-ring");
+  }, [display]);
+  return ringRef;
+}
+
 /**
  * One KPI tile (dataviz stat-tile contract): label + ⓘ, animated value, ▲/▼ change vs the named
  * previous period (colored by direction × whether up is good), and a quiet sparkline with the
- * current period in the accent. The outline flashes softly when the value updates.
+ * current period in the accent. The outline flashes softly (rate-limited) when the value changes.
  */
 export function KpiCard({
   definition,
@@ -46,17 +73,9 @@ export function KpiCard({
   className,
 }: KpiCardProps) {
   const value = kpi?.value ?? null;
-
-  // Flash the card when the value changes (derived during render; no effect needed).
-  const [previous, setPrevious] = useState(value);
-  const [flashes, setFlashes] = useState(0);
-  if (value !== previous) {
-    setPrevious(value);
-    if (isNum(value) && isNum(previous)) setFlashes((n) => n + 1);
-  }
-
-  const tone = definition.signedValue ? toneOf(value) : "neutral";
   const format = (n: number) => formatKpiValue(definition.format, n);
+  const ringRef = useUpdateFlash(isNum(value) ? format(value) : null);
+  const tone = definition.signedValue ? toneOf(value) : "neutral";
   const sparkline = kpi?.sparkline ?? [];
 
   const info = (
@@ -71,7 +90,7 @@ export function KpiCard({
       <div
         aria-busy="true"
         aria-label={`${definition.label} loading`}
-        className={cn("surface-card flex flex-col gap-3 rounded-xl p-4", compact && "gap-2 p-3", className)}
+        className={cn("flex flex-col gap-3 rounded-xl surface-card p-4", compact && "gap-2 p-3", className)}
       >
         <Skeleton className="h-3 w-24" />
         <Skeleton className={cn("h-7 w-32", compact && "h-5 w-20")} />
@@ -98,7 +117,7 @@ export function KpiCard({
   );
 
   const valueRow = (
-    <div className="flex min-w-0 items-baseline gap-2">
+    <div className={cn("flex min-w-0 items-baseline gap-x-2", compact && "flex-wrap gap-y-0.5")}>
       {value === null && nullHint ? (
         <Tooltip content={nullHint}>
           <span tabIndex={0} className="rounded-sm">
@@ -108,7 +127,9 @@ export function KpiCard({
       ) : (
         valueNode
       )}
-      {valueSuffix ? <span className={cn("num text-xs whitespace-nowrap", TONE_TEXT[tone])}>{valueSuffix}</span> : null}
+      {valueSuffix ? (
+        <span className={cn("num text-xs whitespace-nowrap", TONE_TEXT[tone])}>{valueSuffix}</span>
+      ) : null}
     </div>
   );
 
@@ -120,7 +141,9 @@ export function KpiCard({
         format={definition.deltaFormat}
         invert={definition.invertDelta}
       />
-      {kpi?.comparison_label ? <span className="truncate text-[11px] text-fg-subtle">{kpi.comparison_label}</span> : null}
+      {kpi?.comparison_label ? (
+        <span className="truncate text-[11px] text-fg-subtle">{kpi.comparison_label}</span>
+      ) : null}
     </div>
   );
 
@@ -141,17 +164,14 @@ export function KpiCard({
     <section
       aria-label={definition.label}
       className={cn(
-        "surface-card group/kpi relative flex min-w-0 flex-col rounded-xl transition-colors duration-200 hover:border-line-strong",
+        "group/kpi relative flex min-w-0 flex-col rounded-xl surface-card transition-colors duration-200 hover:border-line-strong",
         compact ? "gap-1.5 p-3" : "gap-2 p-4",
         className,
       )}
     >
-      {flashes > 0 ? (
-        // Re-keyed on every update so the soft ring animation restarts; the card itself never remounts.
-        <span key={flashes} aria-hidden className="pointer-events-none absolute -inset-px animate-flash-ring rounded-xl" />
-      ) : null}
+      <span ref={ringRef} aria-hidden className="pointer-events-none absolute -inset-px rounded-xl" />
       <header className="flex items-center gap-1.5">
-        <h3 className="label-caps truncate">{definition.label}</h3>
+        <h3 className="truncate label-caps">{definition.label}</h3>
         <InfoTooltip content={info} label={`About ${definition.label}`} />
       </header>
 
@@ -159,13 +179,15 @@ export function KpiCard({
         <>
           {valueRow}
           {deltaRow}
-          <div className="mt-0.5">{sparklineNode}</div>
+          <div className="mt-auto pt-0.5">{sparklineNode}</div>
         </>
       ) : (
         <>
           <div className="flex min-w-0 items-end justify-between gap-3">
             <div className="min-w-0">{valueRow}</div>
-            <div className={cn("shrink-0", hero ? "w-[44%] max-w-52" : "w-[40%] max-w-48")}>{sparklineNode}</div>
+            <div className={cn("shrink-0", hero ? "w-[44%] max-w-52" : "w-[40%] max-w-48")}>
+              {sparklineNode}
+            </div>
           </div>
           {deltaRow}
         </>

@@ -132,7 +132,7 @@ def get_trade(trade_id: TradeId, ctx: Ctx, timeframe: Timeframe | None = None) -
         raise HTTPException(status_code=404, detail="Trade not found")
     analysis = queries.find_analysis(ctx.db, trade.analysis_id)
     if timeframe is None:
-        base = analysis.timeframe if analysis else ctx.db.get_settings().trading.decision_timeframe
+        base = analysis.timeframe if analysis else queries.stored_settings(ctx.db).trading.decision_timeframe
         timeframe = charts.detail_timeframe(base, trade.opened_at, trade.closed_at)
     candles = charts.detail_candles(
         ctx.db, trade.symbol, timeframe, trade.opened_at, trade.closed_at, utcnow()

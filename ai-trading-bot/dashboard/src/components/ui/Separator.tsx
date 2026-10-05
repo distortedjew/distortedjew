@@ -15,7 +15,11 @@ export function Separator({
     <SeparatorPrimitive.Root
       orientation={orientation}
       decorative={decorative}
-      className={cn("shrink-0 bg-line", orientation === "horizontal" ? "h-px w-full" : "h-full w-px", className)}
+      className={cn(
+        "shrink-0 bg-line",
+        orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
+        className,
+      )}
     />
   );
 }

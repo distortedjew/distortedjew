@@ -3,7 +3,15 @@
  * Definitions follow the API (backend/tradebot/analytics/performance.py): value, previous-period
  * comparison (`comparison_label` from the API) and the sparkline window (oldest → newest).
  */
-import { formatDate, formatInt, formatPct, formatPnl, formatRatio, formatTime, formatUsd } from "@/lib/format";
+import {
+  formatDate,
+  formatInt,
+  formatPct,
+  formatPnl,
+  formatRatio,
+  formatTime,
+  formatUsd,
+} from "@/lib/format";
 import type { KpiKey } from "@/types";
 import type { DeltaFormat } from "@/components/ui/DeltaBadge";
 
@@ -53,7 +61,8 @@ export const KPI_DEFINITIONS: Record<KpiKey, KpiDefinition> = {
     showChangePct: true,
     sparkVariant: "line",
     sparkStep: "halfHour",
-    description: "Current equity: cash plus the unrealized P&L of open positions, in USDT. Compared with 24 hours ago.",
+    description:
+      "Current equity: cash plus the unrealized P&L of open positions, in USDT. Compared with 24 hours ago.",
     sparkWindow: "Equity over the last 24 hours.",
   },
   today_pnl: {
@@ -149,7 +158,11 @@ const DAY_MS = 86_400_000;
  * Hover labels for a KPI sparkline of `count` points ending now: "Today", "Oct 3" for daily
  * points (UTC days, as the API counts them), "Now" / "14:00" for intraday points.
  */
-export function sparkLabels(definition: KpiDefinition, count: number, now: number = Date.now()): string[] | undefined {
+export function sparkLabels(
+  definition: KpiDefinition,
+  count: number,
+  now: number = Date.now(),
+): string[] | undefined {
   const step = definition.sparkStep;
   if (!step || count <= 0) return undefined;
   const today = new Date(now);

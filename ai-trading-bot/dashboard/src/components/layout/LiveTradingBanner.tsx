@@ -19,7 +19,10 @@ export function LiveTradingBanner({ frame = true }: { frame?: boolean }) {
         </span>
       </div>
       {frame ? (
-        <div aria-hidden className="pointer-events-none fixed inset-0 z-[70] shadow-[inset_0_0_0_2px_var(--down)]" />
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-[70] shadow-[inset_0_0_0_2px_var(--down)]"
+        />
       ) : null}
     </>
   );

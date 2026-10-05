@@ -17,7 +17,14 @@ export interface EmptyStateProps {
  * Explains why there is nothing to show and what happens next. Write it for a person:
  * "No open positions — the bot opens one when a signal passes every risk check."
  */
-export function EmptyState({ icon: Icon = EMPTY_ICON, title, description, action, size = "md", className }: EmptyStateProps) {
+export function EmptyState({
+  icon: Icon = EMPTY_ICON,
+  title,
+  description,
+  action,
+  size = "md",
+  className,
+}: EmptyStateProps) {
   return (
     <div
       className={cn(

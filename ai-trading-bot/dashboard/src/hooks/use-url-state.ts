@@ -15,7 +15,8 @@ export function useUrlState<T extends string>(
 ): [T, (next: T) => void] {
   const [params, setParams] = useSearchParams();
   const raw = params.get(key);
-  const value = raw !== null && raw !== "" && (!allowed || allowed.includes(raw as T)) ? (raw as T) : defaultValue;
+  const value =
+    raw !== null && raw !== "" && (!allowed || allowed.includes(raw as T)) ? (raw as T) : defaultValue;
 
   const setValue = useCallback(
     (next: T) => {

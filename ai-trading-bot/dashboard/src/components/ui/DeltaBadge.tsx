@@ -62,7 +62,7 @@ export function DeltaBadge({
   }
   const direction = signOf(basis, 4);
   const resolvedTone: Tone =
-    tone ?? (direction === 0 ? "neutral" : (direction > 0) !== Boolean(invert) ? "up" : "down");
+    tone ?? (direction === 0 ? "neutral" : direction > 0 !== Boolean(invert) ? "up" : "down");
   const arrow = direction > 0 ? "▲" : direction < 0 ? "▼" : "■";
 
   const parts: string[] = [];
@@ -73,9 +73,11 @@ export function DeltaBadge({
   return (
     <span
       className={cn(
-        "num inline-flex items-center gap-1 font-medium whitespace-nowrap",
+        "inline-flex items-center gap-1 num font-medium whitespace-nowrap",
         size === "sm" ? "text-xs" : "text-dense",
-        variant === "pill" ? cn("rounded-md px-1.5 py-0.5 ring-1 ring-inset", TONE_SOFT[resolvedTone]) : TONE_TEXT[resolvedTone],
+        variant === "pill"
+          ? cn("rounded-md px-1.5 py-0.5 ring-1 ring-inset", TONE_SOFT[resolvedTone])
+          : TONE_TEXT[resolvedTone],
         resolvedTone === "neutral" && variant === "text" && "text-fg-muted",
         className,
       )}

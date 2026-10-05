@@ -22,7 +22,7 @@ def _response(ctx: ApiContext, settings: BotSettings) -> SettingsResponse:
 
 @router.get("/settings", response_model=SettingsResponse)
 def get_settings(ctx: Ctx) -> SettingsResponse:
-    return _response(ctx, ctx.db.get_settings())
+    return _response(ctx, queries.stored_settings(ctx.db))
 
 
 @router.put("/settings", response_model=SettingsResponse)
@@ -33,7 +33,7 @@ def update_settings(body: BotSettings, ctx: Ctx) -> SettingsResponse:
     owned by the server environment. A save emits ``SETTINGS_CHANGED`` and every dashboard
     receives a ``settings`` frame. Sending nothing new changes nothing.
     """
-    current = ctx.db.get_settings()
+    current = queries.stored_settings(ctx.db)
     candidate = bot_settings.with_server_fields(
         bot_settings.normalize(bot_settings.merge(current, body)), ctx.config
     )

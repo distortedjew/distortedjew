@@ -12,7 +12,7 @@ export function Switch({
     <SwitchPrimitive.Root
       className={cn(
         "peer inline-flex shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-colors duration-150",
-        "bg-fg/15 data-[state=checked]:bg-accent-solid disabled:cursor-not-allowed disabled:opacity-45",
+        "bg-fg/15 disabled:cursor-not-allowed disabled:opacity-45 data-[state=checked]:bg-accent-solid",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/70",
         size === "sm" ? "h-4 w-7" : "h-5 w-9",
         className,

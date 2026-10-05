@@ -29,7 +29,10 @@ export function RouteErrorBoundary() {
 
   return (
     <Card className="mx-auto mt-6 max-w-xl">
-      <ErrorState title={chunk ? "Dashboard updated" : "Something went wrong on this page"} description={message} />
+      <ErrorState
+        title={chunk ? "Dashboard updated" : "Something went wrong on this page"}
+        description={message}
+      />
       <div className="flex flex-wrap items-center justify-center gap-2 px-6 pb-8">
         <Button variant="primary" size="sm" leftIcon={RotateCw} onClick={() => window.location.reload()}>
           Reload page

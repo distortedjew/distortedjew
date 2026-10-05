@@ -22,6 +22,7 @@ from ..schemas import (
     REGIMES,
     AIAnalysis,
     AIDecisionPage,
+    BotSettings,
     BotStatus,
     Candle,
     EngineStatus,
@@ -141,19 +142,34 @@ def bot_status(engine: EngineStatus | None, config: EnvConfig, now: datetime | N
     )
 
 
+def stored_settings(db: Database) -> BotSettings:
+    """The saved settings, or the defaults (version 0) when none are saved yet.
+
+    Unlike ``Database.get_settings`` this never writes. The engine seeds the defaults and
+    the API saves only on ``PUT /api/settings`` (``save_settings`` is atomic), so readers on
+    several threads of a fresh database cannot race each other into extra versions or
+    overwrite a save with the defaults.
+    """
+    row = db.read_one("SELECT version, updated_at, payload FROM settings WHERE id = 1")
+    if row is None:
+        return BotSettings()
+    settings = BotSettings.model_validate_json(row["payload"])
+    return settings.model_copy(update={"version": row["version"], "updated_at": parse_iso(row["updated_at"])})
+
+
 def active_symbols(db: Database, engine: EngineStatus | None = None) -> list[str]:
     """Symbols the engine is trading (its status), else the configured ones."""
     engine = engine if engine is not None else engine_status(db)
     if engine is not None and engine.symbols:
         return list(engine.symbols)
-    return list(db.get_settings().trading.symbols)
+    return list(stored_settings(db).trading.symbols)
 
 
 def primary_symbol(db: Database, engine: EngineStatus | None = None) -> str:
     engine = engine if engine is not None else engine_status(db)
     if engine is not None and engine.primary_symbol:
         return engine.primary_symbol
-    return db.get_settings().trading.primary_symbol
+    return stored_settings(db).trading.primary_symbol
 
 
 def newest_tick(db: Database, symbols: Sequence[str]) -> datetime | None:
@@ -350,13 +366,18 @@ def find_analysis(db: Database, analysis_id: str | None) -> AIAnalysis | None:
     return AIAnalysis.model_validate_json(row["payload"]) if row else None
 
 
+# Analyses of one decision cycle share created_at (every symbol decides on the same candle
+# close); rowid (insertion order, kept by the engine's upserts) breaks the tie, and the
+# created_at indexes already hold it, so these orderings never sort.
+_NEWEST_FIRST = " ORDER BY created_at DESC, rowid DESC"
+
+
 def latest_analysis(db: Database, symbol: str | None = None) -> AIAnalysis | None:
     if symbol is None:
-        row = db.read_one("SELECT payload FROM ai_decisions ORDER BY created_at DESC, id DESC LIMIT 1")
+        row = db.read_one(f"SELECT payload FROM ai_decisions{_NEWEST_FIRST} LIMIT 1")
     else:
         row = db.read_one(
-            "SELECT payload FROM ai_decisions WHERE symbol = ? ORDER BY created_at DESC, id DESC LIMIT 1",
-            (symbol,),
+            f"SELECT payload FROM ai_decisions WHERE symbol = ?{_NEWEST_FIRST} LIMIT 1", (symbol,)
         )
     return AIAnalysis.model_validate_json(row["payload"]) if row else None
 
@@ -389,7 +410,7 @@ def ai_history(
     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
     total = int(db.read_one(f"SELECT COUNT(*) AS n FROM ai_decisions{where}", params)["n"])
     rows = db.read(
-        f"SELECT payload FROM ai_decisions{where} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
+        f"SELECT payload FROM ai_decisions{where}{_NEWEST_FIRST} LIMIT ? OFFSET ?",
         [*params, limit, offset],
     )
     return AIDecisionPage(
@@ -454,6 +475,23 @@ def recent_issues(db: Database, limit: int = 20) -> list[Event]:
         (limit,),
     )
     return [row_to_event(r) for r in rows]
+
+
+def feed_fallback(db: Database, engine: EngineStatus | None) -> Notification | None:
+    """Why the running engine is on the simulator, when it fell back to it.
+
+    An ``auto`` feed that cannot reach Binance switches to the simulator and raises a
+    ``MARKET_DATA_UNAVAILABLE`` notification; a simulator chosen on purpose raises none.
+    Only notifications from the current engine run (since ``started_at``) count.
+    """
+    if engine is None or engine.feed != "simulated":
+        return None
+    row = db.read_one(
+        "SELECT id, read, payload FROM notifications WHERE type = 'MARKET_DATA_UNAVAILABLE' AND ts >= ? "
+        "ORDER BY id DESC LIMIT 1",
+        (iso(engine.started_at),),
+    )
+    return row_to_notification(row) if row else None
 
 
 def notification_list(db: Database, *, limit: int, unread_only: bool) -> NotificationList:

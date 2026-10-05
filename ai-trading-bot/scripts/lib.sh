@@ -128,7 +128,7 @@ _prefix() {
 run() {
   local name="$1" color="$2" label
   shift 2
-  label="$(printf '%-6s' "[$name]")"
+  label="$(printf '%-8s' "[$name]")"
   [[ -t 1 ]] && label="$color$label$RESET"
   set -m # job control on only while forking: the service gets its own process group
   # The subshell outlives the stop signal (a handler, unlike an ignore, is not inherited by

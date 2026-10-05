@@ -342,6 +342,9 @@ class CandleBook:
             tf: Series(tf, maxlen, aggregated=tf != base) for tf in self.timeframes
         }
         self.last_price: float | None = None
+        # the most recent add(): lets several cores share one book in lock-step
+        self.last_added: int | None = None
+        self._last_closed: list[str] = []
 
     # -- feeding -------------------------------------------------------------
 
@@ -387,8 +390,12 @@ class CandleBook:
     def add(self, candle: Candle) -> list[str]:
         """Add a closed base candle; returns the timeframes that closed with it (base first).
 
-        Candles at or before the latest base candle are ignored (duplicates / replays).
+        Adding the candle that was just added again returns the same timeframes without changing
+        anything (cores sharing the book); other candles at or before the latest base candle are
+        ignored (duplicates / replays).
         """
+        if self.last_added is not None and candle.time == self.last_added:
+            return list(self._last_closed)
         base_series = self.series[self.base]
         last = base_series.last_time
         if last is not None and candle.time <= last:
@@ -406,7 +413,9 @@ class CandleBook:
                     series.push(done)
                     if tf not in closed:
                         closed.append(tf)
-        return closed
+        self.last_added = candle.time
+        self._last_closed = closed
+        return list(closed)
 
     # -- reading -------------------------------------------------------------
 

@@ -9,7 +9,8 @@ export function BottomTabBar({ onMore }: { onMore: () => void }) {
   const { pathname } = useLocation();
   const active = activeNavItem(pathname);
   const items = BOTTOM_TAB_KEYS.map((key) => navItem(key));
-  const moreActive = active !== undefined && !BOTTOM_TAB_KEYS.includes(active.key as (typeof BOTTOM_TAB_KEYS)[number]);
+  const moreActive =
+    active !== undefined && !BOTTOM_TAB_KEYS.includes(active.key as (typeof BOTTOM_TAB_KEYS)[number]);
 
   const tabClass = (isActive: boolean) =>
     cn(
@@ -20,7 +21,7 @@ export function BottomTabBar({ onMore }: { onMore: () => void }) {
   return (
     <nav
       aria-label="Primary"
-      className="surface-glass safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line surface-glass safe-bottom sm:hidden"
     >
       <div className="flex">
         {items.map((item) => {
@@ -28,14 +29,22 @@ export function BottomTabBar({ onMore }: { onMore: () => void }) {
           const isActive = item.key === active?.key;
           return (
             <NavLink key={item.key} to={item.path} end={item.path === "/"} className={tabClass(isActive)}>
-              {isActive ? <span aria-hidden className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-accent" /> : null}
-              <Icon className={cn("size-5", isActive && "text-accent")} strokeWidth={isActive ? 2.1 : 1.8} aria-hidden />
+              {isActive ? (
+                <span aria-hidden className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-accent" />
+              ) : null}
+              <Icon
+                className={cn("size-5", isActive && "text-accent")}
+                strokeWidth={isActive ? 2.1 : 1.8}
+                aria-hidden
+              />
               {item.shortLabel}
             </NavLink>
           );
         })}
         <button type="button" onClick={onMore} className={tabClass(moreActive)}>
-          {moreActive ? <span aria-hidden className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-accent" /> : null}
+          {moreActive ? (
+            <span aria-hidden className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-accent" />
+          ) : null}
           <Ellipsis className={cn("size-5", moreActive && "text-accent")} aria-hidden />
           {moreActive && active ? active.shortLabel : "More"}
         </button>

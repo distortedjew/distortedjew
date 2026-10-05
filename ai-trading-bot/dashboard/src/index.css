@@ -86,7 +86,7 @@
   }
   @keyframes flash-ring {
     0% {
-      box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 55%, transparent);
+      box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 40%, transparent);
     }
     100% {
       box-shadow: inset 0 0 0 1px transparent;
@@ -232,7 +232,8 @@
   --card-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.022) 0%, rgb(255 255 255 / 0) 96px);
   --shadow-card-v: inset 0 1px 0 0 rgb(255 255 255 / 0.04), 0 1px 2px 0 rgb(0 0 0 / 0.4);
   --shadow-popover-v:
-    0 20px 48px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(148 163 184 / 0.08), inset 0 1px 0 0 rgb(255 255 255 / 0.05);
+    0 20px 48px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(148 163 184 / 0.08),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.05);
   --shadow-glow-v: 0 0 0 1px rgb(124 140 255 / 0.3), 0 8px 28px -8px rgb(124 140 255 / 0.45);
   --glow-top: radial-gradient(1100px 440px at 50% -170px, rgb(124 140 255 / 0.085), transparent 70%);
 }

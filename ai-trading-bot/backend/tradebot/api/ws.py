@@ -689,7 +689,7 @@ class Hub:
                 if trade is not None:
                     batch.frames.append(Outgoing(self.serialize(WsTradeClosed(data=trade))))
             elif event.type == "SETTINGS_CHANGED":
-                settings = with_server_fields(self.db.get_settings(), self.config)
+                settings = with_server_fields(queries.stored_settings(self.db), self.config)
                 batch.frames.append(Outgoing(self.serialize(WsSettings(data=settings)), key="settings"))
         # history caught up on still moves the "latest analysis" a new dashboard is greeted with
         for symbol in caught_up - batch.analyses.keys():

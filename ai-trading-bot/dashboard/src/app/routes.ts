@@ -40,7 +40,13 @@ export const routes: RouteObject[] = [
       page("settings", "Settings", SettingsPage),
       // Dev-only design showcase (the only place static sample data is allowed).
       ...(import.meta.env.DEV
-        ? [page("_design", "Design system", lazy(() => import("@/pages/DesignPage")))]
+        ? [
+            page(
+              "_design",
+              "Design system",
+              lazy(() => import("@/pages/DesignPage")),
+            ),
+          ]
         : []),
       { path: "*", Component: NotFoundPage, handle: { title: "Not found" } },
     ],

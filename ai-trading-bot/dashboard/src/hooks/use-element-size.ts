@@ -9,7 +9,10 @@ export interface ElementSize {
  * Observe an element's content-box size. Returns a callback ref and the size
  * (0×0 until measured). Used by SVG charts that render at exact pixel size.
  */
-export function useElementSize<T extends Element = HTMLDivElement>(): [(node: T | null) => void, ElementSize] {
+export function useElementSize<T extends Element = HTMLDivElement>(): [
+  (node: T | null) => void,
+  ElementSize,
+] {
   const [size, setSize] = useState<ElementSize>({ width: 0, height: 0 });
 
   const ref = useCallback((node: T | null) => {

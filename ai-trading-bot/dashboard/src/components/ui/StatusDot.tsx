@@ -20,7 +20,9 @@ export function StatusDot({
   const dim = size === "xs" ? "size-1.5" : size === "sm" ? "size-2" : "size-2.5";
   return (
     <span aria-hidden className={cn("relative inline-flex shrink-0", dim, className)}>
-      {pulse ? <span className={cn("absolute inset-0 animate-pulse-ring rounded-full", TONE_BG[tone])} /> : null}
+      {pulse ? (
+        <span className={cn("absolute inset-0 animate-pulse-ring rounded-full", TONE_BG[tone])} />
+      ) : null}
       <span className={cn("relative inline-flex rounded-full", dim, TONE_BG[tone])} />
     </span>
   );

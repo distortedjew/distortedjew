@@ -29,8 +29,14 @@ export function PnlText({ value, pct, pctOnly, animate, compact, className, pctC
   const percent = (n: number) => formatPct(n, { signed: true });
 
   return (
-    <span className={cn("num inline-flex items-baseline gap-1.5 whitespace-nowrap", TONE_TEXT[tone], className)}>
-      {pctOnly ? null : animate ? <AnimatedNumber value={value} format={money} /> : <span>{isNum(value) ? money(value) : "—"}</span>}
+    <span
+      className={cn("inline-flex items-baseline gap-1.5 num whitespace-nowrap", TONE_TEXT[tone], className)}
+    >
+      {pctOnly ? null : animate ? (
+        <AnimatedNumber value={value} format={money} />
+      ) : (
+        <span>{isNum(value) ? money(value) : "—"}</span>
+      )}
       {isNum(pct) ? (
         <span className={cn(!pctOnly && "text-[0.92em] opacity-80", pctClassName)}>
           {pctOnly ? percent(pct) : `(${percent(pct)})`}

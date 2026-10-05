@@ -261,11 +261,14 @@ def _mtf(ctx: MarketContext) -> Factor | None:
 # --------------------------------------------------------------------------
 
 
-HTF = "4h"  # the timeframe whose trend the bot trades with
-HTF_FLAT_ATR = 0.5  # 4h EMA 21/50 closer than this many 4h ATRs: no higher-timeframe trend
+# The trend the bot trades with lives a few timeframes above the decision timeframe.
+TREND_TIMEFRAME: dict[str, str] = {"1m": "1h", "5m": "4h", "15m": "4h", "1h": "1d", "4h": "1d", "1d": "1d"}
+HTF_FLAT_ATR = 0.5  # trend EMA 21/50 closer than this many trend-timeframe ATRs: no trend
 PULLBACK_RSI = 42.0  # longs need RSI at or below this on the decision timeframe (shorts: 100 - it)
 PULLBACK_PCT_B = 0.3  # longs need price in the lower 30 % of the Bollinger band (shorts: upper 30 %)
 RANGE_PCT_B = 0.05
+BREAKOUT_VOLUME = 1.5  # a breakout bar needs at least this multiple of the 20-bar average volume
+BREAKOUT_R = 2.5
 RANGE_RSI = 35.0
 PULLBACK_R = 2.0
 RANGE_R = 1.6
@@ -293,9 +296,14 @@ def _mtf_trend(ctx: MarketContext, timeframe: str) -> int:
     return 1 if tf.trend == "BULL" else -1 if tf.trend == "BEAR" else 0
 
 
+def trend_timeframe(ctx: MarketContext) -> str:
+    return TREND_TIMEFRAME.get(ctx.timeframe, "4h")
+
+
 def higher_trend(ctx: MarketContext) -> tuple[int, float]:
-    """(direction, separation) of the 4h trend: EMA 21 vs EMA 50 in 4h ATRs; 0 when flat or warming up."""
-    h = ctx.features.get(HTF)
+    """(direction, separation) of the higher-timeframe trend: EMA 21 vs EMA 50 in that timeframe's
+    ATRs; 0 when flat, warming up or unavailable."""
+    h = ctx.features.get(trend_timeframe(ctx))
     if h is None or h.ema21 is None or h.ema50 is None or not h.atr:
         return 0, 0.0
     sep = (h.ema21 - h.ema50) / h.atr
@@ -381,22 +389,25 @@ class HeuristicAnalyst:
         if regime == "UNKNOWN":
             return Setup(None, "", "Regime not established yet: standing aside")
         if regime == "BREAKOUT":
-            return Setup(None, "", "Breakout in progress: waiting for it to hold or fail before acting")
+            return self._breakout_setup(ctx, f)
         direction, sep = higher_trend(ctx)
         if direction:
             return self._pullback_setup(ctx, f, direction, sep)
         if regime in RANGE_REGIMES:
             return self._range_setup(ctx, f, sep)
-        return Setup(None, "", f"No {HTF} trend to join and no range to fade: standing aside")
+        return Setup(
+            None, "", f"No {trend_timeframe(ctx)} trend to join and no range to fade: standing aside"
+        )
 
     def _pullback_setup(self, ctx: MarketContext, f: Features, direction: int, sep: float) -> Setup:
         side: Side = "LONG" if direction > 0 else "SHORT"
-        label = f"{HTF} uptrend" if direction > 0 else f"{HTF} downtrend"
-        context = f"{HTF} EMA 21 {abs(sep):.1f} ATR {'above' if direction > 0 else 'below'} EMA 50 ({label})"
-        h = ctx.features[HTF]
+        htf = trend_timeframe(ctx)
+        label = f"{htf} uptrend" if direction > 0 else f"{htf} downtrend"
+        context = f"{htf} EMA 21 {abs(sep):.1f} ATR {'above' if direction > 0 else 'below'} EMA 50 ({label})"
+        h = ctx.features[htf]
         if h.ema50 is not None and (ctx.price - h.ema50) * direction < 0:
             word = "below" if direction > 0 else "above"
-            return Setup(None, "", f"Price is back {word} the {HTF} EMA 50: the {label} is in question")
+            return Setup(None, "", f"Price is back {word} the {htf} EMA 50: the {label} is in question")
         rsi = f.rsi if f.rsi is not None else 50.0
         pct_b = f.bb_pct_b if f.bb_pct_b is not None else 0.5
         # mirror shorts onto the long side so one set of thresholds serves both
@@ -433,12 +444,49 @@ class HeuristicAnalyst:
         )
         return Setup(side, "trend pullback", text, conf, notes, PULLBACK_R, context)
 
+    def _breakout_setup(self, ctx: MarketContext, f: Features) -> Setup:
+        """Bollinger squeeze breakout: a close outside the band on expanding volume, not against the trend."""
+        pct_b = f.bb_pct_b
+        if pct_b is None:
+            return Setup(None, "", "Breakout regime without Bollinger readings yet")
+        direction = 1 if pct_b > 1.0 else -1 if pct_b < 0.0 else 0
+        if direction == 0:
+            return Setup(
+                None, "", f"Breakout regime, but the close is back inside the bands (%B {pct_b:.2f})"
+            )
+        side: Side = "LONG" if direction > 0 else "SHORT"
+        word = "up" if direction > 0 else "down"
+        trend_dir, sep = higher_trend(ctx)
+        htf = trend_timeframe(ctx)
+        if trend_dir == -direction:
+            return Setup(None, "", f"Breakout {word} against the {htf} trend: not chasing it")
+        volume = f.volume_ratio or 0.0
+        if volume < BREAKOUT_VOLUME:
+            return Setup(
+                None, "", f"Breakout {word} without volume confirmation ({volume:.1f}× the 20-bar average)"
+            )
+        excess = (pct_b - 1.0) if direction > 0 else -pct_b
+        conf = (
+            58.0
+            + 10.0 * _clamp((volume - BREAKOUT_VOLUME) / 1.5, 0.0, 1.0)
+            + 6.0 * _clamp(excess / 0.3, 0.0, 1.0)
+            + (6.0 if trend_dir == direction else 0.0)
+        )
+        context = f"{htf} EMA 21 {abs(sep):.1f} ATR {'above' if sep >= 0 else 'below'} EMA 50" + (
+            " (with the breakout)" if trend_dir == direction else " (no trend)"
+        )
+        text = (
+            f"Squeeze breakout {word}: close outside the Bollinger band (%B {pct_b:.2f}) on {volume:.1f}× volume "
+            f"after a volatility squeeze"
+        )
+        return Setup(side, "squeeze breakout", text, conf, [], BREAKOUT_R, context)
+
     def _range_setup(self, ctx: MarketContext, f: Features, sep: float) -> Setup:
         pct_b = f.bb_pct_b
         rsi = f.rsi
         if pct_b is None or rsi is None:
             return Setup(None, "", "Range regime without Bollinger readings yet")
-        context = f"No {HTF} trend (EMA 21 within {HTF_FLAT_ATR:g} ATR of EMA 50)"
+        context = f"No {trend_timeframe(ctx)} trend (EMA 21 within {HTF_FLAT_ATR:g} ATR of EMA 50)"
         if pct_b <= RANGE_PCT_B and rsi <= RANGE_RSI:
             side: Side = "LONG"
             stretch = 0.5 * _clamp((RANGE_PCT_B - pct_b) / 0.25, 0.0, 1.0) + 0.5 * _clamp(
@@ -632,9 +680,9 @@ class HeuristicAnalyst:
             tfs = ", ".join(f"{t.timeframe} {t.trend.lower()}" for t in ctx.mtf.timeframes)
             direction, sep = higher_trend(ctx)
             h4 = (
-                f"; {HTF} EMA 21 {abs(sep):.1f} ATR {'above' if sep >= 0 else 'below'} EMA 50"
+                f"; {trend_timeframe(ctx)} EMA 21 {abs(sep):.1f} ATR {'above' if sep >= 0 else 'below'} EMA 50"
                 + (" (no trend)" if direction == 0 else "")
-                if HTF in ctx.features
+                if trend_timeframe(ctx) in ctx.features
                 else ""
             )
             p4 = f"Multi-timeframe: {ctx.mtf.alignment_label.lower()} ({tfs}{h4})."
@@ -653,7 +701,8 @@ class HeuristicAnalyst:
                 p5 += " Watch: " + "; ".join(lower_first(n) for n in notes) + "."
         else:
             p5 = (
-                f"Decision: {lower_first(setup.text)}. The bot joins an established {HTF} trend only on a "
+                f"Decision: {lower_first(setup.text)}. The bot joins an established {trend_timeframe(ctx)} trend "
+                f"only on a "
                 f"pullback, and fades a stretched move at a band only inside a range; neither is in place, so it "
                 f"stands aside."
             )

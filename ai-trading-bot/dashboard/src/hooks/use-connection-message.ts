@@ -30,16 +30,28 @@ export function useConnectionMessage(): BannerMessage | null {
     };
   }
   if (connection.status === "offline" || connection.status === "reconnecting") {
-    const retryIn = connection.nextRetryAt ? Math.max(0, Math.ceil((connection.nextRetryAt - now) / 1_000)) : null;
+    const retryIn = connection.nextRetryAt
+      ? Math.max(0, Math.ceil((connection.nextRetryAt - now) / 1_000))
+      : null;
+    const retry = retryIn !== null ? ` Next retry in ${retryIn}s.` : "";
+    if (connection.connectedAt === null) {
+      // Never connected since the page loaded: nothing "last known" to show yet.
+      return {
+        key: "ws-unreachable",
+        tone: "down",
+        icon: WifiOff,
+        title: "Can't reach the trading API.",
+        detail: `Check that the backend is running; the dashboard keeps retrying.${retry}`,
+        retry: true,
+      };
+    }
     const offline = connection.status === "offline";
     return {
       key: `ws-${connection.status}`,
       tone: offline ? "down" : "warning",
       icon: offline ? WifiOff : RotateCw,
       title: offline ? "Live connection lost." : "Reconnecting to live data…",
-      detail: `Showing the last known state; data refreshes every 5 s by polling${
-        retryIn !== null ? ` · next retry in ${retryIn}s` : ""
-      }.`,
+      detail: `Showing the last known state; data refreshes every 5 s by polling.${retry}`,
       retry: true,
     };
   }

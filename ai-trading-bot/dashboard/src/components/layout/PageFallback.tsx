@@ -9,7 +9,7 @@ export function PageFallback() {
         <Skeleton className="h-3.5 w-72 max-w-full" />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="surface-card rounded-xl p-4 lg:col-span-2">
+        <div className="rounded-xl surface-card p-4 lg:col-span-2">
           <Skeleton className="mb-4 h-4 w-36" />
           <SkeletonChart height={280} />
         </div>

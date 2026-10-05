@@ -15,7 +15,7 @@ from tradebot.db import Database, utcnow
 from tradebot.schemas import BotSettings, EventPage, SettingsResponse
 
 from . import factories as f
-from .conftest import make_config, tune_for_tests
+from .conftest import make_config, tune_for_tests, ws_receive
 
 
 def get(client: TestClient) -> SettingsResponse:
@@ -255,3 +255,15 @@ def test_the_response_is_the_stored_document(client: TestClient, db: Database) -
     response = put(client, {"execution": {"fee_bps": 7.5}})
     stored = db.get_settings()
     assert BotSettings.model_validate(response.settings.model_dump()) == stored
+
+
+def test_reading_never_writes_settings(client: TestClient, db: Database) -> None:
+    """Only PUT saves: concurrent readers on a fresh database (REST threads, the WebSocket
+    hub) must not race each other into extra versions or overwrite a save with defaults."""
+    for path in ("/api/settings", "/api/status", "/api/system", "/api/ai/models", "/api/market/regime"):
+        assert client.get(path).status_code == 200, path
+    with client.websocket_connect("/ws") as ws:
+        assert ws_receive(ws)["type"] == "hello"
+    assert db.read_one("SELECT COUNT(*) AS n FROM settings")["n"] == 0
+    assert get(client).settings.version == 0  # the defaults, not yet saved by anyone
+    assert put(client, {"risk": {"max_positions": 4}}).settings.version == 1

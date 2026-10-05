@@ -22,7 +22,7 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
 /** KPI tile placeholder (label, value, delta, sparkline). */
 export function SkeletonKpi({ className }: { className?: string }) {
   return (
-    <div className={cn("surface-card flex flex-col gap-3 rounded-xl p-4", className)} aria-hidden>
+    <div className={cn("flex flex-col gap-3 rounded-xl surface-card p-4", className)} aria-hidden>
       <Skeleton className="h-3 w-24" />
       <Skeleton className="h-7 w-32" />
       <div className="flex items-end justify-between gap-3">
@@ -36,7 +36,7 @@ export function SkeletonKpi({ className }: { className?: string }) {
 /** Card with header + body placeholder. */
 export function SkeletonCard({ className, lines = 4 }: { className?: string; lines?: number }) {
   return (
-    <div className={cn("surface-card rounded-xl p-4", className)} aria-hidden>
+    <div className={cn("rounded-xl surface-card p-4", className)} aria-hidden>
       <div className="mb-4 flex items-center justify-between">
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-6 w-16" />
@@ -55,13 +55,21 @@ export function SkeletonChart({ height = 240, className }: { height?: number; cl
           <div key={i} className="h-px w-full bg-line-subtle" />
         ))}
       </div>
-      <Skeleton className="absolute inset-x-0 bottom-0 h-3/5 rounded-none opacity-60 [mask-image:linear-gradient(to_top,black,transparent)]" />
+      <Skeleton className="absolute inset-x-0 bottom-0 h-3/5 rounded-none [mask-image:linear-gradient(to_top,black,transparent)] opacity-60" />
     </div>
   );
 }
 
 /** Table rows placeholder. */
-export function SkeletonTable({ rows = 6, columns = 5, className }: { rows?: number; columns?: number; className?: string }) {
+export function SkeletonTable({
+  rows = 6,
+  columns = 5,
+  className,
+}: {
+  rows?: number;
+  columns?: number;
+  className?: string;
+}) {
   return (
     <div className={cn("divide-y divide-line-subtle", className)} aria-hidden>
       {Array.from({ length: rows }, (_, r) => (
@@ -69,7 +77,10 @@ export function SkeletonTable({ rows = 6, columns = 5, className }: { rows?: num
           {Array.from({ length: columns }, (_, c) => (
             <Skeleton
               key={c}
-              className={cn("h-3", c === 0 ? "w-24" : c === columns - 1 ? "ml-auto w-16" : "w-full max-w-28 flex-1")}
+              className={cn(
+                "h-3",
+                c === 0 ? "w-24" : c === columns - 1 ? "ml-auto w-16" : "w-full max-w-28 flex-1",
+              )}
             />
           ))}
         </div>

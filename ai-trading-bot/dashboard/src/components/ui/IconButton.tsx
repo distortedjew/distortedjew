@@ -14,7 +14,8 @@ const iconButtonStyles = cva(
   {
     variants: {
       variant: {
-        ghost: "text-fg-muted hover:bg-fg/[0.07] hover:text-fg data-[state=open]:bg-fg/[0.07] data-[state=open]:text-fg",
+        ghost:
+          "text-fg-muted hover:bg-fg/[0.07] hover:text-fg data-[state=open]:bg-fg/[0.07] data-[state=open]:text-fg",
         secondary:
           "border border-line-strong bg-surface-2 text-fg-muted hover:bg-surface-3 hover:text-fg data-[state=open]:bg-surface-3",
         outline: "border border-line-strong text-fg-muted hover:bg-fg/[0.04] hover:text-fg",

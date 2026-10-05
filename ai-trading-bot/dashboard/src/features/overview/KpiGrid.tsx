@@ -9,15 +9,19 @@ import { KPI_DEFINITIONS, KPI_ORDER } from "@/features/overview/kpi-definitions"
 
 function suffixFor(key: string, portfolio: Portfolio | undefined): string | undefined {
   if (!portfolio) return undefined;
-  if (key === "today_pnl" && isNum(portfolio.today_pnl_pct)) return formatPct(portfolio.today_pnl_pct, { signed: true });
-  if (key === "total_pnl" && isNum(portfolio.total_pnl_pct)) return formatPct(portfolio.total_pnl_pct, { signed: true });
+  if (key === "today_pnl" && isNum(portfolio.today_pnl_pct))
+    return formatPct(portfolio.today_pnl_pct, { signed: true });
+  if (key === "total_pnl" && isNum(portfolio.total_pnl_pct))
+    return formatPct(portfolio.total_pnl_pct, { signed: true });
   return undefined;
 }
 
 function nullHintFor(key: string, portfolio: Portfolio | undefined): string | undefined {
   if (key === "profit_factor") {
     const winRate = portfolio?.kpis.win_rate.value;
-    return isNum(winRate) ? "No losing trades in the last 7 days yet." : "No closed trades in the last 7 days yet.";
+    return isNum(winRate)
+      ? "No losing trades in the last 7 days yet."
+      : "No closed trades in the last 7 days yet.";
   }
   if (key === "win_rate") return "No closed trades in the last 7 days yet.";
   return undefined;

@@ -24,6 +24,10 @@ from ..schemas import TIMEFRAME_SECONDS, Regime, Side
 from .base import MarketContext
 
 STOP_ATR_MULT = 1.5
+# Intraday decisions keep their stop outside one hour of normal noise: the trade's thesis is the
+# higher-timeframe trend, the decision bar only times the entry.
+NOISE_TIMEFRAME = "1h"
+NOISE_SECONDS = 3600
 COST_FLOOR_MULT = 4.5
 SWING_BUFFER_ATR = 0.2
 MAX_SWING_STRETCH = 2.0
@@ -66,12 +70,14 @@ def min_stop_distance(ctx: MarketContext) -> tuple[float, str]:
     f = ctx.decision
     if f.atr:
         candidates.append((STOP_ATR_MULT * f.atr, f"1.5 × ATR({ctx.timeframe})"))
-    f15 = ctx.features.get("15m")
     dec_sec = TIMEFRAME_SECONDS[ctx.timeframe]
-    if f15 is not None and f15.atr:
-        candidates.append((STOP_ATR_MULT * f15.atr, "1.5 × ATR(15m)"))
-    elif f.atr and dec_sec < 900:
-        candidates.append((STOP_ATR_MULT * f.atr * math.sqrt(900 / dec_sec), "1.5 × ATR(15m, scaled)"))
+    if dec_sec < NOISE_SECONDS:
+        noise = ctx.features.get(NOISE_TIMEFRAME)
+        if noise is not None and noise.atr:
+            candidates.append((STOP_ATR_MULT * noise.atr, f"1.5 × ATR({NOISE_TIMEFRAME})"))
+        elif f.atr:
+            scaled = STOP_ATR_MULT * f.atr * math.sqrt(NOISE_SECONDS / dec_sec)
+            candidates.append((scaled, f"1.5 × ATR({NOISE_TIMEFRAME}, scaled)"))
     floor = price * COST_FLOOR_MULT * ctx.round_trip_cost_pct / 100.0
     candidates.append((floor, "4.5 × round-trip cost"))
     return max(candidates, key=lambda c: c[0])

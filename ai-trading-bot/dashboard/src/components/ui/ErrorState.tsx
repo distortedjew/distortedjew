@@ -28,7 +28,15 @@ function isWaiting(error: unknown): boolean {
  *
  *   if (query.error) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
  */
-export function ErrorState({ error, title, description, onRetry, retrying, compact, className }: ErrorStateProps) {
+export function ErrorState({
+  error,
+  title,
+  description,
+  onRetry,
+  retrying,
+  compact,
+  className,
+}: ErrorStateProps) {
   const waiting = isWaiting(error);
   const heading = title ?? (waiting ? "Waiting for the trading engine" : "Couldn't load this data");
   const message = description ?? (error ? describeError(error) : "Something went wrong.");

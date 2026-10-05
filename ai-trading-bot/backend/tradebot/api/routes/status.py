@@ -50,7 +50,7 @@ def get_system(ctx: Ctx) -> SystemHealth:
     usage = usage_stats(ctx, engine)
     last_success = ctx.db.read_one("SELECT ts FROM ai_usage WHERE success = 1 ORDER BY id DESC LIMIT 1")
     newest_tick = queries.newest_tick(ctx.db, queries.active_symbols(ctx.db, engine))
-    heuristic_fallback = ctx.db.get_settings().ai.heuristic_fallback
+    heuristic_fallback = queries.stored_settings(ctx.db).ai.heuristic_fallback
     components = [
         bot_health(status),
         api_health(
@@ -65,7 +65,7 @@ def get_system(ctx: Ctx) -> SystemHealth:
             last_success_at=parse_iso(last_success["ts"]) if last_success else None,
             heuristic_fallback=heuristic_fallback,
         ),
-        market_data_health(status, newest_tick, now),
+        market_data_health(status, newest_tick, now, queries.feed_fallback(ctx.db, engine)),
         database_health(database),
         websocket_health(
             running=ctx.hub.running,

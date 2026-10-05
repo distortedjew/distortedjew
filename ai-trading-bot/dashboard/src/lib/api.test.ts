@@ -10,9 +10,14 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("buildUrl", () => {
   it("drops empty values and repeats array keys", () => {
-    expect(buildUrl("/api/events", { limit: 50, types: ["AI_ANALYSIS", "TRADE_CLOSED"], symbol: undefined, q: "" })).toBe(
-      "/api/events?limit=50&types=AI_ANALYSIS&types=TRADE_CLOSED",
-    );
+    expect(
+      buildUrl("/api/events", {
+        limit: 50,
+        types: ["AI_ANALYSIS", "TRADE_CLOSED"],
+        symbol: undefined,
+        q: "",
+      }),
+    ).toBe("/api/events?limit=50&types=AI_ANALYSIS&types=TRADE_CLOSED");
     expect(buildUrl("/api/status")).toBe("/api/status");
     expect(buildUrl("/api/ai/latest", { symbol: "BTC/USDT" })).toBe("/api/ai/latest?symbol=BTC%2FUSDT");
   });
@@ -50,7 +55,10 @@ describe("requests and errors", () => {
   });
 
   it("turns HTTP failures into ApiError with the API's detail", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ detail: "Trade not found" }, 404)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ detail: "Trade not found" }, 404)),
+    );
     const error = await api.get("/api/trades/x").catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).status).toBe(404);
@@ -65,7 +73,10 @@ describe("requests and errors", () => {
         { loc: ["body", "ai", "temperature"], msg: "Input should be less than or equal to 2" },
       ],
     };
-    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(body, 422)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(body, 422)),
+    );
     const error = (await api.put("/api/settings", {}).catch((e: unknown) => e)) as ApiError;
     expect(error.fieldErrors()).toEqual({
       "risk.max_positions": "Input should be less than or equal to 20",
@@ -105,15 +116,33 @@ describe("requests and errors", () => {
   });
 
   it("describes a 503 from an unpublished engine state as a wait, not a failure", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ detail: "Trading engine has not published state yet" }, 503)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ detail: "Trading engine has not published state yet" }, 503)),
+    );
     const error = (await api.get("/api/portfolio").catch((e: unknown) => e)) as ApiError;
     expect(error.isEngineUnavailable).toBe(true);
     expect(error.isTransient).toBe(true);
     expect(describeError(error)).toMatch(/hasn't published/);
   });
 
+  it("treats a gateway 502 / 504 (dev proxy, nginx) as an unreachable API", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("Bad Gateway", { status: 502, statusText: "Bad Gateway" })),
+    );
+    const error = (await api.get("/api/portfolio").catch((e: unknown) => e)) as ApiError;
+    expect(error.isUnreachable).toBe(true);
+    expect(describeError(error)).toMatch(/Can't reach the API/);
+  });
+
   it("treats 401 as non-transient with a token hint", () => {
-    const error = new ApiError({ status: 401, kind: "http", detail: "Not authenticated", path: "/api/status" });
+    const error = new ApiError({
+      status: 401,
+      kind: "http",
+      detail: "Not authenticated",
+      path: "/api/status",
+    });
     expect(error.isUnauthorized).toBe(true);
     expect(error.isTransient).toBe(false);
     expect(describeError(error)).toMatch(/\?token=/);

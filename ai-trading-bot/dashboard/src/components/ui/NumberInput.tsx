@@ -72,7 +72,8 @@ export function NumberInput({
   // While focused the raw text is kept, so partial input like "1." or "-" survives re-renders.
   const [draft, setDraft] = useState<string | null>(null);
   const text = draft ?? display(value, decimals);
-  const outOfRange = value !== null && ((min !== undefined && value < min) || (max !== undefined && value > max));
+  const outOfRange =
+    value !== null && ((min !== undefined && value < min) || (max !== undefined && value > max));
 
   const commit = (raw: string) => {
     const trimmed = raw.trim().replace(",", ".");
@@ -118,7 +119,13 @@ export function NumberInput({
           fieldControlClass,
           "num",
           size === "sm" ? "h-8 pl-2.5 text-dense" : "h-9 pl-3 text-sm",
-          unit ? (stepper ? "pr-[calc(1.75rem+var(--unit-w))]" : "pr-[calc(0.75rem+var(--unit-w))]") : stepper ? "pr-8" : "pr-3",
+          unit
+            ? stepper
+              ? "pr-[calc(1.75rem+var(--unit-w))]"
+              : "pr-[calc(0.75rem+var(--unit-w))]"
+            : stepper
+              ? "pr-8"
+              : "pr-3",
         )}
         style={{ ["--unit-w" as string]: unit ? `${unit.length * 0.5 + 0.5}rem` : "0rem" }}
         value={text}

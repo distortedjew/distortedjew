@@ -12,7 +12,11 @@ function UpdatedAgo() {
   const { dataUpdatedAt } = usePortfolio();
   const now = useNow();
   if (!dataUpdatedAt) return null;
-  return <span className="num text-xs text-fg-subtle">Updated {formatRelativeTime(dataUpdatedAt, Math.max(now, dataUpdatedAt))}</span>;
+  return (
+    <span className="num text-xs text-fg-subtle">
+      Updated {formatRelativeTime(dataUpdatedAt, Math.max(now, dataUpdatedAt))}
+    </span>
+  );
 }
 
 /**
@@ -35,12 +39,17 @@ function WidgetSlot({
   return (
     <section
       aria-label={`${title} (placeholder)`}
-      className={cn("flex flex-col rounded-xl border border-dashed border-line-strong bg-surface/40 p-4", className)}
+      className={cn(
+        "flex flex-col rounded-xl border border-dashed border-line-strong bg-surface/40 p-4",
+        className,
+      )}
       style={{ minHeight: height }}
     >
       <div className="flex items-center justify-between gap-3">
         <h2 className="label-caps">{title}</h2>
-        <span className="rounded-md bg-fg/[0.05] px-1.5 py-0.5 font-mono text-[10.5px] text-fg-subtle">{source}</span>
+        <span className="rounded-md bg-fg/[0.05] px-1.5 py-0.5 font-mono text-[10.5px] text-fg-subtle">
+          {source}
+        </span>
       </div>
       <p className="mt-auto max-w-md text-xs leading-5 text-fg-subtle">{description}</p>
     </section>

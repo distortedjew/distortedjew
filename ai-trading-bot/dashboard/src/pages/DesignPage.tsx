@@ -53,7 +53,7 @@ export default function DesignPage() {
           </Button>
         }
       />
-      <nav aria-label="Sections" className="scrollbar-none -mt-6 flex gap-1 overflow-x-auto">
+      <nav aria-label="Sections" className="-mt-6 scrollbar-none flex gap-1 overflow-x-auto">
         {INDEX.map(([id, label]) => (
           <a
             key={id}

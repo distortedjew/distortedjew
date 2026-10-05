@@ -165,7 +165,14 @@ export function Sparkline({
     const barW = Math.max(1.5, Math.min(6, slot - 2));
     body = (
       <>
-        <line x1={PAD_LEFT} x2={width - PAD_RIGHT + 2} y1={zero} y2={zero} stroke={theme.axisLine} strokeWidth={1} />
+        <line
+          x1={PAD_LEFT}
+          x2={width - PAD_RIGHT + 2}
+          y1={zero}
+          y2={zero}
+          stroke={theme.axisLine}
+          strokeWidth={1}
+        />
         {points.map((v, i) => {
           if (v === 0) return null; // the baseline already shows zero
           const top = Math.min(zero, y(v));
@@ -196,7 +203,16 @@ export function Sparkline({
     );
   } else if (width > 0) {
     // Not enough data: a faint flat rule so the layout does not jump.
-    body = <line x1={PAD_LEFT} x2={width - PAD_RIGHT} y1={height / 2} y2={height / 2} stroke={theme.grid} strokeWidth={1} />;
+    body = (
+      <line
+        x1={PAD_LEFT}
+        x2={width - PAD_RIGHT}
+        y1={height / 2}
+        y2={height / 2}
+        stroke={theme.grid}
+        strokeWidth={1}
+      />
+    );
   }
 
   const hoverValue = hover !== null ? points[hover] : undefined;
@@ -238,7 +254,7 @@ export function Sparkline({
       ) : null}
       {formatValue && hover !== null && hoverValue !== undefined ? (
         <div
-          className="surface-elevated pointer-events-none absolute -top-7 z-10 rounded-md px-1.5 py-0.5 text-[10.5px] whitespace-nowrap text-fg"
+          className="pointer-events-none absolute -top-7 z-10 rounded-md surface-elevated px-1.5 py-0.5 text-[10.5px] whitespace-nowrap text-fg"
           style={{
             left: Math.max(0, Math.min(width - 4, x(hover))),
             transform: `translateX(${x(hover) > width * 0.6 ? "-100%" : x(hover) < width * 0.25 ? "0" : "-50%"})`,

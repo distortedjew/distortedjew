@@ -29,7 +29,9 @@ describe("backoffDelay", () => {
   const opts = { minMs: 500, maxMs: 15_000, jitter: 0.25 };
 
   it("doubles from 0.5 s up to the 15 s cap", () => {
-    const delays = Array.from({ length: 8 }, (_, attempt) => backoffDelay(attempt, { ...opts, random: () => 0.5 }));
+    const delays = Array.from({ length: 8 }, (_, attempt) =>
+      backoffDelay(attempt, { ...opts, random: () => 0.5 }),
+    );
     expect(delays).toEqual([500, 1_000, 2_000, 4_000, 8_000, 15_000, 15_000, 15_000]);
   });
 
@@ -198,7 +200,10 @@ describe("WsManager resume and chart subscriptions", () => {
     first.open();
     expect(first.frames().some((f) => f.type === "resume")).toBe(false);
 
-    first.receive({ type: "hello", data: { server_time: "2026-10-04T12:00:00Z", api_version: "1.0", last_event_id: 41 } });
+    first.receive({
+      type: "hello",
+      data: { server_time: "2026-10-04T12:00:00Z", api_version: "1.0", last_event_id: 41 },
+    });
     first.receive({ type: "event", data: makeEvent({ id: 42 }) });
     first.receive({ type: "event", data: makeEvent({ id: 43 }) });
     expect(manager.getSnapshot().lastEventId).toBe(43);
@@ -210,10 +215,16 @@ describe("WsManager resume and chart subscriptions", () => {
     expect(second.frames()[0]).toEqual({ type: "resume", last_event_id: 43 });
 
     // A hello with a higher id does not skip ahead of what we actually received.
-    second.receive({ type: "hello", data: { server_time: "2026-10-04T12:00:05Z", api_version: "1.0", last_event_id: 50 } });
+    second.receive({
+      type: "hello",
+      data: { server_time: "2026-10-04T12:00:05Z", api_version: "1.0", last_event_id: 50 },
+    });
     expect(manager.getSnapshot().lastEventId).toBe(43);
     // A lower id means the database was reset: follow the server.
-    second.receive({ type: "hello", data: { server_time: "2026-10-04T12:00:06Z", api_version: "1.0", last_event_id: 3 } });
+    second.receive({
+      type: "hello",
+      data: { server_time: "2026-10-04T12:00:06Z", api_version: "1.0", last_event_id: 3 },
+    });
     expect(manager.getSnapshot().lastEventId).toBe(3);
     manager.stop();
   });
@@ -246,10 +257,16 @@ describe("WsManager resume and chart subscriptions", () => {
 
     offC();
     await flushMicrotasks();
-    expect(socket.frames().at(-1)).toEqual({ type: "subscribe_chart", charts: [{ symbol: "BTC/USDT", timeframe: "5m" }] });
+    expect(socket.frames().at(-1)).toEqual({
+      type: "subscribe_chart",
+      charts: [{ symbol: "BTC/USDT", timeframe: "5m" }],
+    });
 
     // After a reconnect the remaining subscription is sent again (after the resume).
-    socket.receive({ type: "hello", data: { server_time: "2026-10-04T12:00:00Z", api_version: "1.0", last_event_id: 7 } });
+    socket.receive({
+      type: "hello",
+      data: { server_time: "2026-10-04T12:00:00Z", api_version: "1.0", last_event_id: 7 },
+    });
     socket.serverClose();
     vi.advanceTimersByTime(500);
     const next = FakeSocket.latest();

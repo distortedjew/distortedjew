@@ -20,7 +20,11 @@ export function isNum(value: unknown): value is number {
 
 const formatters = new Map<string, Intl.NumberFormat>();
 
-function numberFormat(minimumFractionDigits: number, maximumFractionDigits: number, extra?: Intl.NumberFormatOptions) {
+function numberFormat(
+  minimumFractionDigits: number,
+  maximumFractionDigits: number,
+  extra?: Intl.NumberFormatOptions,
+) {
   const key = `${minimumFractionDigits}|${maximumFractionDigits}|${extra ? JSON.stringify(extra) : ""}`;
   let nf = formatters.get(key);
   if (!nf) {
@@ -270,14 +274,23 @@ export function formatDayLabel(value: TimeInput, now = Date.now()): string {
  * long: "just now", "12 seconds ago", "1 minute ago", "3 hours ago", "2 days ago".
  * Future times read "in 12s" / "in 12 seconds".
  */
-export function formatRelativeTime(value: TimeInput, now = Date.now(), style: "short" | "long" = "short"): string {
+export function formatRelativeTime(
+  value: TimeInput,
+  now = Date.now(),
+  style: "short" | "long" = "short",
+): string {
   const ms = toMs(value);
   if (ms === null) return DASH;
   return formatAgo((now - ms) / 1_000, style, ms, now);
 }
 
 /** Relative time from an age in seconds (e.g. heartbeat_age_sec): "2s ago" / "2 seconds ago". */
-export function formatAgo(ageSec: Num, style: "short" | "long" = "short", absoluteMs?: number, now = Date.now()): string {
+export function formatAgo(
+  ageSec: Num,
+  style: "short" | "long" = "short",
+  absoluteMs?: number,
+  now = Date.now(),
+): string {
   if (!isNum(ageSec)) return DASH;
   const future = ageSec < 0;
   const s = Math.abs(ageSec);
@@ -327,7 +340,10 @@ export function signOf(value: Num, decimals = 2): -1 | 0 | 1 {
 }
 
 /** Semantic tone for a signed value: up / down / neutral. `invert` when lower is better. */
-export function toneOf(value: Num, opts: { invert?: boolean; decimals?: number } = {}): "up" | "down" | "neutral" {
+export function toneOf(
+  value: Num,
+  opts: { invert?: boolean; decimals?: number } = {},
+): "up" | "down" | "neutral" {
   const s = signOf(value, opts.decimals ?? 2);
   if (s === 0) return "neutral";
   const positive = opts.invert ? s < 0 : s > 0;

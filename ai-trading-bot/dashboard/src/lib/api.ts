@@ -101,6 +101,14 @@ export class ApiError extends Error {
     return this.kind === "http" && this.status === 503;
   }
 
+  /**
+   * The API itself is unreachable: a network error, or a gateway (Vite's dev proxy, nginx…)
+   * answering 502 / 504 on its behalf.
+   */
+  get isUnreachable(): boolean {
+    return this.kind === "network" || (this.kind === "http" && (this.status === 502 || this.status === 504));
+  }
+
   /** True for errors worth retrying (network, timeout, 5xx, 429). */
   get isTransient(): boolean {
     return this.kind !== "http" || this.status >= 500 || this.status === 429 || this.status === 408;
@@ -125,7 +133,7 @@ export class ApiError extends Error {
 /** A short, human sentence for any error (used by ErrorState and toasts). */
 export function describeError(error: unknown): string {
   if (error instanceof ApiError) {
-    if (error.kind === "network") return "Can't reach the API server. Check that the backend is running.";
+    if (error.isUnreachable) return "Can't reach the API server. Check that the backend is running.";
     if (error.kind === "timeout") return "The API took too long to respond.";
     if (error.isUnauthorized)
       return "Not authorized. Open the dashboard with ?token=<DASHBOARD_TOKEN> in the URL.";
@@ -254,7 +262,12 @@ async function readBody(response: Response): Promise<unknown> {
   return text;
 }
 
-async function request<T>(method: string, path: string, body: unknown, opts: RequestOptions = {}): Promise<T> {
+async function request<T>(
+  method: string,
+  path: string,
+  body: unknown,
+  opts: RequestOptions = {},
+): Promise<T> {
   const response = await send(method, path, body, opts);
   const payload = await readBody(response);
   if (!response.ok) {
@@ -285,8 +298,16 @@ export const api = {
  * Download a file endpoint (e.g. /api/trades/export.csv) with the auth header and save it.
  * A plain <a href> cannot send the Bearer token, so the file is fetched and saved as a blob.
  */
-export async function downloadFile(path: string, params: QueryParams | undefined, filename: string): Promise<void> {
-  const response = await send("GET", path, undefined, { params, timeoutMs: 60_000, headers: { Accept: "*/*" } });
+export async function downloadFile(
+  path: string,
+  params: QueryParams | undefined,
+  filename: string,
+): Promise<void> {
+  const response = await send("GET", path, undefined, {
+    params,
+    timeoutMs: 60_000,
+    headers: { Accept: "*/*" },
+  });
   if (!response.ok) {
     const payload = await readBody(response);
     throw new ApiError({

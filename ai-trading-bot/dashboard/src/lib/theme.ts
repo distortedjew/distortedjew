@@ -55,7 +55,11 @@ function subscribe(listener: () => void): () => void {
 }
 
 /** Current theme; re-renders on change. */
-export function useTheme(): { theme: ThemeMode; setTheme: (mode: ThemeMode) => void; toggleTheme: () => void } {
+export function useTheme(): {
+  theme: ThemeMode;
+  setTheme: (mode: ThemeMode) => void;
+  toggleTheme: () => void;
+} {
   const theme = useSyncExternalStore(subscribe, getTheme, getTheme);
   return { theme, setTheme, toggleTheme };
 }

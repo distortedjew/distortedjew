@@ -36,7 +36,17 @@ import { LiveTag } from "@/components/layout/LiveTag";
 import { LiveTradingBanner } from "@/components/layout/LiveTradingBanner";
 import { TradingModeBadge } from "@/components/layout/TradingModeBadge";
 
-export function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: ReactNode }) {
+export function Section({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
   return (
     <section id={id} className="scroll-mt-32 space-y-3">
       <div>
@@ -106,7 +116,11 @@ export function ColorsSection() {
     },
   ];
   return (
-    <Section id="colors" title="Color tokens" description="Semantic tokens only — color always carries meaning.">
+    <Section
+      id="colors"
+      title="Color tokens"
+      description="Semantic tokens only — color always carries meaning."
+    >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {groups.map((g) => (
           <Card key={g.title}>
@@ -125,14 +139,22 @@ export function ColorsSection() {
 
 export function TypographySection() {
   return (
-    <Section id="type" title="Typography" description="Inter Variable for UI, JetBrains Mono Variable for numbers, prices, timestamps and logs.">
+    <Section
+      id="type"
+      title="Typography"
+      description="Inter Variable for UI, JetBrains Mono Variable for numbers, prices, timestamps and logs."
+    >
       <Card>
         <CardBody className="grid gap-6 pt-4 lg:grid-cols-2">
           <div className="space-y-3">
             <div className="text-xl leading-7 font-semibold tracking-[-0.02em]">Page title · 20 / 600</div>
             <div className="text-[13.5px] font-semibold">Card title · 13.5 / 600</div>
-            <div className="text-sm text-fg">Body · 14 / 400 — The AI analyst found a bullish EMA stack on 5m and 1h.</div>
-            <div className="text-dense text-fg-muted">Dense · 13 / 400 — used in tables and dense panels.</div>
+            <div className="text-sm text-fg">
+              Body · 14 / 400 — The AI analyst found a bullish EMA stack on 5m and 1h.
+            </div>
+            <div className="text-dense text-fg-muted">
+              Dense · 13 / 400 — used in tables and dense panels.
+            </div>
             <div className="text-xs text-fg-subtle">Meta · 12 / 400 — Updated 2s ago</div>
             <div className="label-caps">Section label · 11 / 500 caps</div>
           </div>
@@ -155,7 +177,11 @@ export function TypographySection() {
 
 export function StatusSection() {
   return (
-    <Section id="status" title="Status, mode & connection" description="Top-bar indicators, visible at every breakpoint.">
+    <Section
+      id="status"
+      title="Status, mode & connection"
+      description="Top-bar indicators, visible at every breakpoint."
+    >
       <Card>
         <CardBody className="space-y-4 pt-4">
           <div className="flex flex-wrap items-center gap-2">
@@ -268,7 +294,11 @@ const ENUMS: { kind: EnumKind; values: string[] }[] = [
 
 export function BadgesSection() {
   return (
-    <Section id="badges" title="Badges & enum labels" description="Every API enum renders through <EnumBadge kind=… value=… /> from lib/constants.">
+    <Section
+      id="badges"
+      title="Badges & enum labels"
+      description="Every API enum renders through <EnumBadge kind=… value=… /> from lib/constants."
+    >
       <Card>
         <CardBody className="space-y-3 pt-4">
           {(["soft", "solid", "outline", "plain"] as const).map((variant) => (

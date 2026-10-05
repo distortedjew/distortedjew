@@ -32,7 +32,9 @@ SymbolQuery = Annotated[
 def decision_timeframe(ctx: ApiContext, engine: EngineStatus | None = None) -> Timeframe:
     engine = engine if engine is not None else queries.engine_status(ctx.db)
     return (
-        engine.decision_timeframe if engine is not None else ctx.db.get_settings().trading.decision_timeframe
+        engine.decision_timeframe
+        if engine is not None
+        else queries.stored_settings(ctx.db).trading.decision_timeframe
     )
 
 

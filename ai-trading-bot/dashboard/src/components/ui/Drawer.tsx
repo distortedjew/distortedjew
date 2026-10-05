@@ -69,7 +69,10 @@ export function Drawer({
         {open ? (
           <DialogPrimitive.Portal forceMount>
             <DialogPrimitive.Overlay asChild forceMount>
-              <motion.div className="fixed inset-0 z-50 bg-overlay backdrop-blur-[1px]" {...motionPresets.overlay} />
+              <motion.div
+                className="fixed inset-0 z-50 bg-overlay backdrop-blur-[1px]"
+                {...motionPresets.overlay}
+              />
             </DialogPrimitive.Overlay>
             <DialogPrimitive.Content asChild forceMount>
               <motion.div
@@ -82,8 +85,9 @@ export function Drawer({
                 dragElastic={{ top: 0, bottom: 0.6 }}
                 onDragEnd={isBottom ? onDragEnd : undefined}
                 className={cn(
-                  "surface-elevated fixed z-50 flex flex-col overflow-hidden outline-none",
-                  resolved === "right" && cn("inset-y-0 right-0 w-full rounded-l-2xl border-r-0", widths[size]),
+                  "fixed z-50 flex flex-col overflow-hidden surface-elevated outline-none",
+                  resolved === "right" &&
+                    cn("inset-y-0 right-0 w-full rounded-l-2xl border-r-0", widths[size]),
                   resolved === "left" && cn("inset-y-0 left-0 w-full rounded-r-2xl border-l-0", widths[size]),
                   isBottom && "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-2xl border-b-0",
                   className,
@@ -99,7 +103,10 @@ export function Drawer({
                   </div>
                 ) : null}
                 <div
-                  className={cn("shrink-0 border-b border-line px-5 pb-3.5", isBottom ? "touch-none pt-1.5" : "pt-4.5")}
+                  className={cn(
+                    "shrink-0 border-b border-line px-5 pb-3.5",
+                    isBottom ? "touch-none pt-1.5" : "pt-4.5",
+                  )}
                   onPointerDown={startDrag}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -124,11 +131,13 @@ export function Drawer({
                   </div>
                   {headerExtra ? <div className="mt-3">{headerExtra}</div> : null}
                 </div>
-                <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4", bodyClassName)}>
+                <div
+                  className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4", bodyClassName)}
+                >
                   {children}
                 </div>
                 {footer ? (
-                  <div className="safe-bottom flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line bg-surface-2/50 px-5 py-3">
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line bg-surface-2/50 px-5 py-3 safe-bottom">
                     {footer}
                   </div>
                 ) : null}

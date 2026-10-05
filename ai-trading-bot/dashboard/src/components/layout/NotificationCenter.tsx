@@ -27,7 +27,7 @@ function UnreadBadge({ count }: { count: number }) {
   return (
     <span
       aria-hidden
-      className="num absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-down-solid px-1 text-[10px] leading-none font-semibold text-white ring-2 ring-canvas"
+      className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-down-solid px-1 num text-[10px] leading-none font-semibold text-white ring-2 ring-canvas"
     >
       {count > 99 ? "99+" : count}
     </span>
@@ -46,7 +46,8 @@ function NotificationRow({
   onMarkRead: (n: Notification) => void;
 }) {
   const meta = NOTIFICATION_TYPE_META[notification.type];
-  const tone = notification.severity === "error" ? "down" : notification.severity === "warning" ? "warning" : meta.tone;
+  const tone =
+    notification.severity === "error" ? "down" : notification.severity === "warning" ? "warning" : meta.tone;
   const Icon = meta.icon;
   return (
     <motion.li layout="position" {...motionPresets.listItem} className="group/item relative">
@@ -58,17 +59,31 @@ function NotificationRow({
           !notification.read && "bg-accent/[0.035]",
         )}
       >
-        <span className={cn("mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg", TONE_CHIP[tone])}>
+        <span
+          className={cn(
+            "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg",
+            TONE_CHIP[tone],
+          )}
+        >
           <Icon className="size-3.5" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline justify-between gap-3">
-            <span className={cn("truncate text-dense", notification.read ? "text-fg-muted" : "font-medium text-fg")}>
+            <span
+              className={cn(
+                "truncate text-dense",
+                notification.read ? "text-fg-muted" : "font-medium text-fg",
+              )}
+            >
               {notification.title}
             </span>
-            <span className="num shrink-0 text-[10.5px] text-fg-subtle">{formatRelativeTime(notification.ts, now)}</span>
+            <span className="shrink-0 num text-[10.5px] text-fg-subtle">
+              {formatRelativeTime(notification.ts, now)}
+            </span>
           </span>
-          <span className="mt-0.5 line-clamp-2 text-xs leading-[1.45] text-fg-subtle">{notification.message}</span>
+          <span className="mt-0.5 line-clamp-2 text-xs leading-[1.45] text-fg-subtle">
+            {notification.message}
+          </span>
         </span>
       </button>
       {!notification.read ? (
@@ -84,7 +99,10 @@ function NotificationRow({
         </Tooltip>
       ) : null}
       {!notification.read ? (
-        <span aria-label="Unread" className="absolute top-1/2 left-0 size-1.5 -translate-y-1/2 rounded-full bg-accent group-hover/item:opacity-0" />
+        <span
+          aria-label="Unread"
+          className="absolute top-1/2 left-0 size-1.5 -translate-y-1/2 rounded-full bg-accent group-hover/item:opacity-0"
+        />
       ) : null}
     </motion.li>
   );
@@ -132,7 +150,9 @@ export function NotificationCenter() {
           <div className="flex items-center gap-2">
             <h2 className="text-dense font-semibold text-fg">Notifications</h2>
             {unread ? (
-              <span className="num rounded-full bg-accent/15 px-1.5 text-[11px] font-medium text-accent">{unread} new</span>
+              <span className="rounded-full bg-accent/15 px-1.5 num text-[11px] font-medium text-accent">
+                {unread} new
+              </span>
             ) : null}
           </div>
           <div className="flex items-center gap-1.5">
@@ -181,7 +201,7 @@ export function NotificationCenter() {
           ) : (
             groups.map((group) => (
               <section key={group.label} className="mb-1">
-                <h3 className="label-caps px-2.5 pt-2 pb-1">{group.label}</h3>
+                <h3 className="px-2.5 pt-2 pb-1 label-caps">{group.label}</h3>
                 <ul>
                   <AnimatePresence initial={false}>
                     {group.items.map((n) => (

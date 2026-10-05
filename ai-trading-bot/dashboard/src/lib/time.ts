@@ -53,7 +53,10 @@ export function toMs(value: string | number | Date | null | undefined): number |
 }
 
 /** Seconds elapsed since `value` (never negative), or null. */
-export function secondsSince(value: string | number | Date | null | undefined, now = Date.now()): number | null {
+export function secondsSince(
+  value: string | number | Date | null | undefined,
+  now = Date.now(),
+): number | null {
   const ms = toMs(value);
   return ms === null ? null : Math.max(0, (now - ms) / 1_000);
 }

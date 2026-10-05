@@ -22,7 +22,12 @@ export interface ProgressBarProps {
   "aria-label"?: string;
 }
 
-const STATUS_TONE: Record<RiskMeterStatus, Tone> = { ok: "accent", warning: "warning", critical: "down", breached: "down" };
+const STATUS_TONE: Record<RiskMeterStatus, Tone> = {
+  ok: "accent",
+  warning: "warning",
+  critical: "down",
+  breached: "down",
+};
 
 const FILL: Partial<Record<Tone, string>> = {
   accent: "bg-accent",
@@ -65,7 +70,8 @@ export function ProgressBar({
   className,
   ...aria
 }: ProgressBarProps) {
-  const pct = value === null || value === undefined || !Number.isFinite(value) || max <= 0 ? 0 : (value / max) * 100;
+  const pct =
+    value === null || value === undefined || !Number.isFinite(value) || max <= 0 ? 0 : (value / max) * 100;
   const clamped = Math.max(0, Math.min(100, pct));
   const resolved: Tone =
     tone ??
@@ -83,7 +89,7 @@ export function ProgressBar({
       {label || valueLabel ? (
         <div className="mb-1.5 flex items-baseline justify-between gap-3 text-xs">
           <span className="truncate text-fg-muted">{label}</span>
-          {valueLabel ? <span className="num shrink-0 text-fg">{valueLabel}</span> : null}
+          {valueLabel ? <span className="shrink-0 num text-fg">{valueLabel}</span> : null}
         </div>
       ) : null}
       <div

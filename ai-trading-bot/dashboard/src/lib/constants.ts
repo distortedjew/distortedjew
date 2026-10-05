@@ -254,7 +254,12 @@ export const REGIME_META: Record<Regime, Meta> = {
 export const SIGNAL_META: Record<Signal, Meta> = {
   LONG: { label: "Long", tone: "up", icon: ArrowUpRight, description: "Expecting price to rise." },
   SHORT: { label: "Short", tone: "down", icon: ArrowDownRight, description: "Expecting price to fall." },
-  HOLD: { label: "Hold", tone: "neutral", icon: Pause, description: "No trade: stay flat or keep the position." },
+  HOLD: {
+    label: "Hold",
+    tone: "neutral",
+    icon: Pause,
+    description: "No trade: stay flat or keep the position.",
+  },
 };
 
 export const SIDE_META: Record<Side, Meta> = {
@@ -312,17 +317,19 @@ export const FEED_META: Record<FeedKind, Meta> = {
   },
 };
 
-export const CHART_MARKER_META: Record<ChartMarkerKind, Meta & { shape: "arrowUp" | "arrowDown" | "circle" | "square" }> =
-  {
-    entry_long: { label: "Long entry", tone: "up", icon: ArrowUpRight, shape: "arrowUp" },
-    entry_short: { label: "Short entry", tone: "down", icon: ArrowDownRight, shape: "arrowDown" },
-    exit_win: { label: "Exit (win)", tone: "up", icon: CircleCheck, shape: "circle" },
-    exit_loss: { label: "Exit (loss)", tone: "down", icon: CircleX, shape: "circle" },
-    stop_loss: { label: "Stop loss", tone: "down", icon: ShieldX, shape: "square" },
-    take_profit: { label: "Take profit", tone: "up", icon: Target, shape: "square" },
-    signal_long: { label: "Long signal", tone: "ai", icon: ArrowUpRight, shape: "arrowUp" },
-    signal_short: { label: "Short signal", tone: "ai", icon: ArrowDownRight, shape: "arrowDown" },
-  };
+export const CHART_MARKER_META: Record<
+  ChartMarkerKind,
+  Meta & { shape: "arrowUp" | "arrowDown" | "circle" | "square" }
+> = {
+  entry_long: { label: "Long entry", tone: "up", icon: ArrowUpRight, shape: "arrowUp" },
+  entry_short: { label: "Short entry", tone: "down", icon: ArrowDownRight, shape: "arrowDown" },
+  exit_win: { label: "Exit (win)", tone: "up", icon: CircleCheck, shape: "circle" },
+  exit_loss: { label: "Exit (loss)", tone: "down", icon: CircleX, shape: "circle" },
+  stop_loss: { label: "Stop loss", tone: "down", icon: ShieldX, shape: "square" },
+  take_profit: { label: "Take profit", tone: "up", icon: Target, shape: "square" },
+  signal_long: { label: "Long signal", tone: "ai", icon: ArrowUpRight, shape: "arrowUp" },
+  signal_short: { label: "Short signal", tone: "ai", icon: ArrowDownRight, shape: "arrowDown" },
+};
 
 export const PRICE_LEVEL_META: Record<PriceLevelKind, Meta> = {
   entry: { label: "Entry", short: "Entry", tone: "accent", icon: LogIn },
@@ -359,7 +366,13 @@ export const ORDER_TYPE_META: Record<OrderType, Meta> = {
 };
 
 export const EXIT_REASON_META: Record<ExitReason, Meta> = {
-  STOP_LOSS: { label: "Stop loss", short: "SL", tone: "down", icon: ShieldX, description: "Price hit the stop." },
+  STOP_LOSS: {
+    label: "Stop loss",
+    short: "SL",
+    tone: "down",
+    icon: ShieldX,
+    description: "Price hit the stop.",
+  },
   TAKE_PROFIT: {
     label: "Take profit",
     short: "TP",
@@ -409,10 +422,25 @@ export const RISK_STATUS_META: Record<RiskStatus, Meta> = {
 };
 
 export const EVAL_STATUS_META: Record<EvalStatus, Meta> = {
-  PENDING: { label: "Pending", tone: "info", icon: Hourglass, description: "Waiting for target, stop or horizon." },
-  CORRECT: { label: "Correct", tone: "up", icon: CircleCheck, description: "Virtual target hit before the stop." },
+  PENDING: {
+    label: "Pending",
+    tone: "info",
+    icon: Hourglass,
+    description: "Waiting for target, stop or horizon.",
+  },
+  CORRECT: {
+    label: "Correct",
+    tone: "up",
+    icon: CircleCheck,
+    description: "Virtual target hit before the stop.",
+  },
   INCORRECT: { label: "Incorrect", tone: "down", icon: CircleX, description: "Virtual stop hit first." },
-  EXPIRED: { label: "Expired", tone: "muted", icon: Clock, description: "Neither level hit within the horizon." },
+  EXPIRED: {
+    label: "Expired",
+    tone: "muted",
+    icon: Clock,
+    description: "Neither level hit within the horizon.",
+  },
   NOT_APPLICABLE: { label: "Not applicable", short: "N/A", tone: "muted", icon: Minus },
 };
 
@@ -446,7 +474,13 @@ export const TRADING_MODE_META: Record<TradingMode, Meta> = {
 };
 
 export const BOT_STATE_META: Record<BotState | "unknown", Meta> = {
-  online: { label: "Bot online", short: "Online", tone: "up", icon: Bot, description: "Heartbeat under 10 s." },
+  online: {
+    label: "Bot online",
+    short: "Online",
+    tone: "up",
+    icon: Bot,
+    description: "Heartbeat under 10 s.",
+  },
   degraded: {
     label: "Degraded",
     short: "Degraded",
@@ -472,7 +506,12 @@ export const BOT_STATE_META: Record<BotState | "unknown", Meta> = {
 
 export const CONNECTION_META: Record<ConnectionStatus, Meta> = {
   live: { label: "Live", tone: "up", icon: Radio, description: "Streaming real-time updates." },
-  connecting: { label: "Connecting…", tone: "muted", icon: LoaderCircle, description: "Opening the live stream." },
+  connecting: {
+    label: "Connecting…",
+    tone: "muted",
+    icon: LoaderCircle,
+    description: "Opening the live stream.",
+  },
   reconnecting: {
     label: "Reconnecting…",
     tone: "warning",
@@ -543,7 +582,12 @@ export const NOTIFICATION_TYPE_META: Record<NotificationType, Meta & { route: st
   BOT_ERROR: { label: "Bot error", tone: "down", icon: Bot, route: "/system" },
   API_FAILURE: { label: "API failure", tone: "down", icon: PlugZap, route: "/system" },
   AI_UNAVAILABLE: { label: "AI unavailable", tone: "warning", icon: BrainCircuit, route: "/ai" },
-  MARKET_DATA_UNAVAILABLE: { label: "Market data unavailable", tone: "warning", icon: WifiOff, route: "/system" },
+  MARKET_DATA_UNAVAILABLE: {
+    label: "Market data unavailable",
+    tone: "warning",
+    icon: WifiOff,
+    route: "/system",
+  },
   SYSTEM: { label: "System", tone: "info", icon: Info, route: "/system" },
 };
 

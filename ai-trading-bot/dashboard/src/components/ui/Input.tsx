@@ -3,7 +3,6 @@ import type { InputHTMLAttributes, ReactNode, Ref, TextareaHTMLAttributes } from
 import { cn } from "@/lib/cn";
 import { fieldControlClass } from "@/components/ui/field-styles";
 
-
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
   size?: "sm" | "md";
   leftIcon?: LucideIcon;
@@ -14,7 +13,15 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 /** Text input with optional leading icon and trailing slot. */
-export function Input({ size = "md", leftIcon: LeftIcon, rightSlot, invalid, className, ref, ...props }: InputProps) {
+export function Input({
+  size = "md",
+  leftIcon: LeftIcon,
+  rightSlot,
+  invalid,
+  className,
+  ref,
+  ...props
+}: InputProps) {
   return (
     <div className={cn("relative flex w-full items-center", className)}>
       {LeftIcon ? (

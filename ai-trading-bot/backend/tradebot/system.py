@@ -8,7 +8,7 @@ Component states follow ``schemas.HealthState``: ``operational`` (green), ``warn
 | bot | heartbeat < 10 s old, trading allowed | heartbeat 10–60 s old, or trading halted | no heartbeat for 60 s, stopped, or never started |
 | api | always (it is answering) | | |
 | openrouter | last request succeeded, 24 h error rate < 20 % | error rate ≥ 20 % | last request failed; *disabled* when no API key is configured (local heuristic analyst in use) |
-| market_data | feed connected, last tick < 15 s old | tick 15–60 s old, or simulated feed after a Binance fallback | feed disconnected, data stale (> 60 s) or engine offline |
+| market_data | feed connected, last tick < 15 s old (a simulator chosen on purpose included) | tick 15–60 s old, no tick yet (starting up), or the simulator after a Binance fallback | feed disconnected, data stale (> 60 s) or engine offline |
 | database | queries answer in < 250 ms | slower | (a failing database fails the request: 500) |
 | websocket | broadcaster running | | broadcaster stopped |
 """
@@ -32,6 +32,7 @@ from .schemas import (
     ComponentHealth,
     DatabaseStats,
     HostStats,
+    Notification,
     ProcessStats,
 )
 
@@ -281,7 +282,14 @@ def openrouter_health(
     )
 
 
-def market_data_health(status: BotStatus, newest_tick: datetime | None, now: datetime) -> ComponentHealth:
+def market_data_health(
+    status: BotStatus,
+    newest_tick: datetime | None,
+    now: datetime,
+    fallback: Notification | None = None,
+) -> ComponentHealth:
+    """``fallback`` is the notification an ``auto`` feed raised when it switched to the
+    simulator (see ``queries.feed_fallback``); a simulator chosen on purpose is healthy."""
     engine = status.engine
     name = "Market data"
     if engine is None:
@@ -296,22 +304,28 @@ def market_data_health(status: BotStatus, newest_tick: datetime | None, now: dat
         "last_tick_age_sec": round(tick_age, 1) if tick_age is not None else None,
         "symbols": ", ".join(engine.symbols),
     }
+    if fallback is not None:
+        details["fallback_since"] = fallback.ts.isoformat()
+        details["fallback_reason"] = str(fallback.data.get("error") or fallback.message)
     if status.state == "offline":
         state, message = "error", "No live market data — engine offline"
     elif not engine.feed_connected:
         state = "error"
         message = f"{feed} feed disconnected" + (f": {engine.feed_message}" if engine.feed_message else "")
-    elif tick_age is None or tick_age > TICK_STALE_SEC:
-        last = f"last tick {format_age(tick_age)} ago" if tick_age is not None else "no ticks received"
-        state, message = "error", f"Market data stale — {last}"
-    elif engine.feed == "simulated" and engine.feed_message:
-        state, message = "warning", engine.feed_message
+    elif tick_age is None:
+        # starting up (connecting, bootstrapping): the engine says what it is doing
+        state, message = "warning", engine.feed_message or "Waiting for the first market data"
+    elif tick_age > TICK_STALE_SEC:
+        state, message = "error", f"Market data stale — last tick {format_age(tick_age)} ago"
+    elif fallback is not None:
+        state = "warning"
+        message = f"Binance unreachable — {engine.feed_message or 'using the simulated market'}"
     elif tick_age > TICK_DELAYED_SEC:
         state, message = "warning", f"Market data delayed — last tick {format_age(tick_age)} ago"
     elif engine.feed == "binance":
-        state, message = "operational", "Binance live stream connected"
+        state, message = "operational", engine.feed_message or "Binance live stream connected"
     else:
-        state, message = "operational", "Simulated market feed"
+        state, message = "operational", engine.feed_message or "Simulated market feed"
     return ComponentHealth(
         key="market_data", name=name, state=state, message=message, last_ok=newest_tick, details=details
     )

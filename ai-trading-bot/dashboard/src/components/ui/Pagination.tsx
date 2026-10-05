@@ -16,7 +16,15 @@ export interface PaginationProps {
 }
 
 /** Offset pagination for API pages (`limit` / `offset` / `total`): "1–50 of 1,284 trades ‹ ›". */
-export function Pagination({ offset, limit, total, onOffsetChange, disabled, className, noun = "rows" }: PaginationProps) {
+export function Pagination({
+  offset,
+  limit,
+  total,
+  onOffsetChange,
+  disabled,
+  className,
+  noun = "rows",
+}: PaginationProps) {
   const from = total === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, total);
   const canPrev = offset > 0;

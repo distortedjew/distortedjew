@@ -23,7 +23,14 @@ import {
   makeTrade,
   makeEngineStatus,
 } from "@/test/fixtures";
-import type { AIAnalysis, AIDecisionPage, NotificationList, RegimeReport, SettingsResponse, Ticker } from "@/types";
+import type {
+  AIAnalysis,
+  AIDecisionPage,
+  NotificationList,
+  RegimeReport,
+  SettingsResponse,
+  Ticker,
+} from "@/types";
 
 let queryClient: QueryClient;
 let manager: WsManager;
@@ -86,7 +93,10 @@ describe("snapshot frames → query cache", () => {
 
   it("keeps the settings' applied version in step with the engine heartbeat", () => {
     queryClient.setQueryData(queryKeys.settings(), makeSettingsResponse({ applied_version: 1 }));
-    socket.receive({ type: "status", data: makeStatus({ engine: makeEngineStatus({ settings_version: 2 }) }) });
+    socket.receive({
+      type: "status",
+      data: makeStatus({ engine: makeEngineStatus({ settings_version: 2 }) }),
+    });
     expect(queryClient.getQueryData<SettingsResponse>(queryKeys.settings())?.applied_version).toBe(2);
 
     const settings = makeSettings({ version: 3 });
@@ -111,11 +121,15 @@ describe("snapshot frames → query cache", () => {
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     queryClient.setQueryData(queryKeys.regime("BTC/USDT"), makeRegimeReport());
     socket.receive({ type: "regime", data: makeRegimeState({ confidence: 90 }) });
-    expect(queryClient.getQueryData<RegimeReport>(queryKeys.regime("BTC/USDT"))?.current?.confidence).toBe(90);
+    expect(queryClient.getQueryData<RegimeReport>(queryKeys.regime("BTC/USDT"))?.current?.confidence).toBe(
+      90,
+    );
     expect(invalidate).not.toHaveBeenCalled();
 
     socket.receive({ type: "regime", data: makeRegimeState({ regime: "RANGING" }) });
-    expect(queryClient.getQueryData<RegimeReport>(queryKeys.regime("BTC/USDT"))?.current?.regime).toBe("RANGING");
+    expect(queryClient.getQueryData<RegimeReport>(queryKeys.regime("BTC/USDT"))?.current?.regime).toBe(
+      "RANGING",
+    );
     expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.regime("BTC/USDT") });
   });
 });
@@ -140,7 +154,9 @@ describe("AI analyses", () => {
     socket.receive({ type: "ai_analysis", data: rewritten });
     const cached = queryClient.getQueryData<AIDecisionPage>(queryKeys.aiHistory({ symbol: "BTC/USDT" }));
     expect(cached?.items[0].trade_id).toBe("pos_0123456789ab");
-    expect(queryClient.getQueryData<AIAnalysis>(queryKeys.aiLatest("BTC/USDT"))?.trade_id).toBe("pos_0123456789ab");
+    expect(queryClient.getQueryData<AIAnalysis>(queryKeys.aiLatest("BTC/USDT"))?.trade_id).toBe(
+      "pos_0123456789ab",
+    );
     expect(invalidate).not.toHaveBeenCalled();
   });
 });
@@ -151,17 +167,24 @@ describe("notifications", () => {
     queryClient.setQueryData(queryKeys.notifications({ limit: 50 }), makeNotificationList([old]));
     queryClient.setQueryData(queryKeys.notifications({ unread_only: true }), makeNotificationList([]));
 
-    socket.receive({ type: "notification", data: makeNotification({ id: 2, type: "STOP_LOSS_HIT", severity: "warning" }) });
+    socket.receive({
+      type: "notification",
+      data: makeNotification({ id: 2, type: "STOP_LOSS_HIT", severity: "warning" }),
+    });
     const all = queryClient.getQueryData<NotificationList>(queryKeys.notifications({ limit: 50 }))!;
     expect(all.items.map((n) => n.id)).toEqual([2, 1]);
     expect(all.unread_count).toBe(1);
     expect(all.total).toBe(2);
-    const unread = queryClient.getQueryData<NotificationList>(queryKeys.notifications({ unread_only: true }))!;
+    const unread = queryClient.getQueryData<NotificationList>(
+      queryKeys.notifications({ unread_only: true }),
+    )!;
     expect(unread.items.map((n) => n.id)).toEqual([2]);
 
     // Replays are ignored.
     socket.receive({ type: "notification", data: makeNotification({ id: 2 }) });
-    expect(queryClient.getQueryData<NotificationList>(queryKeys.notifications({ limit: 50 }))!.items).toHaveLength(2);
+    expect(
+      queryClient.getQueryData<NotificationList>(queryKeys.notifications({ limit: 50 }))!.items,
+    ).toHaveLength(2);
   });
 
   it("prependNotification skips read items for unread-only lists", () => {

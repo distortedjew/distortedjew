@@ -213,7 +213,13 @@ export function useBotStatus(): BotStatusInfo {
   const updatedAt = query.dataUpdatedAt;
 
   if (!status) {
-    return { status: undefined, state: "unknown", heartbeatAgeSec: null, dataAgeSec: null, isPending: query.isPending };
+    return {
+      status: undefined,
+      state: "unknown",
+      heartbeatAgeSec: null,
+      dataAgeSec: null,
+      isPending: query.isPending,
+    };
   }
   const dataAgeSec = updatedAt ? Math.max(0, (now - updatedAt) / 1_000) : null;
   const heartbeatAgeSec =

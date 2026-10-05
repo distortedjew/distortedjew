@@ -52,7 +52,7 @@ export function Tooltip({
           sideOffset={6}
           collisionPadding={8}
           className={cn(
-            "popper-motion surface-elevated z-50 max-w-72 rounded-lg px-2.5 py-1.5 text-xs leading-[1.45] text-fg",
+            "popper-motion z-50 max-w-72 rounded-lg surface-elevated px-2.5 py-1.5 text-xs leading-[1.45] text-fg",
             "origin-(--radix-tooltip-content-transform-origin)",
             className,
           )}

@@ -37,14 +37,20 @@ export interface BotStatusPillProps {
   className?: string;
 }
 
-function Details({ state, heartbeatAgeSec, status }: Pick<BotStatusPillProps, "state" | "heartbeatAgeSec" | "status">) {
+function Details({
+  state,
+  heartbeatAgeSec,
+  status,
+}: Pick<BotStatusPillProps, "state" | "heartbeatAgeSec" | "status">) {
   const now = useNow();
   const engine = status?.engine;
   const uptime = engine ? secondsSince(engine.started_at, now) : null;
   return (
     <div className="space-y-1.5 py-0.5">
       <p className="font-medium text-fg">
-        {heartbeatAgeSec === null ? "No heartbeat received yet" : `Last heartbeat: ${formatAgo(heartbeatAgeSec, "long")}`}
+        {heartbeatAgeSec === null
+          ? "No heartbeat received yet"
+          : `Last heartbeat: ${formatAgo(heartbeatAgeSec, "long")}`}
       </p>
       <p className="text-fg-muted">{BOT_STATE_META[state].description}</p>
       {engine ? (
@@ -71,10 +77,17 @@ function Details({ state, heartbeatAgeSec, status }: Pick<BotStatusPillProps, "s
 }
 
 /** "● BOT ONLINE" pill (pure view). Use <ConnectedBotStatusPill /> in the app. */
-export function BotStatusPill({ state, heartbeatAgeSec, status, compact, static: isStatic, className }: BotStatusPillProps) {
+export function BotStatusPill({
+  state,
+  heartbeatAgeSec,
+  status,
+  compact,
+  static: isStatic,
+  className,
+}: BotStatusPillProps) {
   const tone = BOT_STATE_META[state].tone;
   const classes = cn(
-    "inline-flex h-7 items-center gap-2 rounded-full px-2.5 text-[11px] font-semibold tracking-[0.08em] whitespace-nowrap ring-1 ring-inset transition-colors",
+    "inline-flex h-7 items-center gap-2 rounded-full px-2.5 text-[11px] font-semibold tracking-[0.08em] whitespace-nowrap ring-1 transition-colors ring-inset",
     STYLE[state],
     !isStatic && "hover:brightness-110",
     className,
@@ -86,13 +99,22 @@ export function BotStatusPill({ state, heartbeatAgeSec, status, compact, static:
     </>
   );
   return (
-    <Tooltip content={<Details state={state} heartbeatAgeSec={heartbeatAgeSec} status={status} />} side="bottom" className="max-w-80">
+    <Tooltip
+      content={<Details state={state} heartbeatAgeSec={heartbeatAgeSec} status={status} />}
+      side="bottom"
+      className="max-w-80"
+    >
       {isStatic ? (
         <span tabIndex={0} role="status" className={classes}>
           {content}
         </span>
       ) : (
-        <Link to="/system" role="status" aria-label={`${LABEL[state]} — open system health`} className={classes}>
+        <Link
+          to="/system"
+          role="status"
+          aria-label={`${LABEL[state]} — open system health`}
+          className={classes}
+        >
           {content}
         </Link>
       )}

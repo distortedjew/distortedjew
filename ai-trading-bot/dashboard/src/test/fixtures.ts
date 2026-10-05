@@ -132,13 +132,43 @@ export function makeKpi(overrides: Partial<Kpi> = {}): Kpi {
 export function makeKpis(overrides: Partial<PortfolioKpis> = {}): PortfolioKpis {
   return {
     equity: makeKpi(),
-    today_pnl: makeKpi({ value: 82.31, previous: -40, change: 122.31, change_pct: null, comparison_label: "vs yesterday" }),
+    today_pnl: makeKpi({
+      value: 82.31,
+      previous: -40,
+      change: 122.31,
+      change_pct: null,
+      comparison_label: "vs yesterday",
+    }),
     total_pnl: makeKpi({ value: 482.31, previous: 300, change: 182.31, change_pct: 60.77 }),
-    win_rate: makeKpi({ value: 58.3, previous: 52.1, change: 6.2, change_pct: 11.9, comparison_label: "vs prior 7d" }),
-    profit_factor: makeKpi({ value: 1.62, previous: 1.31, change: 0.31, change_pct: 23.66, comparison_label: "vs prior 7d" }),
-    max_drawdown: makeKpi({ value: -4.21, previous: -3.9, change: -0.31, change_pct: -7.95, comparison_label: "vs 7d ago" }),
+    win_rate: makeKpi({
+      value: 58.3,
+      previous: 52.1,
+      change: 6.2,
+      change_pct: 11.9,
+      comparison_label: "vs prior 7d",
+    }),
+    profit_factor: makeKpi({
+      value: 1.62,
+      previous: 1.31,
+      change: 0.31,
+      change_pct: 23.66,
+      comparison_label: "vs prior 7d",
+    }),
+    max_drawdown: makeKpi({
+      value: -4.21,
+      previous: -3.9,
+      change: -0.31,
+      change_pct: -7.95,
+      comparison_label: "vs 7d ago",
+    }),
     open_positions: makeKpi({ value: 2, previous: 1, change: 1, change_pct: 100, sparkline: [1, 1, 2, 2] }),
-    trades_today: makeKpi({ value: 5, previous: 7, change: -2, change_pct: -28.57, comparison_label: "vs yesterday" }),
+    trades_today: makeKpi({
+      value: 5,
+      previous: 7,
+      change: -2,
+      change_pct: -28.57,
+      comparison_label: "vs yesterday",
+    }),
     ...overrides,
   };
 }

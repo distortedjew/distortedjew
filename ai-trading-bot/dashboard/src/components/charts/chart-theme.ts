@@ -69,7 +69,8 @@ export interface ChartTheme {
 }
 
 const FONT_SANS = '"Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif';
-const FONT_MONO = '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
+const FONT_MONO =
+  '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
 
 const DARK_SERIES = ["#3987e5", "#d55181", "#c98500", "#9085e9", "#d95926", "#199e70"] as const;
 const LIGHT_SERIES = ["#2a78d6", "#e87ba4", "#eda100", "#4a3aa7", "#eb6834", "#1baf7a"] as const;

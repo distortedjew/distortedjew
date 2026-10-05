@@ -20,8 +20,7 @@ interface RouteHandle {
 function useRouteTitle(): void {
   const matches = useMatches();
   const title = [...matches].reverse().find((m) => (m.handle as RouteHandle | undefined)?.title)?.handle as
-    | RouteHandle
-    | undefined;
+    RouteHandle | undefined;
   const text = title?.title;
   useEffect(() => {
     document.title = text ? `${text} · AI Trading Bot` : "AI Trading Bot";
@@ -47,7 +46,10 @@ export function AppShell() {
 
   return (
     <div className="relative isolate flex min-h-dvh flex-col">
-      <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[520px] bg-(image:--glow-top)" />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[520px] bg-(image:--glow-top)"
+      />
       <a
         href="#main"
         className="sr-only z-50 rounded-md bg-accent-solid px-3 py-2 text-sm text-accent-fg focus:not-sr-only focus:fixed focus:top-2 focus:left-2"

@@ -25,6 +25,7 @@ MAX_CONFIDENCE = 85.0
 
 def _hold(ctx: MarketContext, reasons: list[str], risks: list[str] | None = None) -> AnalystResult:
     return AnalystResult(
+        bias=bias(ctx),
         signal="HOLD",
         confidence=60.0,
         entry=None,
@@ -130,4 +131,5 @@ def evaluate(ctx: MarketContext) -> AnalystResult:
         ),
         provider="heuristic",
         model=MODEL_ID,
+        bias=side,
     )

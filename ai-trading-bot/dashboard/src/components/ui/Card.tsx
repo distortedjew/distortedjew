@@ -89,7 +89,9 @@ export function CardHeader({
         ) : null}
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-1.5">
-            <h3 className="truncate text-[13.5px] leading-6 font-semibold tracking-[-0.005em] text-fg">{title}</h3>
+            <h3 className="truncate text-[13.5px] leading-6 font-semibold tracking-[-0.005em] text-fg">
+              {title}
+            </h3>
             {info ? <InfoTooltip content={info} /> : null}
             {badge}
           </div>
@@ -108,7 +110,10 @@ export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>
 export function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex items-center justify-between gap-3 border-t border-line px-4 py-2.5 text-xs text-fg-subtle", className)}
+      className={cn(
+        "flex items-center justify-between gap-3 border-t border-line px-4 py-2.5 text-xs text-fg-subtle",
+        className,
+      )}
       {...props}
     />
   );

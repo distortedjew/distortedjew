@@ -17,7 +17,9 @@ function TickerChip({ symbol }: { symbol: string }) {
     >
       <span className="font-semibold tracking-[0.04em] text-fg-muted group-hover:text-fg">{base}</span>
       <PriceText value={ticker?.price} className="text-fg" />
-      <span className={cn("num text-[11px]", TONE_TEXT[tone])}>{formatPct(ticker?.change_24h_pct, { signed: true })}</span>
+      <span className={cn("num text-[11px]", TONE_TEXT[tone])}>
+        {formatPct(ticker?.change_24h_pct, { signed: true })}
+      </span>
     </Link>
   );
 }

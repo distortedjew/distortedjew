@@ -55,7 +55,7 @@ export function SectionHeader({ title, description, info, count, actions, classN
         <div className="flex items-center gap-1.5">
           <h2 className="label-caps">{title}</h2>
           {count !== undefined ? (
-            <span className="num rounded bg-fg/[0.06] px-1 text-2xs text-fg-subtle">{count}</span>
+            <span className="rounded bg-fg/[0.06] px-1 num text-2xs text-fg-subtle">{count}</span>
           ) : null}
           {info ? <InfoTooltip content={info} /> : null}
         </div>

@@ -28,7 +28,7 @@ export function PopoverContent({
         align={align}
         collisionPadding={8}
         className={cn(
-          "popper-motion surface-elevated z-50 w-72 rounded-xl p-3 outline-none",
+          "popper-motion z-50 w-72 rounded-xl surface-elevated p-3 outline-none",
           "origin-(--radix-popover-content-transform-origin)",
           className,
         )}

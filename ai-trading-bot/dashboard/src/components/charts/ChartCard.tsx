@@ -80,7 +80,8 @@ export function ChartCard({
         <ErrorState error={error} onRetry={onRetry} className="h-full" />
       );
   else if (empty) {
-    const props: EmptyStateProps = typeof empty === "object" ? empty : { title: "No data for this period yet" };
+    const props: EmptyStateProps =
+      typeof empty === "object" ? empty : { title: "No data for this period yet" };
     body = <EmptyState size="sm" {...props} className={cn("h-full", props.className)} />;
   } else if (view === "table" && table) body = <div className="h-full overflow-auto">{table}</div>;
   else body = children;
@@ -101,14 +102,21 @@ export function ChartCard({
           ) : undefined
         }
       />
-      {legend && legend.length > 1 && !loading && !error && !empty ? <ChartLegend items={legend} className="px-4 pb-2" /> : null}
+      {legend && legend.length > 1 && !loading && !error && !empty ? (
+        <ChartLegend items={legend} className="px-4 pb-2" />
+      ) : null}
       <div
-        className={cn("relative min-w-0 px-2 pb-3 transition-opacity duration-200", fetching && !loading && "opacity-60")}
+        className={cn(
+          "relative min-w-0 px-2 pb-3 transition-opacity duration-200",
+          fetching && !loading && "opacity-60",
+        )}
         style={{ height }}
       >
         {body}
       </div>
-      {footer ? <div className="border-t border-line px-4 py-2.5 text-xs text-fg-subtle">{footer}</div> : null}
+      {footer ? (
+        <div className="border-t border-line px-4 py-2.5 text-xs text-fg-subtle">{footer}</div>
+      ) : null}
     </Card>
   );
 }

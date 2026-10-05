@@ -4,7 +4,9 @@ import { cn } from "@/lib/cn";
 
 type Item = NonNullable<TooltipContentProps<number | string, string>["payload"]>[number];
 
-export interface ChartTooltipContentProps extends Partial<Pick<TooltipContentProps<number | string, string>, "active" | "payload" | "label">> {
+export interface ChartTooltipContentProps extends Partial<
+  Pick<TooltipContentProps<number | string, string>, "active" | "payload" | "label">
+> {
   /** Format each value (the number leads; the series name follows). */
   valueFormatter?: (value: number, name: string, item: Item) => ReactNode;
   /** Format the header (x value: a date, a bucket label…). */
@@ -38,7 +40,7 @@ export function ChartTooltipContent({
   const items = payload.filter((item) => !item.hide && item.value !== undefined && item.value !== null);
   if (!items.length) return null;
   return (
-    <div className={cn("surface-elevated min-w-32 rounded-lg px-2.5 py-2 text-xs", className)}>
+    <div className={cn("min-w-32 rounded-lg surface-elevated px-2.5 py-2 text-xs", className)}>
       {!hideLabel ? (
         <div className="mb-1.5 text-[11px] whitespace-nowrap text-fg-subtle">
           {labelFormatter ? labelFormatter(label, payload) : label}
@@ -62,14 +64,18 @@ export function ChartTooltipContent({
                 style={{ backgroundColor: color }}
               />
               <span className="num font-medium whitespace-nowrap text-fg">
-                {valueFormatter && Number.isFinite(numeric) ? valueFormatter(numeric, name, item) : String(item.value)}
+                {valueFormatter && Number.isFinite(numeric)
+                  ? valueFormatter(numeric, name, item)
+                  : String(item.value)}
               </span>
               <span className="truncate text-fg-subtle">{name}</span>
             </div>
           );
         })}
       </div>
-      {footer ? <div className="mt-1.5 border-t border-line pt-1.5 text-fg-muted">{footer(items)}</div> : null}
+      {footer ? (
+        <div className="mt-1.5 border-t border-line pt-1.5 text-fg-muted">{footer(items)}</div>
+      ) : null}
     </div>
   );
 }

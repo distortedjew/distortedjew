@@ -10,10 +10,10 @@ Model (parameters are set from typical BTC/ETH/SOL behaviour, not tuned to any s
 
 - **Market factor** (≈ BTC) with seven hourly Markov regimes — range, quiet, bull trend, bear
   trend, volatile, breakout up/down. Trends carry drift (≈ ±1 %/day, breakouts ≈ ±4.5 %/day
-  for a few hours); range and quiet are mean-reverting around the level where they began
-  (consolidation, half-life ≈ 6 h); breakouts usually hand over to a trend in their direction.
-  Regimes last hours to days, so trends persist the way crypto trends do while most of the
-  minute-to-minute movement stays noise.
+  for a few hours); range and quiet drift weakly back toward the level where they began
+  (consolidation, half-life ≈ 2 days); breakouts usually hand over to a trend in their
+  direction. Regimes last hours to days, so trends persist the way crypto trends do while most
+  of the minute-to-minute movement stays noise.
 - **Volatility clustering**: two AR(1) log-volatility components (half-lives 3 h and 2 days)
   at 5-minute resolution, with a volatility spike after every jump.
 - **Fat tails and jumps**: Student-t(5) innovations; Poisson jumps with Laplace sizes whose
@@ -22,12 +22,21 @@ Model (parameters are set from typical BTC/ETH/SOL behaviour, not tuned to any s
   and bottom out around 03:00 UTC; weekends are quieter.
 - **Cross-asset structure**: each asset is ``beta × market + idiosyncratic`` with its own
   stochastic volatility (partly shared with the market's), slow idiosyncratic trends and weak
-  mean reversion of its relative price, calibrated to a target daily volatility and correlation
-  (ETH ≈ 3.6 %/day, ρ≈0.8; SOL ≈ 4.8 %/day, ρ≈0.72).
+  mean reversion of its relative price (half-life ≈ 30 days), calibrated to a target daily
+  volatility and correlation (ETH ≈ 3.6 %/day, ρ≈0.8; SOL ≈ 4.8 %/day, ρ≈0.72).
 - **OHLC** from sub-steps: each 1m candle's intra-minute path is a Brownian bridge between
   consecutive closes (60 sub-steps for recent days — one per live second — and 12 for older
   history). Higher timeframes are exact aggregations of the 1m candles.
 - **Volume**: per-asset base volume × seasonality × volatility × |move| × log-normal noise.
+
+Calibration is against stylized facts of real crypto markets, never against strategy results.
+Over 8 seeds × 1 year the BTC series shows: daily volatility ≈ 2.9 %, 1h return
+autocorrelation ≈ −0.01, variance ratios VR(24h) ≈ 0.97 and VR(1 week) ≈ 1.02 (close to a
+random walk with mild weekly persistence, as BTC is), 1h excess kurtosis ≈ 8 and clear
+volatility clustering (|r| lag-1 autocorrelation ≈ 0.24). An earlier version reverted ranges
+with a 6 h half-life and alt/BTC ratios with a 5-day one; that made 1-7 day returns
+mean-reverting (BTC VR(24h) 0.86, SOL VR(1 week) 0.75), far from real markets, so both were
+slowed down.
 
 History is anchored at its *end*: on first open BTC trades near 97,000, ETH near 3,450 and
 SOL near 165 (unknown symbols get a stable hash-derived price and volatility).
@@ -81,8 +90,8 @@ IDIO_JUMPS_PER_DAY = 0.25
 IDIO_JUMP_SCALE = 0.007
 
 # Mean reversion
-KAPPA_RANGE = math.log(2) / 6.0  # per hour, half-life 6 h
-KAPPA_IDIO = math.log(2) / 120.0  # relative price, half-life 5 days
+KAPPA_RANGE = math.log(2) / 48.0  # per hour, half-life 2 days
+KAPPA_IDIO = math.log(2) / 720.0  # relative price, half-life 30 days
 IDIO_TREND_DRIFT = 0.008  # per day while an idiosyncratic trend runs
 IDIO_TREND_HOURS = 30.0
 

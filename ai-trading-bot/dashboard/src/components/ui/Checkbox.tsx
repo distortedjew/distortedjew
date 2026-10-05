@@ -11,7 +11,7 @@ export function Checkbox({ className, ...props }: ComponentProps<typeof Checkbox
         "peer inline-flex size-4 shrink-0 items-center justify-center rounded-[5px] border border-line-strong bg-surface-2 transition-colors",
         "hover:border-fg/30 data-[state=checked]:border-accent-solid data-[state=checked]:bg-accent-solid data-[state=checked]:text-accent-fg",
         "data-[state=indeterminate]:border-accent-solid data-[state=indeterminate]:bg-accent-solid data-[state=indeterminate]:text-accent-fg",
-        "disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/70",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/70 disabled:cursor-not-allowed disabled:opacity-45",
         className,
       )}
       {...props}

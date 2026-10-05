@@ -2,8 +2,10 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-export interface SliderProps
-  extends Omit<ComponentProps<typeof SliderPrimitive.Root>, "value" | "onValueChange" | "onValueCommit" | "defaultValue"> {
+export interface SliderProps extends Omit<
+  ComponentProps<typeof SliderPrimitive.Root>,
+  "value" | "onValueChange" | "onValueCommit" | "defaultValue"
+> {
   value: number;
   onValueChange: (value: number) => void;
   /** Called when the user releases the thumb. */
@@ -14,7 +16,14 @@ export interface SliderProps
 }
 
 /** Single-value slider (Radix) with an optional value readout. */
-export function Slider({ value, onValueChange, onValueCommit, formatValue, className, ...props }: SliderProps) {
+export function Slider({
+  value,
+  onValueChange,
+  onValueCommit,
+  formatValue,
+  className,
+  ...props
+}: SliderProps) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <SliderPrimitive.Root
@@ -36,7 +45,7 @@ export function Slider({ value, onValueChange, onValueCommit, formatValue, class
         />
       </SliderPrimitive.Root>
       {formatValue ? (
-        <span className="num min-w-12 shrink-0 text-right text-dense text-fg">{formatValue(value)}</span>
+        <span className="min-w-12 shrink-0 text-right num text-dense text-fg">{formatValue(value)}</span>
       ) : null}
     </div>
   );

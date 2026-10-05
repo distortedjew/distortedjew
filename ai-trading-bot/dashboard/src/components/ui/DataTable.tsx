@@ -149,7 +149,8 @@ export function DataTable<T>({
       .sort((a, b) => {
         const result = compare(get(a.row), get(b.row));
         if (result === 0) return a.index - b.index;
-        const missingLast = get(a.row) === null || get(a.row) === undefined || get(b.row) === null || get(b.row) === undefined;
+        const missingLast =
+          get(a.row) === null || get(a.row) === undefined || get(b.row) === null || get(b.row) === undefined;
         return sort.desc && !missingLast ? -result : result;
       })
       .map(({ row }) => row);
@@ -228,7 +229,11 @@ export function DataTable<T>({
                     aria-sort={active ? (sort?.desc ? "descending" : "ascending") : undefined}
                     className={cn(
                       "sticky top-0 z-10 h-9 border-b border-line bg-surface-2 px-3 text-[11px] font-medium tracking-[0.05em] whitespace-nowrap text-fg-subtle uppercase first:pl-4 last:pr-4",
-                      column.align === "right" ? "text-right" : column.align === "center" ? "text-center" : "text-left",
+                      column.align === "right"
+                        ? "text-right"
+                        : column.align === "center"
+                          ? "text-center"
+                          : "text-left",
                       column.hideBelow && HIDE_BELOW[column.hideBelow],
                       column.headerClassName,
                     )}

@@ -211,6 +211,22 @@ class RestoredState:
     day: str | None = None  # UTC date the daily numbers belong to
 
 
+@dataclass
+class MarketState:
+    """The market side of a core: candle books, regime trackers and MTF reports per symbol.
+
+    Cores that consume the same candles in lock-step can share one (the backtester runs its
+    strategy comparison this way): the first core to see a bar adds it to the books and
+    computes the regime and the MTF report, the others reuse them.
+    """
+
+    books: dict[str, CandleBook] = field(default_factory=dict)
+    regimes: dict[str, RegimeTracker] = field(default_factory=dict)
+    mtf: dict[str, MTFReport] = field(default_factory=dict)
+    mtf_cache: dict[str, dict] = field(default_factory=dict)
+    mtf_built: dict[str, int | None] = field(default_factory=dict)  # book end time of the last build
+
+
 _EXIT_LABEL: dict[str, str] = {
     "STOP_LOSS": "stop loss",
     "TAKE_PROFIT": "take profit",
@@ -230,19 +246,22 @@ class TradingCore:
         *,
         position_ids: Callable[[], str] = new_position_id,
         decision_ids: Callable[[], str] = new_decision_id,
+        baseline_fn: Callable[[MarketContext], AnalystResult] = baseline.evaluate,
+        market: MarketState | None = None,
     ) -> None:
         self.settings = settings
         self.config = config
         self.analyst = analyst
         self.sink: CoreSink = sink or NullSink()
         self.decision_ids = decision_ids
+        self.baseline_fn = baseline_fn
         self.risk = RiskManager(settings.risk, settings.execution, settings.trading)
         self.broker = PaperBroker(settings.execution, ids=position_ids)
-        self.books: dict[str, CandleBook] = {}
-        self.regimes: dict[str, RegimeTracker] = {}
-        self.mtf: dict[str, MTFReport] = {}
-        self._mtf_cache: dict[str, dict] = {}
-        self._mtf_dirty: set[str] = set()
+        self.market = market if market is not None else MarketState()
+        self.books = self.market.books
+        self.regimes = self.market.regimes
+        self.mtf = self.market.mtf
+        self._last_bar: dict[str, int] = {}  # open time of the last base candle this core processed
         self.prices: dict[str, float] = {}
         self.latest_analysis: dict[str, AIAnalysis] = {}
         self.evaluations: list[PendingEvaluation] = []
@@ -278,11 +297,9 @@ class TradingCore:
 
     @property
     def context_timeframes(self) -> tuple[str, ...]:
+        """Every timeframe the candle books hold (the base and above); prompts use a subset."""
         base = TIMEFRAME_SECONDS[self.config.base_timeframe]
-        tfs = [tf for tf in CONTEXT_TIMEFRAMES if TIMEFRAME_SECONDS[tf] >= base]
-        if self.decision_timeframe not in tfs:
-            tfs.append(self.decision_timeframe)
-        return tuple(tfs)
+        return tuple(tf for tf in TIMEFRAMES if TIMEFRAME_SECONDS[tf] >= base)
 
     def ensure_symbol(self, symbol: str) -> CandleBook:
         sym = normalize(symbol)
@@ -295,15 +312,32 @@ class TradingCore:
         return book
 
     def warm_up(self, symbol: str, history: Mapping[str, Sequence[Candle]]) -> None:
-        """Seed a symbol's candle book (no decisions, no records)."""
-        book = self.ensure_symbol(symbol)
+        """Seed a symbol's candle book from history (no decisions, no records).
+
+        The book is rebuilt from scratch, so warming a symbol again (re-added in the settings)
+        never double-counts candles.
+        """
+        sym = normalize(symbol)
+        base = self.config.base_timeframe
+        book = CandleBook(sym, base, TIMEFRAMES[TIMEFRAMES.index(base) :])
+        self.books[sym] = book
+        self.regimes.setdefault(sym, RegimeTracker(sym))
+        self.market.mtf_cache.pop(sym, None)
+        self.market.mtf_built.pop(sym, None)
+        self._last_bar.pop(sym, None)
         book.warm_up(history)
-        if book.last_price is not None:
-            self.prices[book.symbol] = book.last_price
-            for pos in self.broker.positions.values():
-                if pos.symbol == book.symbol and not pos.mark:
-                    pos.mark = book.last_price
-        self._build_mtf(book.symbol, None)
+        self.sync_prices(sym)
+        self._build_mtf(sym, None)
+
+    def sync_prices(self, symbol: str) -> None:
+        """Take the latest price of a (possibly shared) candle book as this core's mark."""
+        book = self.books.get(normalize(symbol))
+        if book is None or book.last_price is None:
+            return
+        self.prices[book.symbol] = book.last_price
+        for pos in self.broker.positions.values():
+            if pos.symbol == book.symbol and not pos.mark:
+                pos.mark = book.last_price
 
     def apply_settings(self, settings: BotSettings) -> None:
         self.settings = settings
@@ -481,9 +515,14 @@ class TradingCore:
         sym = normalize(symbol)
         book = self.ensure_symbol(sym)
         now = _ts(candle.time + book.base_seconds)
-        last = book.series[book.base].last_time
-        if last is not None and candle.time <= last:
+        mine = self._last_bar.get(sym)
+        if mine is not None and candle.time <= mine:
             return []
+        shared_bar = book.last_added == candle.time  # another core on this market added it already
+        last = book.series[book.base].last_time
+        if not shared_bar and last is not None and candle.time <= last:
+            return []
+        self._last_bar[sym] = candle.time
         self._roll_day(now)
         result = self.broker.on_bar(sym, candle, now, self.settings.trading.max_holding_minutes)
         self._handle_fills(result.filled, now)
@@ -497,9 +536,8 @@ class TradingCore:
             if pos.symbol == sym:
                 pos.mark = candle.close
         self._after_mark(now)
-        self._mtf_dirty.add(sym)
         if self.config.publish_mtf:
-            report = self._build_mtf(sym, now)
+            report = self.mtf_report(sym, now)
             if report is not None and self.config.emit_records:
                 self._batch.mtf.append(report)
         pending: list[PendingDecision] = []
@@ -515,7 +553,8 @@ class TradingCore:
         self._roll_day(now)
         rec = self._equity_record(now)
         self._batch.equity.append(rec)
-        self._batch.accounting = self.accounting_state()
+        if self.config.emit_records:
+            self._batch.accounting = self.accounting_state()
         if include_positions and self.config.emit_records:
             self._batch.positions.extend(self.positions(now))
         self.flush()
@@ -587,7 +626,8 @@ class TradingCore:
             self.trades_today = 0
         self.day = day
         self.day_start_equity = equity
-        self._batch.accounting = self.accounting_state()
+        if self.config.emit_records:
+            self._batch.accounting = self.accounting_state()
         halted_before = self.risk.state.daily_halt_until is not None
         if self.risk.roll_day(now):
             self._risk_dirty = True
@@ -718,7 +758,8 @@ class TradingCore:
         self._event(event_type, title, msg, now, severity=severity, symbol=trade.symbol, data=data)
         self._notify(notif, notif_title, msg, now, severity=severity, data={**data, "symbol": trade.symbol})
         self._batch.equity.append(self._equity_record(now))
-        self._batch.accounting = self.accounting_state()
+        if self.config.emit_records:
+            self._batch.accounting = self.accounting_state()
         for alert in alerts:
             self._alert(alert, now)
 
@@ -787,7 +828,8 @@ class TradingCore:
 
     def mtf_report(self, symbol: str, now: datetime | None = None) -> MTFReport | None:
         """The symbol's MTF report, rebuilt first if candles arrived since the last build."""
-        if symbol in self._mtf_dirty:
+        book = self.books.get(symbol)
+        if book is not None and self.market.mtf_built.get(symbol, -1) != book.end_time:
             self._build_mtf(symbol, now)
         return self.mtf.get(symbol)
 
@@ -796,8 +838,8 @@ class TradingCore:
         tfs = self.config.mtf_timeframes
         features = {tf: book.features(tf) for tf in tfs if tf in book.series}
         ts = now or (_ts(book.end_time) if book.end_time else datetime.now(UTC))
-        report = build_report(symbol, features, ts, tfs, self._mtf_cache.setdefault(symbol, {}))
-        self._mtf_dirty.discard(symbol)
+        report = build_report(symbol, features, ts, tfs, self.market.mtf_cache.setdefault(symbol, {}))
+        self.market.mtf_built[symbol] = book.end_time
         if report is not None:
             self.mtf[symbol] = report
         return report
@@ -888,12 +930,14 @@ class TradingCore:
         snapshots = {}
         # every timeframe's snapshot goes into an LLM prompt; local analysts read features only
         full = self.analyst.is_remote and needs_analyst(self.settings.trading.strategy)
+        records = self.config.emit_records
+        prompt_tfs = set(CONTEXT_TIMEFRAMES) | {tf}
         for t in self.context_timeframes:
             feat = book.features(t)
             if feat is None:
                 continue
             features[t] = feat
-            if full or t == tf:
+            if (full and t in prompt_tfs) or (records and t == tf):
                 snap = book.snapshot(t)
                 if snap is not None:
                     snapshots[t] = snap
@@ -910,8 +954,8 @@ class TradingCore:
             snapshots=snapshots,
             mtf=self.mtf_report(symbol, now),
             regime=regime,
-            candles=book.candles(tf, CONTEXT_CANDLES),
-            position=pos.to_schema(now) if pos is not None else None,
+            candles=book.candles(tf, CONTEXT_CANDLES) if full else [],
+            position=pos.to_schema(now) if pos is not None and (full or records) else None,
             equity=self.equity(),
             settings=self.settings,
             performance=self.performance(),
@@ -922,7 +966,9 @@ class TradingCore:
         book = self.books[symbol]
         tf = self.decision_timeframe
         feats = book.features(tf)
-        state, switched = self.regimes[symbol].update(classify(feats), now)
+        tracker = self.regimes[symbol]
+        cached = tracker.cached(now)
+        state, switched = cached if cached is not None else tracker.update(classify(feats), now)
         if self.config.emit_records:
             self._batch.regimes.append((state, switched))
         self.last_market_update = now
@@ -947,7 +993,7 @@ class TradingCore:
         if ctx is None:
             return None
         strategy = self.settings.trading.strategy
-        base = baseline.evaluate(ctx)
+        base = self.baseline_fn(ctx)
         if not needs_analyst(strategy):
             self._finalize(ctx, base, base, None, now)
             return None
@@ -1034,7 +1080,8 @@ class TradingCore:
             risk_decision = assessment.decision
             if risk_decision.status == "REJECTED":
                 self._risk_dirty = True
-            self._risk_event(analysis_id, assessment, symbol, side, now)
+            if self.config.emit_records:
+                self._risk_event(analysis_id, assessment, symbol, side, now)
             if assessment.reverse:
                 self._reverse(symbol, now)
             if risk_decision.status == "APPROVED" and assessment.sizing is not None:

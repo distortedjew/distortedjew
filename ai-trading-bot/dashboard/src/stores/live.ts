@@ -84,7 +84,14 @@ export const useLiveStore = create<LiveState>()((set, get) => ({
   ...initial,
 
   setConnection: ({ status, attempt, nextRetryAt, connectedAt, reconnects, unauthorized }) =>
-    set({ connection: status, reconnectAttempt: attempt, nextRetryAt, connectedAt, reconnects, unauthorized }),
+    set({
+      connection: status,
+      reconnectAttempt: attempt,
+      nextRetryAt,
+      connectedAt,
+      reconnects,
+      unauthorized,
+    }),
 
   noteFrame: (at) => {
     const last = get().lastFrameAt;
@@ -120,7 +127,11 @@ export const useLiveStore = create<LiveState>()((set, get) => ({
       return {
         events: merged,
         lastEventId:
-          maxId === null ? state.lastEventId : state.lastEventId === null ? maxId : Math.max(state.lastEventId, maxId),
+          maxId === null
+            ? state.lastEventId
+            : state.lastEventId === null
+              ? maxId
+              : Math.max(state.lastEventId, maxId),
       };
     }),
 

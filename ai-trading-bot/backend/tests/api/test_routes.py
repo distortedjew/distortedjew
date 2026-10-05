@@ -540,6 +540,57 @@ def test_system_health(client: TestClient, seeded: Seed) -> None:
     assert health.host.cpu_count >= 1 and health.api.pid > 0
 
 
+def market_data(client: TestClient) -> tuple[str, str, dict]:
+    health = SystemHealth.model_validate(client.get("/api/system").json())
+    component = next(c for c in health.components if c.key == "market_data")
+    return component.state, component.message, component.details
+
+
+SIM_MESSAGE = "Simulated market (deterministic, seed 7)"
+
+
+def test_a_simulator_chosen_on_purpose_is_healthy(client: TestClient, db: Database) -> None:
+    f.publish_live_state(db)
+    db.put_live("status", f.engine_status(feed_message=SIM_MESSAGE))
+    assert market_data(client)[:2] == ("operational", SIM_MESSAGE)
+
+
+def test_the_simulator_after_a_binance_fallback_is_a_warning(client: TestClient, db: Database) -> None:
+    f.publish_live_state(db)
+    started = utcnow() - timedelta(hours=1)
+    db.put_live("status", f.engine_status(feed_message=SIM_MESSAGE, started_at=started))
+    db.add_notification(
+        "MARKET_DATA_UNAVAILABLE",
+        "Binance unreachable — using the simulator",
+        "Live market data could not be reached (403 Forbidden).",
+        severity="warning",
+        data={"error": "403 Forbidden"},
+        ts=started + timedelta(seconds=4),
+    )
+    state, message, details = market_data(client)
+    assert (state, message) == ("warning", f"Binance unreachable — {SIM_MESSAGE}")
+    assert details["fallback_reason"] == "403 Forbidden"
+
+    # a fallback from an earlier engine run does not count for this one
+    db.put_live(
+        "status", f.engine_status(feed_message=SIM_MESSAGE, started_at=utcnow() - timedelta(minutes=5))
+    )
+    assert market_data(client)[0] == "operational"
+
+
+def test_market_data_while_starting_and_when_stale(client: TestClient, db: Database) -> None:
+    phase = "Bootstrapping: replaying 14 days of simulated market"
+    db.put_live("status", f.engine_status(feed_message=phase))
+    assert market_data(client)[:2] == ("warning", phase)  # no tick yet
+
+    db.put_live("ticker:BTC/USDT", f.ticker("BTC/USDT", ts=utcnow() - timedelta(seconds=30)))
+    assert market_data(client)[1].startswith("Market data delayed")
+    db.put_live("ticker:BTC/USDT", f.ticker("BTC/USDT", ts=utcnow() - timedelta(minutes=3)))
+    assert market_data(client)[:2] == ("error", "Market data stale — last tick 3 min ago")
+    db.put_live("status", f.engine_status(feed="binance", feed_connected=False, feed_message="stream lost"))
+    assert market_data(client)[:2] == ("error", "Binance feed disconnected: stream lost")
+
+
 def test_unknown_api_paths_and_methods_are_json(client: TestClient) -> None:
     missing = client.get("/api/does-not-exist")
     assert missing.status_code == 404 and missing.json() == {"detail": "Not Found"}

@@ -49,14 +49,17 @@ export function Dialog({
         {open ? (
           <DialogPrimitive.Portal forceMount>
             <DialogPrimitive.Overlay asChild forceMount>
-              <motion.div className="fixed inset-0 z-50 bg-overlay backdrop-blur-[2px]" {...motionPresets.overlay} />
+              <motion.div
+                className="fixed inset-0 z-50 bg-overlay backdrop-blur-[2px]"
+                {...motionPresets.overlay}
+              />
             </DialogPrimitive.Overlay>
             <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-6">
               <DialogPrimitive.Content asChild forceMount>
                 <motion.div
                   {...motionPresets.dialog}
                   className={cn(
-                    "surface-elevated pointer-events-auto flex max-h-[min(88dvh,820px)] w-full flex-col overflow-hidden rounded-2xl outline-none",
+                    "pointer-events-auto flex max-h-[min(88dvh,820px)] w-full flex-col overflow-hidden rounded-2xl surface-elevated outline-none",
                     sizes[size],
                     className,
                   )}
@@ -136,7 +139,12 @@ export function ConfirmDialog({
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={loading}>
             {cancelLabel}
           </Button>
-          <Button variant={tone === "danger" ? "danger" : "primary"} size="sm" loading={loading} onClick={onConfirm}>
+          <Button
+            variant={tone === "danger" ? "danger" : "primary"}
+            size="sm"
+            loading={loading}
+            onClick={onConfirm}
+          >
             {confirmLabel}
           </Button>
         </>

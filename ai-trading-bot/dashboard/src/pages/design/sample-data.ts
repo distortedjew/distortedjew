@@ -2,7 +2,16 @@
  * Static sample data for the dev-only design showcase (/_design). Never import this from a
  * real page: real pages render API data only.
  */
-import type { Candle, ChartMarker, Kpi, LinePoint, Notification, Position, PortfolioKpis, PriceLevel } from "@/types";
+import type {
+  Candle,
+  ChartMarker,
+  Kpi,
+  LinePoint,
+  Notification,
+  Position,
+  PortfolioKpis,
+  PriceLevel,
+} from "@/types";
 
 /** Deterministic pseudo-random walk (no Math.random, so renders are stable). */
 export function walk(n: number, start: number, vol: number, drift = 0, seed = 7): number[] {
@@ -229,7 +238,11 @@ export const SAMPLE_EQUITY = (() => {
   let peak = -Infinity;
   return values.map((equity, i) => {
     peak = Math.max(peak, equity);
-    return { time: start + i * 86_400, equity, drawdown_pct: Math.round(((equity - peak) / peak) * 10_000) / 100 };
+    return {
+      time: start + i * 86_400,
+      equity,
+      drawdown_pct: Math.round(((equity - peak) / peak) * 10_000) / 100,
+    };
   });
 })();
 
@@ -278,17 +291,59 @@ export const SAMPLE_MARKET = (() => {
   const at = (i: number) => candles[i];
   const markers: ChartMarker[] = [
     { time: at(24).time, kind: "signal_long", price: at(24).close, label: "AI 71%", trade_id: null },
-    { time: at(42).time, kind: "entry_long", price: at(42).close, label: "LONG 74%", trade_id: "pos_sample000001" },
-    { time: at(70).time, kind: "take_profit", price: at(70).high, label: "TP +1.92%", trade_id: "pos_sample000001" },
-    { time: at(96).time, kind: "entry_short", price: at(96).close, label: "SHORT 68%", trade_id: "pos_sample000002" },
-    { time: at(110).time, kind: "stop_loss", price: at(110).high, label: "SL −0.84%", trade_id: "pos_sample000002" },
-    { time: at(132).time, kind: "entry_long", price: at(132).close, label: "LONG 77%", trade_id: "pos_sample000003" },
+    {
+      time: at(42).time,
+      kind: "entry_long",
+      price: at(42).close,
+      label: "LONG 74%",
+      trade_id: "pos_sample000001",
+    },
+    {
+      time: at(70).time,
+      kind: "take_profit",
+      price: at(70).high,
+      label: "TP +1.92%",
+      trade_id: "pos_sample000001",
+    },
+    {
+      time: at(96).time,
+      kind: "entry_short",
+      price: at(96).close,
+      label: "SHORT 68%",
+      trade_id: "pos_sample000002",
+    },
+    {
+      time: at(110).time,
+      kind: "stop_loss",
+      price: at(110).high,
+      label: "SL −0.84%",
+      trade_id: "pos_sample000002",
+    },
+    {
+      time: at(132).time,
+      kind: "entry_long",
+      price: at(132).close,
+      label: "LONG 77%",
+      trade_id: "pos_sample000003",
+    },
   ];
   const entry = at(132).close;
   const levels: PriceLevel[] = [
     { kind: "entry", price: entry, label: "LONG entry", position_id: "pos_sample000003", side: "LONG" },
-    { kind: "stop_loss", price: Math.round(entry * 0.9965 * 100) / 100, label: "SL", position_id: "pos_sample000003", side: "LONG" },
-    { kind: "take_profit", price: Math.round(entry * 1.0065 * 100) / 100, label: "TP", position_id: "pos_sample000003", side: "LONG" },
+    {
+      kind: "stop_loss",
+      price: Math.round(entry * 0.9965 * 100) / 100,
+      label: "SL",
+      position_id: "pos_sample000003",
+      side: "LONG",
+    },
+    {
+      kind: "take_profit",
+      price: Math.round(entry * 1.0065 * 100) / 100,
+      label: "TP",
+      position_id: "pos_sample000003",
+      side: "LONG",
+    },
   ];
   return { candles, ema21, markers, levels };
 })();

@@ -25,14 +25,25 @@ export function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const isDesktop = useBreakpoint("lg");
 
   return (
-    <header className="surface-glass sticky top-0 z-40 border-b border-line">
+    <header className="sticky top-0 z-40 border-b border-line surface-glass">
       <div className="mx-auto max-w-[1760px] px-3 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center gap-2 sm:gap-3 lg:h-[52px]">
-          <IconButton icon={Menu} label="Open navigation" onClick={onOpenMenu} className="-ml-1 lg:hidden" tooltip={false} />
+          <IconButton
+            icon={Menu}
+            label="Open navigation"
+            onClick={onOpenMenu}
+            className="-ml-1 lg:hidden"
+            tooltip={false}
+          />
           <BrandMark compact={!isDesktop} />
           <div className="flex-1" />
           <div className="flex items-center gap-1.5 sm:gap-2.5">
-            <ConnectionIndicator compact={!isTablet} className={cn(!isTablet && "px-1")} />
+            <ConnectionIndicator
+              compact={!isTablet}
+              // Phones in live-trading mode: the red banner + "LIVE" mode pill own the word "LIVE".
+              dotOnly={!isTablet && mode === "live"}
+              className={cn(!isTablet && "px-1")}
+            />
             <ConnectedBotStatusPill compact={!isTablet} />
             <TradingModeBadge mode={mode} compact={!isTablet} />
             <Separator orientation="vertical" className="mx-0.5 hidden h-5 sm:block" />

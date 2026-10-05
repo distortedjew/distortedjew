@@ -17,6 +17,7 @@ Definitions (the dashboard's AI page tooltips come from here):
 - **Calibration**: per bucket, the mean confidence of its closed trades (of its
   signals when none closed yet) against the trades' win rate; ``actual`` stays None
   under 3 trades.
+- **By provider**: directional signals and closed AI trades per provider / model.
 - **Over time**: one point per UTC day. ``signals``, ``avg_confidence`` and
   ``accuracy`` belong to the day the signal was made; ``trades``, ``win_rate``,
   ``pnl`` and ``cumulative_win_rate`` to the day the trade closed.
@@ -72,7 +73,7 @@ class DecisionRow:
     signal: Signal
     confidence: float
     provider: str
-    model: str
+    model: str | None  # loaded for directional signals only (the provider breakdown counts those)
     risk_status: str
     eval_status: str
     trade_id: str | None
@@ -102,8 +103,9 @@ class AITradeRow:
 
 def load_decisions(db: Database, start: datetime, end: datetime) -> list[DecisionRow]:
     rows = db.read(
+        # the model sits inside the JSON payload: skip parsing it for the (many) HOLDs
         "SELECT id, created_at, signal, confidence, provider, risk_status, eval_status, trade_id, "
-        "json_extract(payload, '$.model') AS model FROM ai_decisions "
+        "CASE WHEN signal != 'HOLD' THEN json_extract(payload, '$.model') END AS model FROM ai_decisions "
         "WHERE created_at >= ? AND created_at <= ? ORDER BY created_at",
         (iso(start), iso(end)),
     )
@@ -114,7 +116,7 @@ def load_decisions(db: Database, start: datetime, end: datetime) -> list[Decisio
             signal=r["signal"],
             confidence=r["confidence"],
             provider=r["provider"],
-            model=r["model"] or "unknown",
+            model=r["model"],
             risk_status=r["risk_status"],
             eval_status=r["eval_status"],
             trade_id=r["trade_id"],
@@ -336,7 +338,8 @@ def _over_time(
 def _by_provider(decisions: Sequence[DecisionRow], trades: Sequence[AITradeRow]) -> list[ProviderBreakdown]:
     signals: Counter[tuple[str, str]] = Counter()
     for d in decisions:
-        signals[(d.provider, d.model)] += 1 if d.directional else 0
+        if d.directional:
+            signals[(d.provider, d.model or "unknown")] += 1
     pnls: dict[tuple[str, str], list[float]] = defaultdict(list)
     for t in trades:
         pnls[(t.provider, t.model)].append(t.pnl)

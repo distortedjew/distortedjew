@@ -16,7 +16,17 @@ import {
   YAxis,
 } from "recharts";
 import { ApiError } from "@/lib/api";
-import { formatDate, formatDateTime, formatDuration, formatPnl, formatPrice, formatR, formatSize, formatUsd, splitSymbol } from "@/lib/format";
+import {
+  formatDate,
+  formatDateTime,
+  formatDuration,
+  formatPnl,
+  formatPrice,
+  formatR,
+  formatSize,
+  formatUsd,
+  splitSymbol,
+} from "@/lib/format";
 import { TIMEFRAMES } from "@/lib/constants";
 import type { Kpi, PortfolioKpis, Position, Timeframe } from "@/types";
 import {
@@ -125,7 +135,11 @@ export function FormsSection() {
   const [email, setEmail] = useState(false);
   const [maxPositions, setMaxPositions] = useState<number | null>(25);
   return (
-    <Section id="forms" title="Form controls" description="Settings forms and filters. NumberInput clamps on blur, ↑/↓ steps (Shift ×10).">
+    <Section
+      id="forms"
+      title="Form controls"
+      description="Settings forms and filters. NumberInput clamps on blur, ↑/↓ steps (Shift ×10)."
+    >
       <Card>
         <CardBody className="grid gap-5 pt-4 md:grid-cols-2 xl:grid-cols-3">
           <Field label="Search" htmlFor="ds-search" hint="Symbol, id or reason">
@@ -147,23 +161,65 @@ export function FormsSection() {
               options={TIMEFRAMES.map((t) => ({ value: t, label: t }))}
             />
           </Field>
-          <Field label="Risk per trade" htmlFor="ds-risk" info="Of equity, lost if the stop is hit." hint="0.1 – 5 %">
-            <NumberInput id="ds-risk" value={risk} onValueChange={setRisk} min={0.1} max={5} step={0.1} unit="%" />
+          <Field
+            label="Risk per trade"
+            htmlFor="ds-risk"
+            info="Of equity, lost if the stop is hit."
+            hint="0.1 – 5 %"
+          >
+            <NumberInput
+              id="ds-risk"
+              value={risk}
+              onValueChange={setRisk}
+              min={0.1}
+              max={5}
+              step={0.1}
+              unit="%"
+            />
           </Field>
           <Field
             label="Max positions"
             htmlFor="ds-maxpos"
             error={maxPositions !== null && maxPositions > 20 ? "Must be 20 or less" : undefined}
           >
-            <NumberInput id="ds-maxpos" value={maxPositions} onValueChange={setMaxPositions} step={1} unit="pos" />
+            <NumberInput
+              id="ds-maxpos"
+              value={maxPositions}
+              onValueChange={setMaxPositions}
+              step={1}
+              unit="pos"
+              invalid={maxPositions !== null && maxPositions > 20}
+            />
           </Field>
-          <Field label="Minimum AI confidence" htmlFor="ds-conf" aside={<span className="num">{confidence}%</span>}>
-            <Slider aria-label="Minimum AI confidence" value={confidence} onValueChange={setConfidence} min={0} max={100} step={1} />
+          <Field
+            label="Minimum AI confidence"
+            htmlFor="ds-conf"
+            aside={<span className="num">{confidence}%</span>}
+          >
+            <Slider
+              aria-label="Minimum AI confidence"
+              value={confidence}
+              onValueChange={setConfidence}
+              min={0}
+              max={100}
+              step={1}
+            />
           </Field>
-          <Field label="Allow short positions" htmlFor="ds-shorts" layout="inline" hint="Trade both directions">
+          <Field
+            label="Allow short positions"
+            htmlFor="ds-shorts"
+            layout="inline"
+            hint="Trade both directions"
+          >
             <Switch id="ds-shorts" checked={shorts} onCheckedChange={setShorts} />
           </Field>
-          <Field label="Email alerts" htmlFor="ds-email" layout="inline" hint="SMTP not configured" aside={<Badge tone="muted">Off</Badge>}>
+          <Field
+            label="Email alerts"
+            htmlFor="ds-email"
+            layout="inline"
+            hint="SMTP not configured"
+            aside={<Badge tone="muted">Off</Badge>}
+          >
             <Checkbox id="ds-email" checked={email} onCheckedChange={(v) => setEmail(v === true)} />
           </Field>
           <Field label="Notes" htmlFor="ds-notes">
@@ -215,7 +271,18 @@ export function FormsSection() {
               onValueChange={() => {}}
               options={["24h", "7d", "30d", "90d", "all"].map((v) => ({ value: v, label: v.toUpperCase() }))}
             />
-            <Select size="sm" className="w-36" aria-label="Side" value="all" onValueChange={() => {}} options={[{ value: "all", label: "All sides" }, { value: "LONG", label: "Long" }, { value: "SHORT", label: "Short" }]} />
+            <Select
+              size="sm"
+              className="w-36"
+              aria-label="Side"
+              value="all"
+              onValueChange={() => {}}
+              options={[
+                { value: "all", label: "All sides" },
+                { value: "LONG", label: "Long" },
+                { value: "SHORT", label: "Short" },
+              ]}
+            />
             <FilterBarSpacer />
             <Button size="sm" leftIcon={Download}>
               Export
@@ -237,7 +304,11 @@ export function NumbersSection() {
     return () => clearInterval(id);
   }, []);
   return (
-    <Section id="numbers" title="Live numbers" description="Tabular figures; prices flash on change, KPIs count smoothly (instant with reduced motion).">
+    <Section
+      id="numbers"
+      title="Live numbers"
+      description="Tabular figures; prices flash on change, KPIs count smoothly (instant with reduced motion)."
+    >
       <Card>
         <CardBody className="grid gap-6 pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <KeyValue label="PriceText (ticking)" value={<PriceText value={price} className="text-lg" />} />
@@ -245,8 +316,15 @@ export function NumbersSection() {
             label="AnimatedNumber"
             value={
               <div className="flex items-center gap-2">
-                <AnimatedNumber value={equity} format={(n) => formatUsd(n)} className="text-lg font-semibold" />
-                <Button size="xs" onClick={() => setEquity((e) => Math.round((e + (Math.random() - 0.45) * 300) * 100) / 100)}>
+                <AnimatedNumber
+                  value={equity}
+                  format={(n) => formatUsd(n)}
+                  className="text-lg font-semibold"
+                />
+                <Button
+                  size="xs"
+                  onClick={() => setEquity((e) => Math.round((e + (Math.random() - 0.45) * 300) * 100) / 100)}
+                >
                   Update
                 </Button>
               </div>
@@ -255,7 +333,7 @@ export function NumbersSection() {
           <KeyValue
             label="PnlText"
             value={
-              <div className="space-y-1">
+              <div className="flex flex-col items-start gap-1">
                 <PnlText value={482.31} pct={4.82} />
                 <PnlText value={-120.5} pct={-1.2} />
                 <PnlText value={0} pct={0} />
@@ -265,7 +343,7 @@ export function NumbersSection() {
           <KeyValue
             label="DeltaBadge"
             value={
-              <div className="space-y-1.5">
+              <div className="flex flex-col items-start gap-1.5">
                 <DeltaBadge change={482.31} changePct={4.82} format="currency" />
                 <DeltaBadge change={-1.32} format="pp" />
                 <DeltaBadge change={-0.08} format="ratio" variant="pill" />
@@ -311,14 +389,28 @@ export function KpiSection() {
       for (const key of KPI_ORDER) {
         const k = current[key];
         if (k.value === null) continue;
-        const delta = key === "equity" ? (Math.random() - 0.4) * 120 : key === "open_positions" || key === "trades_today" ? 1 : (Math.random() - 0.4) * Math.abs(k.value) * 0.1;
+        const delta =
+          key === "equity"
+            ? (Math.random() - 0.4) * 120
+            : key === "open_positions" || key === "trades_today"
+              ? 1
+              : (Math.random() - 0.4) * Math.abs(k.value) * 0.1;
         const value = Math.round((k.value + delta) * 100) / 100;
-        next[key] = { ...k, value, change: k.change === null ? null : Math.round((k.change + delta) * 100) / 100, sparkline: [...k.sparkline.slice(1), value] } as Kpi;
+        next[key] = {
+          ...k,
+          value,
+          change: k.change === null ? null : Math.round((k.change + delta) * 100) / 100,
+          sparkline: [...k.sparkline.slice(1), value],
+        } as Kpi;
       }
       return next;
     });
   return (
-    <Section id="kpis" title="KPI cards" description="KpiCard with sample props (the Overview renders them from usePortfolio().data.kpis).">
+    <Section
+      id="kpis"
+      title="KPI cards"
+      description="KpiCard with sample props (the Overview renders them from usePortfolio().data.kpis)."
+    >
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={bump}>
           Simulate update
@@ -337,7 +429,11 @@ export function KpiSection() {
         ))}
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard definition={KPI_DEFINITIONS.profit_factor} kpi={{ ...NULL_KPI }} nullHint="No losing trades in the last 7 days yet." />
+        <KpiCard
+          definition={KPI_DEFINITIONS.profit_factor}
+          kpi={{ ...NULL_KPI }}
+          nullHint="No losing trades in the last 7 days yet."
+        />
         <KpiCard definition={KPI_DEFINITIONS.equity} kpi={undefined} loading />
         <KpiCard definition={KPI_DEFINITIONS.win_rate} kpi={kpis.win_rate} compact />
         <SkeletonKpi />
@@ -357,20 +453,63 @@ export function SparklineSection() {
         <CardBody className="grid gap-6 pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <KeyValue
             label="Stat tile · line"
-            value={<Sparkline data={walk(30, 100, 4, 0.6, 2)} tone="deemphasis" highlightLast height={38} formatValue={(v) => formatPrice(v)} />}
+            value={
+              <Sparkline
+                data={walk(30, 100, 4, 0.6, 2)}
+                tone="deemphasis"
+                highlightLast
+                height={38}
+                formatValue={(v) => formatPrice(v)}
+              />
+            }
           />
           <KeyValue
             label="Stat tile · bars"
-            value={<Sparkline data={SAMPLE_KPIS.today_pnl.sparkline} variant="bars" tone="deemphasis" highlightLast height={38} formatValue={(v) => formatPnl(v)} />}
+            value={
+              <Sparkline
+                data={SAMPLE_KPIS.today_pnl.sparkline}
+                variant="bars"
+                tone="deemphasis"
+                highlightLast
+                height={38}
+                formatValue={(v) => formatPnl(v)}
+              />
+            }
           />
-          <KeyValue label="Up trend" value={<Sparkline data={walk(30, 100, 4, 0.6, 2)} formatValue={(v) => formatPrice(v)} />} />
-          <KeyValue label="Down trend" value={<Sparkline data={walk(30, 100, 4, -0.6, 8)} formatValue={(v) => formatPrice(v)} />} />
-          <KeyValue label="Daily P&L bars" value={<Sparkline data={SAMPLE_KPIS.today_pnl.sparkline} variant="bars" formatValue={(v) => formatPnl(v)} />} />
-          <KeyValue label="Neutral counts" value={<Sparkline data={SAMPLE_KPIS.trades_today.sparkline} variant="bars" tone="accent" />} />
+          <KeyValue
+            label="Up trend"
+            value={<Sparkline data={walk(30, 100, 4, 0.6, 2)} formatValue={(v) => formatPrice(v)} />}
+          />
+          <KeyValue
+            label="Down trend"
+            value={<Sparkline data={walk(30, 100, 4, -0.6, 8)} formatValue={(v) => formatPrice(v)} />}
+          />
+          <KeyValue
+            label="Daily P&L bars"
+            value={
+              <Sparkline
+                data={SAMPLE_KPIS.today_pnl.sparkline}
+                variant="bars"
+                formatValue={(v) => formatPnl(v)}
+              />
+            }
+          />
+          <KeyValue
+            label="Neutral counts"
+            value={<Sparkline data={SAMPLE_KPIS.trades_today.sparkline} variant="bars" tone="accent" />}
+          />
           <KeyValue label="Flat" value={<Sparkline data={[5, 5, 5, 5, 5]} />} />
           <KeyValue label="No data" value={<Sparkline data={[]} />} />
-          <KeyValue label="Line, no area" value={<Sparkline data={walk(40, 50, 3, 0.1, 13)} area={false} tone="accent" />} />
-          <KeyValue label="Tall (64px)" value={<Sparkline data={walk(48, 200, 8, 0.3, 17)} height={64} formatValue={(v) => formatPrice(v)} />} />
+          <KeyValue
+            label="Line, no area"
+            value={<Sparkline data={walk(40, 50, 3, 0.1, 13)} area={false} tone="accent" />}
+          />
+          <KeyValue
+            label="Tall (64px)"
+            value={
+              <Sparkline data={walk(48, 200, 8, 0.3, 17)} height={64} formatValue={(v) => formatPrice(v)} />
+            }
+          />
         </CardBody>
       </Card>
     </Section>
@@ -381,7 +520,11 @@ export function ChartsSection() {
   const theme = useChartTheme();
   const anim = useChartAnimation();
   return (
-    <Section id="charts" title="Analytics charts (Recharts)" description="Theme tokens, solid hairline grid, 2px lines, ~10 % area wash, ≤ 24px bars, value-first tooltips.">
+    <Section
+      id="charts"
+      title="Analytics charts (Recharts)"
+      description="Theme tokens, solid hairline grid, 2px lines, ~10 % area wash, ≤ 24px bars, value-first tooltips."
+    >
       <LightweightSample />
       <div className="grid items-start gap-4 xl:grid-cols-2">
         <ChartCard
@@ -394,7 +537,7 @@ export function ChartsSection() {
                 {SAMPLE_EQUITY.slice(-10).map((p) => (
                   <tr key={p.time} className="border-b border-line-subtle">
                     <td className="px-3 py-1.5 text-fg-muted">{formatDate(p.time * 1000)}</td>
-                    <td className="num px-3 py-1.5 text-right">{formatUsd(p.equity)}</td>
+                    <td className="px-3 py-1.5 text-right num">{formatUsd(p.equity)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -411,12 +554,29 @@ export function ChartsSection() {
               </defs>
               <CartesianGrid {...gridProps(theme)} />
               <XAxis dataKey="time" {...xAxisProps(theme)} tickFormatter={tickFormatters.dateFromUnix} />
-              <YAxis {...yAxisProps(theme)} tickFormatter={tickFormatters.usdCompact} domain={["auto", "auto"]} />
+              <YAxis
+                {...yAxisProps(theme)}
+                tickFormatter={tickFormatters.usdCompact}
+                domain={["auto", "auto"]}
+              />
               <ChartTooltip
                 cursor={lineCursor(theme)}
-                content={<ChartTooltipContent valueFormatter={(v) => formatUsd(v)} labelFormatter={(t) => formatDateTime(Number(t) * 1000)} />}
+                content={
+                  <ChartTooltipContent
+                    valueFormatter={(v) => formatUsd(v)}
+                    labelFormatter={(t) => formatDateTime(Number(t) * 1000)}
+                  />
+                }
               />
-              <Area type="monotone" dataKey="equity" name="Equity" stroke={theme.series[0]} strokeWidth={2} fill="url(#ds-equity)" {...anim} />
+              <Area
+                type="monotone"
+                dataKey="equity"
+                name="Equity"
+                stroke={theme.series[0]}
+                strokeWidth={2}
+                fill="url(#ds-equity)"
+                {...anim}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -429,7 +589,13 @@ export function ChartsSection() {
               <ReferenceLine {...zeroLineProps(theme)} />
               <ChartTooltip
                 cursor={barCursor(theme)}
-                content={<ChartTooltipContent indicator="square" valueFormatter={(v) => formatPnl(v)} labelFormatter={(d) => formatDate(String(d))} />}
+                content={
+                  <ChartTooltipContent
+                    indicator="square"
+                    valueFormatter={(v) => formatPnl(v)}
+                    labelFormatter={(d) => formatDate(String(d))}
+                  />
+                }
               />
               <Bar dataKey="pnl" name="P&L" radius={BAR_RADIUS_SIGNED} maxBarSize={MAX_BAR_SIZE} {...anim}>
                 {SAMPLE_DAILY_PNL.map((d) => (
@@ -453,10 +619,42 @@ export function ChartsSection() {
               <CartesianGrid {...gridProps(theme)} />
               <XAxis dataKey="step" {...xAxisProps(theme)} />
               <YAxis {...yAxisProps(theme)} domain={["auto", "auto"]} tickFormatter={tickFormatters.number} />
-              <ChartTooltip cursor={lineCursor(theme)} content={<ChartTooltipContent valueFormatter={(v) => v.toFixed(2)} labelFormatter={(s) => `Day ${s}`} />} />
-              <Line type="monotone" dataKey="ai" name="AI" stroke={theme.series[0]} strokeWidth={2} dot={false} {...anim} />
-              <Line type="monotone" dataKey="hybrid" name="Hybrid" stroke={theme.series[1]} strokeWidth={2} dot={false} {...anim} />
-              <Line type="monotone" dataKey="baseline" name="Baseline" stroke={theme.series[2]} strokeWidth={2} dot={false} {...anim} />
+              <ChartTooltip
+                cursor={lineCursor(theme)}
+                content={
+                  <ChartTooltipContent
+                    valueFormatter={(v) => v.toFixed(2)}
+                    labelFormatter={(s) => `Day ${s}`}
+                  />
+                }
+              />
+              <Line
+                type="monotone"
+                dataKey="ai"
+                name="AI"
+                stroke={theme.series[0]}
+                strokeWidth={2}
+                dot={false}
+                {...anim}
+              />
+              <Line
+                type="monotone"
+                dataKey="hybrid"
+                name="Hybrid"
+                stroke={theme.series[1]}
+                strokeWidth={2}
+                dot={false}
+                {...anim}
+              />
+              <Line
+                type="monotone"
+                dataKey="baseline"
+                name="Baseline"
+                stroke={theme.series[2]}
+                strokeWidth={2}
+                dot={false}
+                {...anim}
+              />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -464,10 +662,19 @@ export function ChartsSection() {
           <ChartCard title="Loading" height={120} loading>
             <div />
           </ChartCard>
-          <ChartCard title="Empty" height={120} empty={{ title: "No trades in this range", description: "Pick a longer range." }}>
+          <ChartCard
+            title="Empty"
+            height={120}
+            empty={{ title: "No trades in this range", description: "Pick a longer range." }}
+          >
             <div />
           </ChartCard>
-          <ChartCard title="Error" height={120} error={new Error("Request timed out after 30 s")} onRetry={() => {}}>
+          <ChartCard
+            title="Error"
+            height={120}
+            error={new Error("Request timed out after 30 s")}
+            onRetry={() => {}}
+          >
             <div />
           </ChartCard>
         </div>
@@ -484,9 +691,27 @@ const positionColumns: Column<Position>[] = [
     sortValue: (p) => p.symbol,
     cell: (p) => <SymbolLabel symbol={p.symbol} />,
   },
-  { id: "side", header: "Side", mobile: "subtitle", cell: (p) => <EnumBadge kind="side" value={p.side} size="xs" /> },
-  { id: "size", header: "Size", align: "right", mobileLabel: "Size", sortValue: (p) => p.notional, cell: (p) => <span className="num">{formatSize(p.size, splitSymbol(p.symbol).base)}</span>, hideBelow: "lg" },
-  { id: "entry", header: "Entry", align: "right", cell: (p) => <span className="num">{formatPrice(p.entry_price)}</span> },
+  {
+    id: "side",
+    header: "Side",
+    mobile: "subtitle",
+    cell: (p) => <EnumBadge kind="side" value={p.side} size="xs" />,
+  },
+  {
+    id: "size",
+    header: "Size",
+    align: "right",
+    mobileLabel: "Size",
+    sortValue: (p) => p.notional,
+    cell: (p) => <span className="num">{formatSize(p.size, splitSymbol(p.symbol).base)}</span>,
+    hideBelow: "lg",
+  },
+  {
+    id: "entry",
+    header: "Entry",
+    align: "right",
+    cell: (p) => <span className="num">{formatPrice(p.entry_price)}</span>,
+  },
   { id: "mark", header: "Mark", align: "right", cell: (p) => <PriceText value={p.current_price} /> },
   {
     id: "pnl",
@@ -497,7 +722,14 @@ const positionColumns: Column<Position>[] = [
     info: "Net of the entry fee already paid.",
     cell: (p) => <PnlText value={p.unrealized_pnl} pct={p.unrealized_pnl_pct} />,
   },
-  { id: "r", header: "R", align: "right", mobile: "meta", sortValue: (p) => p.r_multiple, cell: (p) => <span className="num text-fg-muted">{formatR(p.r_multiple)}</span> },
+  {
+    id: "r",
+    header: "R",
+    align: "right",
+    mobile: "meta",
+    sortValue: (p) => p.r_multiple,
+    cell: (p) => <span className="num text-fg-muted">{formatR(p.r_multiple)}</span>,
+  },
   {
     id: "confidence",
     header: "AI",
@@ -507,8 +739,20 @@ const positionColumns: Column<Position>[] = [
     cell: (p) => <ConfidenceMeter value={p.ai_confidence} threshold={65} />,
     hideBelow: "2xl",
   },
-  { id: "age", header: "Open for", align: "right", sortValue: (p) => p.duration_sec, cell: (p) => <span className="num text-fg-muted">{formatDuration(p.duration_sec)}</span>, hideBelow: "xl" },
-  { id: "regime", header: "Regime", cell: (p) => <EnumBadge kind="regime" value={p.regime} size="xs" short />, hideBelow: "xl" },
+  {
+    id: "age",
+    header: "Open for",
+    align: "right",
+    sortValue: (p) => p.duration_sec,
+    cell: (p) => <span className="num text-fg-muted">{formatDuration(p.duration_sec)}</span>,
+    hideBelow: "xl",
+  },
+  {
+    id: "regime",
+    header: "Regime",
+    cell: (p) => <EnumBadge kind="regime" value={p.regime} size="xs" short />,
+    hideBelow: "xl",
+  },
 ];
 
 export function TableSection() {
@@ -516,7 +760,11 @@ export function TableSection() {
   const [offset, setOffset] = useState(0);
   const active = SAMPLE_POSITIONS.find((p) => p.id === selected) ?? null;
   return (
-    <Section id="table" title="DataTable" description="Sortable, sticky header, row click, skeleton / empty / error states; stacked cards on small screens.">
+    <Section
+      id="table"
+      title="DataTable"
+      description="Sortable, sticky header, row click, skeleton / empty / error states; stacked cards on small screens."
+    >
       <Card>
         <CardHeader title="Open positions" subtitle="Sample rows · click a row" icon={Layers} />
         <DataTable
@@ -526,17 +774,31 @@ export function TableSection() {
           onRowClick={(p) => setSelected(p.id)}
           isRowSelected={(p) => p.id === selected}
           defaultSort={{ id: "pnl", desc: true }}
-          footer={<Pagination offset={offset} limit={3} total={27} noun="positions" onOffsetChange={setOffset} />}
+          footer={
+            <Pagination offset={offset} limit={3} total={27} noun="positions" onOffsetChange={setOffset} />
+          }
         />
       </Card>
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader title="Card layout" subtitle="mobile roles: title · subtitle · value · meta · detail" />
-          <DataTable columns={positionColumns} data={SAMPLE_POSITIONS.slice(0, 2)} rowKey={(p) => p.id} mobileBreakpoint="3xl" />
+          <DataTable
+            columns={positionColumns}
+            data={SAMPLE_POSITIONS.slice(0, 2)}
+            rowKey={(p) => p.id}
+            mobileBreakpoint="3xl"
+          />
         </Card>
         <Card>
           <CardHeader title="Loading" />
-          <DataTable columns={positionColumns.slice(0, 4)} data={undefined} loading rowKey={(p) => p.id} skeletonRows={4} mobileBreakpoint={false} />
+          <DataTable
+            columns={positionColumns.slice(0, 4)}
+            data={undefined}
+            loading
+            rowKey={(p) => p.id}
+            skeletonRows={4}
+            mobileBreakpoint={false}
+          />
         </Card>
         <Card>
           <CardHeader title="Empty" />
@@ -545,7 +807,11 @@ export function TableSection() {
             data={[]}
             rowKey={(p) => p.id}
             mobileBreakpoint={false}
-            empty={{ icon: Inbox, title: "No open positions", description: "The bot opens one when a signal passes every risk check." }}
+            empty={{
+              icon: Inbox,
+              title: "No open positions",
+              description: "The bot opens one when a signal passes every risk check.",
+            }}
           />
         </Card>
       </div>
@@ -554,7 +820,11 @@ export function TableSection() {
         onOpenChange={(open) => !open && setSelected(null)}
         title={active ? `${active.symbol} · ${active.side === "LONG" ? "Long" : "Short"}` : ""}
         description={active?.entry_reason}
-        headerExtra={active ? <PnlText value={active.unrealized_pnl} pct={active.unrealized_pnl_pct} className="text-lg" /> : null}
+        headerExtra={
+          active ? (
+            <PnlText value={active.unrealized_pnl} pct={active.unrealized_pnl_pct} className="text-lg" />
+          ) : null
+        }
         footer={
           <Button size="sm" variant="ghost" onClick={() => setSelected(null)}>
             Close
@@ -587,14 +857,26 @@ export function FeedbackSection() {
     <Section id="feedback" title="Loading, empty & error states">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
-          <EmptyState icon={Inbox} title="No trades yet" description="Closed trades appear here as soon as the bot exits its first position." action={<Button size="sm">Run a backtest</Button>} />
+          <EmptyState
+            icon={Inbox}
+            title="No trades yet"
+            description="Closed trades appear here as soon as the bot exits its first position."
+            action={<Button size="sm">Run a backtest</Button>}
+          />
         </Card>
         <Card>
           <ErrorState error={new Error("Can't reach the API server.")} onRetry={() => {}} />
         </Card>
         <Card>
           <ErrorState
-            error={new ApiError({ status: 503, kind: "http", detail: "Trading engine has not published state yet", path: "/api/portfolio" })}
+            error={
+              new ApiError({
+                status: 503,
+                kind: "http",
+                detail: "Trading engine has not published state yet",
+                path: "/api/portfolio",
+              })
+            }
           />
         </Card>
         <Card className="space-y-3 p-4">
@@ -610,11 +892,20 @@ export function FeedbackSection() {
           <SkeletonChart height={150} />
         </Card>
         <Card>
-          <CardHeader title="Risk meters" info="ProgressBar: fill = severity (accent → warning → down), track = same hue lighter." />
+          <CardHeader
+            title="Risk meters"
+            info="ProgressBar: fill = severity (accent → warning → down), track = same hue lighter."
+          />
           <CardBody className="space-y-3.5">
             <ProgressBar label="Daily loss" valueLabel="$42 / $200" value={21} status="ok" />
             <ProgressBar label="Exposure" valueLabel="118% / 150%" value={78.7} status="warning" />
-            <ProgressBar label="Drawdown" valueLabel="−13.6% / −15%" value={90.7} status="critical" markerPct={80} />
+            <ProgressBar
+              label="Drawdown"
+              valueLabel="−13.6% / −15%"
+              value={90.7}
+              status="critical"
+              markerPct={80}
+            />
             <ProgressBar label="Positions" valueLabel="3 / 3" value={100} status="breached" />
             <ProgressBar label="Backtest progress" valueLabel="64%" value={64} tone="info" size="xs" />
           </CardBody>
@@ -630,7 +921,11 @@ export function OverlaysSection() {
   const [drawer, setDrawer] = useState(false);
   const [columns, setColumns] = useState(true);
   return (
-    <Section id="overlays" title="Overlays" description="Dialog, confirm, drawer (right on desktop, bottom sheet on phones), popover, menu, tooltip.">
+    <Section
+      id="overlays"
+      title="Overlays"
+      description="Dialog, confirm, drawer (right on desktop, bottom sheet on phones), popover, menu, tooltip."
+    >
       <Card>
         <CardBody className="flex flex-wrap items-center gap-2 pt-4">
           <Button onClick={() => setDialog(true)}>Open dialog</Button>
@@ -679,7 +974,8 @@ export function OverlaysSection() {
             pos_3f9a1c2b7d10 <CopyButton value="pos_3f9a1c2b7d10" label="Copy id" />
           </span>
           <span className="text-xs text-fg-subtle">
-            <Timestamp value="2026-10-04T12:32:05Z" /> · <Timestamp value={LOADED_AT - 42_000} mode="relative" />
+            <Timestamp value="2026-10-04T12:32:05Z" /> ·{" "}
+            <Timestamp value={LOADED_AT - 42_000} mode="relative" />
           </span>
         </CardBody>
       </Card>
@@ -717,9 +1013,17 @@ export function OverlaysSection() {
         confirmLabel="Delete"
         onConfirm={() => setConfirm(false)}
       />
-      <Drawer open={drawer} onOpenChange={setDrawer} title="AI decision · BTC/USDT" description="LONG · 78% confidence · 2 minutes ago">
+      <Drawer
+        open={drawer}
+        onOpenChange={setDrawer}
+        title="AI decision · BTC/USDT"
+        description="LONG · 78% confidence · 2 minutes ago"
+      >
         <div className="space-y-4 text-dense text-fg-muted">
-          <p>EMA 21 crossed above EMA 50 on the 5-minute chart with rising MACD momentum and volume 1.6× the 20-bar average.</p>
+          <p>
+            EMA 21 crossed above EMA 50 on the 5-minute chart with rising MACD momentum and volume 1.6× the
+            20-bar average.
+          </p>
           <StatGrid
             columns={3}
             items={[
@@ -729,7 +1033,10 @@ export function OverlaysSection() {
             ]}
           />
           {Array.from({ length: 8 }, (_, i) => (
-            <p key={i}>Scrollable body paragraph {i + 1}: drawers keep the header and footer fixed while the content scrolls.</p>
+            <p key={i}>
+              Scrollable body paragraph {i + 1}: drawers keep the header and footer fixed while the content
+              scrolls.
+            </p>
           ))}
         </div>
       </Drawer>

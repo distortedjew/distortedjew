@@ -78,11 +78,13 @@ export function zeroLineProps(theme: ChartTheme) {
 export const tickFormatters = {
   usd: (v: number) => formatUsd(v, { decimals: 0 }),
   usdCompact: (v: number) => formatUsd(v, { compact: true, decimals: Math.abs(v) >= 1_000 ? 1 : 0 }),
-  pnlCompact: (v: number) => formatUsd(v, { compact: true, signed: true, decimals: Math.abs(v) >= 1_000 ? 1 : 0 }),
+  pnlCompact: (v: number) =>
+    formatUsd(v, { compact: true, signed: true, decimals: Math.abs(v) >= 1_000 ? 1 : 0 }),
   /** Values already in percent units. */
   pct: (v: number) => formatPct(v, { decimals: Math.abs(v) >= 10 ? 0 : 1 }),
   pctSigned: (v: number) => formatPct(v, { decimals: Math.abs(v) >= 10 ? 0 : 1, signed: true }),
-  number: (v: number) => formatNumber(v, Number.isInteger(v) || Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 10 ? 1 : 2),
+  number: (v: number) =>
+    formatNumber(v, Number.isInteger(v) || Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 10 ? 1 : 2),
   compact: (v: number) => formatCompact(v),
   /** Unix seconds → "Oct 4". */
   dateFromUnix: (v: number) => formatDate(v * 1_000),

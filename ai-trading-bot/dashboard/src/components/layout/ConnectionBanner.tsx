@@ -13,11 +13,19 @@ export function ConnectionBanner() {
   return (
     <AnimatePresence initial={false}>
       {message ? (
-        <motion.div key={message.key} {...motionPresets.banner} className="overflow-hidden" role="status" aria-live="polite">
+        <motion.div
+          key={message.key}
+          {...motionPresets.banner}
+          className="overflow-hidden"
+          role="status"
+          aria-live="polite"
+        >
           <div
             className={cn(
               "border-b px-4 py-2 sm:px-6 lg:px-8",
-              message.tone === "down" ? "border-down/25 bg-down/[0.09]" : "border-warning/25 bg-warning/[0.08]",
+              message.tone === "down"
+                ? "border-down/25 bg-down/[0.09]"
+                : "border-warning/25 bg-warning/[0.08]",
             )}
           >
             <div className="mx-auto flex max-w-[1760px] items-center gap-3 text-dense">

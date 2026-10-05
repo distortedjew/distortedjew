@@ -31,7 +31,16 @@ import { secondsSince, toMs } from "@/lib/time";
 
 describe("missing values", () => {
   it("renders an em dash for null, undefined and NaN", () => {
-    for (const fn of [formatPrice, formatUsd, formatPnl, formatPct, formatCompact, formatRatio, formatR, formatSize]) {
+    for (const fn of [
+      formatPrice,
+      formatUsd,
+      formatPnl,
+      formatPct,
+      formatCompact,
+      formatRatio,
+      formatR,
+      formatSize,
+    ]) {
       expect(fn(null)).toBe(DASH);
       expect(fn(undefined)).toBe(DASH);
       expect(fn(Number.NaN)).toBe(DASH);

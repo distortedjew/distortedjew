@@ -4,7 +4,15 @@ import { cn } from "@/lib/cn";
 import { Tooltip } from "@/components/ui/Tooltip";
 
 /** Copies `value` to the clipboard (ids, prices) with a brief ✓ confirmation. */
-export function CopyButton({ value, label = "Copy", className }: { value: string; label?: string; className?: string }) {
+export function CopyButton({
+  value,
+  label = "Copy",
+  className,
+}: {
+  value: string;
+  label?: string;
+  className?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -29,7 +37,11 @@ export function CopyButton({ value, label = "Copy", className }: { value: string
           className,
         )}
       >
-        {copied ? <Check className="size-3.5 text-up" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
+        {copied ? (
+          <Check className="size-3.5 text-up" aria-hidden />
+        ) : (
+          <Copy className="size-3.5" aria-hidden />
+        )}
       </button>
     </Tooltip>
   );

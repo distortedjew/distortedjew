@@ -21,6 +21,7 @@ from ..schemas import (
     MTFReport,
     Position,
     RegimeState,
+    Side,
     Signal,
     Timeframe,
 )
@@ -111,6 +112,8 @@ class AnalystResult:
     errors: list[str] = field(default_factory=list)  # sanitized API errors met while answering
     # the remote analyst produced no answer of its own (heuristic fallback or an outage HOLD)
     failed: bool = False
+    # the direction the analysis leans even when it holds (the baseline's trend filter)
+    bias: Side | None = None
 
     @property
     def risk_reward(self) -> float | None:

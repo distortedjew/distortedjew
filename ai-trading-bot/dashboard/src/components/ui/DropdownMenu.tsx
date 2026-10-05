@@ -34,7 +34,7 @@ export function DropdownMenuContent({
         align={align}
         collisionPadding={8}
         className={cn(
-          "popper-motion surface-elevated z-50 min-w-44 overflow-hidden rounded-lg p-1",
+          "popper-motion z-50 min-w-44 overflow-hidden rounded-lg surface-elevated p-1",
           "origin-(--radix-dropdown-menu-content-transform-origin)",
           className,
         )}
@@ -60,7 +60,11 @@ export function DropdownMenuItem({
 }: ComponentProps<typeof Menu.Item> & { icon?: LucideIcon; shortcut?: ReactNode; tone?: "danger" }) {
   return (
     <Menu.Item
-      className={cn(itemClass, tone === "danger" && "text-down data-[highlighted]:bg-down/10 data-[highlighted]:text-down", className)}
+      className={cn(
+        itemClass,
+        tone === "danger" && "text-down data-[highlighted]:bg-down/10 data-[highlighted]:text-down",
+        className,
+      )}
       {...props}
     >
       {Icon ? <Icon aria-hidden className={tone === "danger" ? "" : "text-fg-subtle"} /> : null}
@@ -70,7 +74,11 @@ export function DropdownMenuItem({
   );
 }
 
-export function DropdownMenuCheckboxItem({ className, children, ...props }: ComponentProps<typeof Menu.CheckboxItem>) {
+export function DropdownMenuCheckboxItem({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Menu.CheckboxItem>) {
   return (
     <Menu.CheckboxItem className={cn(itemClass, "pl-7", className)} {...props}>
       <Menu.ItemIndicator className="absolute left-2 inline-flex">
@@ -81,7 +89,11 @@ export function DropdownMenuCheckboxItem({ className, children, ...props }: Comp
   );
 }
 
-export function DropdownMenuRadioItem({ className, children, ...props }: ComponentProps<typeof Menu.RadioItem>) {
+export function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Menu.RadioItem>) {
   return (
     <Menu.RadioItem className={cn(itemClass, "pl-7", className)} {...props}>
       <Menu.ItemIndicator className="absolute left-1.5 inline-flex">
@@ -93,7 +105,7 @@ export function DropdownMenuRadioItem({ className, children, ...props }: Compone
 }
 
 export function DropdownMenuLabel({ className, ...props }: ComponentProps<typeof Menu.Label>) {
-  return <Menu.Label className={cn("label-caps px-2 pt-1.5 pb-1", className)} {...props} />;
+  return <Menu.Label className={cn("px-2 pt-1.5 pb-1 label-caps", className)} {...props} />;
 }
 
 export function DropdownMenuSeparator({ className, ...props }: ComponentProps<typeof Menu.Separator>) {

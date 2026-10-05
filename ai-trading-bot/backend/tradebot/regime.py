@@ -126,11 +126,19 @@ class RegimeTracker:
         self.state: RegimeState | None = None
         self._candidate: Regime | None = None
         self._streak = 0
+        self._last: tuple[datetime, bool] | None = None  # (bar time, switched) of the last update
 
     def restore(self, state: RegimeState) -> None:
         self.state = state
         self._candidate = None
         self._streak = 0
+        self._last = None
+
+    def cached(self, ts: datetime) -> tuple[RegimeState, bool] | None:
+        """The result of the update already made for bar ``ts`` (trackers shared by several cores)."""
+        if self._last is not None and self.state is not None and self._last[0] == ts:
+            return self.state, self._last[1]
+        return None
 
     @property
     def regime(self) -> Regime:
@@ -151,6 +159,7 @@ class RegimeTracker:
                 metrics=reading.metrics,
                 updated_at=ts,
             )
+            self._last = (ts, switched)
             return self.state, switched
         if reading.regime == self._candidate:
             self._streak += 1
@@ -168,7 +177,9 @@ class RegimeTracker:
                 metrics=reading.metrics,
                 updated_at=ts,
             )
+            self._last = (ts, True)
             return self.state, True
         # keep the current regime, refresh its numbers
         self.state = current.model_copy(update={"metrics": reading.metrics, "updated_at": ts})
+        self._last = (ts, False)
         return self.state, False

@@ -29,7 +29,18 @@ const STYLE: Record<ConnectionStatus, string> = {
  * "LIVE" and "OFFLINE" but shows only the spinner while (re)connecting — the connection banner
  * under the top bar spells that state out — and drops to the dot alone below 375 px.
  */
-export function ConnectionBadge({ status, compact, className }: { status: ConnectionStatus; compact?: boolean; className?: string }) {
+export function ConnectionBadge({
+  status,
+  compact,
+  dotOnly,
+  className,
+}: {
+  status: ConnectionStatus;
+  compact?: boolean;
+  /** Visually just the dot / spinner (label kept for screen readers). */
+  dotOnly?: boolean;
+  className?: string;
+}) {
   const pending = status === "connecting" || status === "reconnecting";
   return (
     <span
@@ -40,7 +51,9 @@ export function ConnectionBadge({ status, compact, className }: { status: Connec
       )}
     >
       {pending ? <Spinner className="size-3" label={LABEL[status]} /> : null}
-      <span className={cn(compact && (pending ? "sr-only" : "max-[374px]:sr-only"))}>{LABEL[status]}</span>
+      <span className={cn((dotOnly || (compact && pending)) && "sr-only", compact && "max-[374px]:sr-only")}>
+        {LABEL[status]}
+      </span>
       {status === "live" ? <StatusDot tone="up" pulse size="xs" /> : null}
       {status === "offline" ? <StatusDot tone="down" size="xs" /> : null}
     </span>
@@ -66,27 +79,29 @@ function Details({ info }: { info: ConnectionInfo }) {
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
         <dt className="text-fg-subtle">Last message</dt>
-        <dd className="num text-right text-fg">{lastFrame === null ? "—" : formatAgo(lastFrame)}</dd>
+        <dd className="text-right num text-fg">{lastFrame === null ? "—" : formatAgo(lastFrame)}</dd>
         {connectedFor !== null ? (
           <>
             <dt className="text-fg-subtle">Connected for</dt>
-            <dd className="num text-right text-fg">{formatDuration(connectedFor)}</dd>
+            <dd className="text-right num text-fg">{formatDuration(connectedFor)}</dd>
           </>
         ) : null}
         <dt className="text-fg-subtle">Reconnects</dt>
-        <dd className="num text-right text-fg">{info.reconnects}</dd>
+        <dd className="text-right num text-fg">{info.reconnects}</dd>
         {info.status !== "live" ? (
           <>
             <dt className="text-fg-subtle">Failed attempts</dt>
-            <dd className="num text-right text-fg">{info.attempt}</dd>
+            <dd className="text-right num text-fg">{info.attempt}</dd>
             <dt className="text-fg-subtle">Next retry</dt>
-            <dd className="num text-right text-fg">{retryIn === null ? "now" : `in ${retryIn}s`}</dd>
+            <dd className="text-right num text-fg">{retryIn === null ? "now" : `in ${retryIn}s`}</dd>
           </>
         ) : null}
       </dl>
       {info.status !== "live" ? (
         <>
-          <p className="text-fg-subtle">Data keeps refreshing every few seconds by polling while the stream is down.</p>
+          <p className="text-fg-subtle">
+            Data keeps refreshing every few seconds by polling while the stream is down.
+          </p>
           <Button size="xs" variant="secondary" leftIcon={RotateCw} onClick={info.retryNow} fullWidth>
             Retry now
           </Button>
@@ -97,7 +112,16 @@ function Details({ info }: { info: ConnectionInfo }) {
 }
 
 /** WebSocket status with a details popover (last message, retries, "Retry now"). */
-export function ConnectionIndicator({ compact, className }: { compact?: boolean; className?: string }) {
+export function ConnectionIndicator({
+  compact,
+  dotOnly,
+  className,
+}: {
+  compact?: boolean;
+  /** See ConnectionBadge — used on phones in live-trading mode so two "LIVE" labels never sit side by side. */
+  dotOnly?: boolean;
+  className?: string;
+}) {
   const info = useConnection();
   return (
     <Popover>
@@ -105,7 +129,7 @@ export function ConnectionIndicator({ compact, className }: { compact?: boolean;
         aria-label={`Real-time connection: ${CONNECTION_META[info.status].label}`}
         className={cn("rounded-md px-1.5 transition-colors hover:bg-fg/[0.05]", className)}
       >
-        <ConnectionBadge status={info.status} compact={compact} />
+        <ConnectionBadge status={info.status} compact={compact} dotOnly={dotOnly} />
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72">
         <Details info={info} />

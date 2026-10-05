@@ -123,8 +123,7 @@ export function useAiLatest(symbol: string | undefined, options: QueryOpts = {})
   const fallback = useFallbackInterval(15_000);
   return useQuery({
     queryKey: queryKeys.aiLatest(symbol ?? ""),
-    queryFn: ({ signal }) =>
-      api.get<AIAnalysis | null>("/api/ai/latest", { signal, params: { symbol } }),
+    queryFn: ({ signal }) => api.get<AIAnalysis | null>("/api/ai/latest", { signal, params: { symbol } }),
     enabled: Boolean(symbol) && options.enabled !== false,
     refetchInterval: options.refetchInterval ?? fallback,
     staleTime: options.staleTime,
@@ -419,7 +418,9 @@ export function useMarkNotificationsRead() {
     mutationFn: (ids: number[]) => api.post<NotificationList>("/api/notifications/read", { ids }),
     onMutate: async (ids) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.notificationsRoot() });
-      const snapshot = queryClient.getQueriesData<NotificationList>({ queryKey: queryKeys.notificationsRoot() });
+      const snapshot = queryClient.getQueriesData<NotificationList>({
+        queryKey: queryKeys.notificationsRoot(),
+      });
       markNotificationsReadInCache(queryClient, ids);
       return { snapshot };
     },

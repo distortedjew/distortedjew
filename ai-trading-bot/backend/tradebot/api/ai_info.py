@@ -23,7 +23,7 @@ def openrouter_configured(ctx: ApiContext, engine: EngineStatus | None) -> bool:
 def usage_stats(ctx: ApiContext, engine: EngineStatus | None = None) -> AIUsageStats:
     engine = engine if engine is not None else queries.engine_status(ctx.db)
     configured = openrouter_configured(ctx, engine)
-    model = ctx.db.get_settings().ai.model if configured else HEURISTIC_MODEL_ID
+    model = queries.stored_settings(ctx.db).ai.model if configured else HEURISTIC_MODEL_ID
     provider = "openrouter" if configured else "heuristic"
     return ctx.stats.get(
         ("ai_usage", provider, model),
@@ -51,7 +51,7 @@ def _active_provider(engine: EngineStatus | None, configured: bool) -> AIProvide
 def model_info(ctx: ApiContext) -> AIModelInfo:
     engine = queries.engine_status(ctx.db)
     configured = openrouter_configured(ctx, engine)
-    current_model = ctx.db.get_settings().ai.model
+    current_model = queries.stored_settings(ctx.db).ai.model
     return AIModelInfo(
         configured=configured,
         api_key_hint=API_KEY_MASK if configured else None,

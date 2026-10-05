@@ -74,7 +74,7 @@ export function Select<T extends string = string>({
           sideOffset={6}
           collisionPadding={8}
           className={cn(
-            "popper-motion surface-elevated z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg",
+            "popper-motion z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg surface-elevated",
             "origin-(--radix-select-content-transform-origin)",
             contentClassName,
           )}
@@ -104,7 +104,9 @@ function SelectItem<T extends string>({ option }: { option: SelectOption<T> }) {
       {Icon ? <Icon className="size-3.5 shrink-0 text-fg-subtle" aria-hidden /> : null}
       <div className="min-w-0">
         <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
-        {option.description ? <div className="truncate text-xs text-fg-subtle">{option.description}</div> : null}
+        {option.description ? (
+          <div className="truncate text-xs text-fg-subtle">{option.description}</div>
+        ) : null}
       </div>
       <SelectPrimitive.ItemIndicator className="absolute right-2 inline-flex">
         <Check className="size-3.5 text-accent" aria-hidden />

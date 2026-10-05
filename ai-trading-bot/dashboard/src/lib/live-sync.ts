@@ -174,7 +174,8 @@ export function connectLiveSync(
   add(
     manager.on("settings", (data) => {
       const previous = queryClient.getQueryData<SettingsResponse>(queryKeys.settings());
-      if (previous) queryClient.setQueryData<SettingsResponse>(queryKeys.settings(), { ...previous, settings: data });
+      if (previous)
+        queryClient.setQueryData<SettingsResponse>(queryKeys.settings(), { ...previous, settings: data });
       else void queryClient.invalidateQueries({ queryKey: queryKeys.settings() });
     }),
   );

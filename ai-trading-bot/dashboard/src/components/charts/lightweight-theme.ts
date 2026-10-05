@@ -152,7 +152,10 @@ export function lwVolumeScaleOptions(): DeepPartial<PriceScaleOptions> {
 }
 
 /** Thin overlay line (EMA, VWAP, Bollinger) — pass a color from theme.overlays. */
-export function lwOverlayOptions(color: string, opts: { width?: 1 | 2; title?: string } = {}): LineSeriesPartialOptions {
+export function lwOverlayOptions(
+  color: string,
+  opts: { width?: 1 | 2; title?: string } = {},
+): LineSeriesPartialOptions {
   return {
     color,
     lineWidth: opts.width ?? 1,
@@ -243,7 +246,7 @@ export function lwPriceLine(theme: ChartTheme, level: PriceLevel): CreatePriceLi
     price: level.price,
     color,
     lineWidth: 1,
-    lineStyle: level.kind === "entry" ? LineStyle.Solid : LineStyle.Dashed,
+    lineStyle: level.kind === "entry" ? LineStyle.Solid : LineStyle.LargeDashed,
     axisLabelVisible: true,
     title: level.label,
     axisLabelColor: color,

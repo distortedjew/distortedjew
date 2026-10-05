@@ -16,7 +16,12 @@ export interface PriceTextProps {
  *
  *   <PriceText value={ticker.price} className="text-lg" />
  */
-export function PriceText({ value, format = (v) => formatPrice(v), flash = true, className }: PriceTextProps) {
+export function PriceText({
+  value,
+  format = (v) => formatPrice(v),
+  flash = true,
+  className,
+}: PriceTextProps) {
   const [previous, setPrevious] = useState(value);
   const [tick, setTick] = useState<{ dir: "up" | "down"; n: number } | null>(null);
 
@@ -32,7 +37,7 @@ export function PriceText({ value, format = (v) => formatPrice(v), flash = true,
     <span
       key={tick?.n ?? 0}
       className={cn(
-        "num -mx-0.5 inline-block rounded-[3px] px-0.5",
+        "-mx-0.5 inline-block rounded-[3px] px-0.5 num",
         tick && (tick.dir === "up" ? "animate-flash-up" : "animate-flash-down"),
         className,
       )}

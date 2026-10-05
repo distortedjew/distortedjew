@@ -18,13 +18,17 @@ export function Timestamp({ value, mode = "datetime", seconds = true, className 
   return (
     <Tooltip
       content={
-        <span className="num block text-[11px] leading-4">
+        <span className="block num text-[11px] leading-4">
           {formatDateTime(ms, { seconds: true })}
           <span className="block text-fg-subtle">{formatUtc(ms)}</span>
         </span>
       }
     >
-      <time dateTime={new Date(ms).toISOString()} tabIndex={0} className={cn("num whitespace-nowrap", className)}>
+      <time
+        dateTime={new Date(ms).toISOString()}
+        tabIndex={0}
+        className={cn("num whitespace-nowrap", className)}
+      >
         {mode === "relative" ? (
           <RelativeTime ms={ms} />
         ) : mode === "time" ? (
