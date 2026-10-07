@@ -1,0 +1,20 @@
+[Unit]
+Description=XAUUSD M15 gold trading bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/opt/gold-bot
+EnvironmentFile=/opt/gold-bot/.env
+ExecStart=/opt/gold-bot/venv/bin/python -m goldbot
+Restart=always
+RestartSec=10
+# Unprivileged, read-only system: it only writes logs/ and data/.
+User=goldbot
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/gold-bot/logs /opt/gold-bot/data
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
