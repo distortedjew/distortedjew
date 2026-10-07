@@ -166,7 +166,9 @@ def test_snapshot_reports_the_last_candle():
     assert snap.ema200 is not None and snap.adx is not None and snap.rsi is not None
     assert 0 <= snap.rsi <= 100
     assert snap.atr_pct == pytest.approx(snap.atr / last.close * 100, rel=1e-3)
-    assert snap.bb_width_pct == pytest.approx((snap.bb_upper - snap.bb_lower) / snap.bb_middle * 100, rel=1e-4)
+    assert snap.bb_width_pct == pytest.approx(
+        (snap.bb_upper - snap.bb_lower) / snap.bb_middle * 100, rel=1e-4
+    )
     with pytest.raises(ValueError):
         ind.snapshot([])
 

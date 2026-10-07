@@ -23,6 +23,15 @@ class Clock:
         return self.now
 
 
+def same_candles(a, b) -> bool:
+    """Equal OHLC and times; volumes equal up to float summation order."""
+    return len(a) == len(b) and all(
+        (x.time, x.open, x.high, x.low, x.close) == (y.time, y.open, y.high, y.low, y.close)
+        and x.volume == pytest.approx(y.volume, rel=1e-12)
+        for x, y in zip(a, b, strict=True)
+    )
+
+
 def _arrays_equal(a, b) -> bool:
     return all(np.array_equal(getattr(a, f), getattr(b, f)) for f in ("t", "o", "h", "lo", "c", "v"))
 
@@ -59,7 +68,9 @@ def test_higher_timeframes_are_exact_aggregations():
         sec = TIMEFRAME_SECONDS[tf]
         expected = aggregate(minutes, tf, include_partial=False)
         got = hist.candles("BTC/USDT", sec).to_candles()
-        assert got[-50:] == expected[-50:]
+        for g, e in zip(got[-50:], expected[-50:], strict=True):
+            assert (g.time, g.open, g.high, g.low, g.close) == (e.time, e.open, e.high, e.low, e.close)
+            assert g.volume == pytest.approx(e.volume, rel=1e-12)
 
 
 def test_cross_asset_correlation_and_volatility_are_plausible():
@@ -69,6 +80,10 @@ def test_cross_asset_correlation_and_volatility_are_plausible():
     assert daily["SOL/USDT"].std() > daily["BTC/USDT"].std()
     assert np.corrcoef(daily["BTC/USDT"], daily["ETH/USDT"])[0, 1] > 0.5
     assert np.corrcoef(daily["BTC/USDT"], daily["SOL/USDT"])[0, 1] > 0.4
+
+
+def history_minutes(feed) -> list:
+    return [c for c in feed.history_1m if c.time >= END - 3600]
 
 
 @pytest.fixture(scope="module")
@@ -91,7 +106,7 @@ def test_fresh_history_fills_every_chart(opened_feed):
     minutes = per_tf["1m"].to_candles()
     hours = per_tf["1h"].to_candles()
     rebuilt = aggregate([c for c in minutes if c.time >= hours[-30].time], "1h", include_partial=False)
-    assert rebuilt == hours[-30:]
+    assert same_candles(rebuilt, hours[-30:])
     # closed candles only: nothing at or after the live minute
     assert all(arr.t[-1] + TIMEFRAME_SECONDS[tf] <= END for tf, arr in per_tf.items())
 
@@ -101,7 +116,8 @@ def test_live_ticks_once_per_second_and_minutes_close_on_the_generated_candle():
     feed = SimulatedFeed(7, clock=clock)
     import asyncio
 
-    asyncio.run(feed.open(["BTC/USDT"], StoredMarket()))
+    history = asyncio.run(feed.open(["BTC/USDT"], StoredMarket()))
+    feed.history_1m = history.candles["BTC/USDT"]["1m"].to_candles()  # type: ignore[attr-defined]
     block = feed.block
     assert block is not None
     expected = block.candles("BTC/USDT", RECENT_SUBSTEPS).window(END, END + 300).to_candles()
@@ -113,8 +129,14 @@ def test_live_ticks_once_per_second_and_minutes_close_on_the_generated_candle():
     closed_1m = [e.candle for e in events if isinstance(e, CandleEvent) and e.closed and e.timeframe == "1m"]
     assert closed_1m == expected
     closed_5m = [e.candle for e in events if isinstance(e, CandleEvent) and e.closed and e.timeframe == "5m"]
-    assert closed_5m == aggregate(expected, "5m", include_partial=False)
-    forming = [e.candle for e in events if isinstance(e, CandleEvent) and not e.closed and e.timeframe == "1m"]
+    minutes = [*history_minutes(feed), *expected]
+    assert same_candles(
+        closed_5m, [c for c in aggregate(minutes, "5m") if c.time + 300 > END][: len(closed_5m)]
+    )
+    assert closed_5m
+    forming = [
+        e.candle for e in events if isinstance(e, CandleEvent) and not e.closed and e.timeframe == "1m"
+    ]
     assert all(c.low <= c.close <= c.high for c in forming)
     tickers = [e.ticker for e in events if isinstance(e, TickerEvent)]
     assert tickers and tickers[-1].symbol == "BTC/USDT" and tickers[-1].high_24h >= tickers[-1].price
