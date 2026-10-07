@@ -201,7 +201,7 @@ function build(b) {
 
 const F = (k) => $(`[data-f="${k}"]`);
 const days = (v) => v == null ? "—" : v < 1 ? Math.round(v * 24) + "h" : v.toFixed(1) + "d";
-const STATUS = { trading: "Trading", "market closed": "Market closed", paused: "Paused", stale: "No heartbeat", offline: "Offline" };
+const STATUS = { trading: "Trading", "market closed": "Market closed", paused: "Paused", disabled: "Disabled", stale: "No heartbeat", offline: "Offline" };
 
 function render(b) {
   last = b;

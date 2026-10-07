@@ -24,15 +24,13 @@ from datetime import date, datetime, time as dtime, timedelta
 from pathlib import Path
 
 from . import blackscholes as bs
-from .base import ET
+from .base import ET, TUNABLE
 from .config import Settings, load_settings
 from .indicators import realized_vol
 from .models import Bar, Leg, OptionQuote, occ_symbol, parse_occ
 from .store import Store
 
 # Strategy knobs the backtest page may override (all numeric class attributes).
-TUNABLE = ("take_profit", "stop_loss", "exit_dte", "max_open", "min_days_between",
-           "short_delta", "long_delta", "put_delta", "call_delta", "width", "require_dip", "allow_bearish")
 
 
 @dataclass
@@ -271,9 +269,11 @@ def run_backtest(bot_name: str, start: date, end: date, capital: float = 100_000
         bot_allocation_pct=allocation_pct if allocation_pct is not None else base.allocation_for(bot_name),
         risk_per_trade_pct=risk_per_trade_pct if risk_per_trade_pct is not None else base.risk_per_trade_pct,
         max_contracts=base.max_contracts, daily_max_loss_pct=base.daily_max_loss_pct,
+        account_risk_cap_pct=base.account_risk_cap_pct,
         exec_wait_sec=0, manage_every_sec=0, alphavantage_key="")
     store = Store(":memory:", clock=broker.now)
     bot = cls(broker, store, settings, sleep=lambda s: None)
+    bot.enabled = 1          # a bot switched off in .env can still be backtested
     applied = {}
     for k, v in (overrides or {}).items():
         if k in TUNABLE and hasattr(bot, k) and v not in (None, ""):

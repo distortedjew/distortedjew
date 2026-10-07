@@ -95,7 +95,7 @@ class SimBroker:
         with self.lock:
             self._tick()
             s = self.spot[underlying]
-            step = 1.0 if s < 300 else 5.0
+            step = 1.0 if s < 1000 else 5.0   # SPY/QQQ/IWM list $1 strikes
             out = []
             d = exp_from
             while d <= exp_to:

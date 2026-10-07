@@ -69,7 +69,7 @@
 // ---- rendering ---------------------------------------------------------------------
 let last = null;
 window.onThemeChange = () => last && render(last);
-const STATUS = { trading: "Trading", "market closed": "Market closed", paused: "Paused", stale: "No heartbeat", offline: "Offline" };
+const STATUS = { trading: "Trading", "market closed": "Market closed", paused: "Paused", disabled: "Disabled", stale: "No heartbeat", offline: "Offline" };
 
 function render(st) {
   last = st;

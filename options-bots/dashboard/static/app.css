@@ -200,7 +200,7 @@ details.table table { margin-top: 6px; }
 .tagline { color: var(--text-secondary); font-size: 13px; font-style: italic; }
 .strategy { font-size: 13px; margin-top: 2px; }
 .status { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; margin-top: 5px; }
-.st-trading { color: var(--good); } .st-closed { color: var(--text-muted); } .st-paused, .st-stale { color: var(--warn); } .st-offline { color: var(--bad); }
+.st-trading { color: var(--good); } .st-closed { color: var(--text-muted); } .st-paused, .st-stale { color: var(--warn); } .st-disabled { color: var(--text-muted); } .st-offline { color: var(--bad); }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0 10px; }
 .stat { background: var(--surface-2); border-radius: 12px; padding: 8px 10px; border-radius: 12px; }
 .stat .k { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }

@@ -42,6 +42,7 @@ class Settings:
     risk_per_trade_pct: float
     max_contracts: int
     daily_max_loss_pct: float
+    account_risk_cap_pct: float  # all bots together may risk at most this share of equity
     exec_wait_sec: int
     manage_every_sec: int
     alphavantage_key: str
@@ -70,6 +71,7 @@ def load_settings() -> Settings:
         risk_per_trade_pct=_f("RISK_PER_TRADE_PCT", 0.02),
         max_contracts=_i("MAX_CONTRACTS", 5),
         daily_max_loss_pct=_f("DAILY_MAX_LOSS_PCT", 0.05),
+        account_risk_cap_pct=_f("ACCOUNT_RISK_CAP_PCT", 1.0),
         exec_wait_sec=_i("EXEC_WAIT_SEC", 45),
         manage_every_sec=_i("MANAGE_EVERY_SEC", 120),
         alphavantage_key=os.environ.get("ALPHAVANTAGE_API_KEY", ""),

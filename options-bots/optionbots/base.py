@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 import time
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -21,6 +22,12 @@ from .notify import Notifier
 from .store import Store
 
 ET = ZoneInfo("America/New_York")
+
+# Strategy settings that can be overridden per bot from .env (e.g. RANGER_WIDTH=1, ORCHARD_ENABLED=0)
+# and from the backtester.
+TUNABLE = ("take_profit", "stop_loss", "exit_dte", "max_open", "min_days_between",
+           "short_delta", "long_delta", "put_delta", "call_delta", "width", "max_width",
+           "require_dip", "allow_bearish")
 log = logging.getLogger(__name__)
 
 
@@ -40,6 +47,8 @@ class BaseBot:
     max_open = 2               # simultaneous positions
     min_days_between = 5       # calendar days between new entries
     earnings_blackout = False  # skip entries whose expiry spans earnings
+    enabled = 1                # 0 = manage open positions but never open new ones (<NAME>_ENABLED=0)
+    max_width = 0              # debit spreads: cap strike distance in $ (0 = pick the short leg by delta)
 
     # entry window, US/Eastern
     entry_start = (10, 0)
@@ -51,6 +60,15 @@ class BaseBot:
         self.broker, self.store, self.settings, self.sleep = broker, store, settings, sleep
         self.notifier = notifier or Notifier()   # disabled unless run_bot passes a configured one
         self.last_price: float | None = None
+        self.apply_env_overrides()
+
+    def apply_env_overrides(self) -> None:
+        """<NAME>_<SETTING>=value in .env overrides a class setting, e.g. ATLAS_WIDTH=1."""
+        for attr in TUNABLE + ("enabled",):
+            raw = os.environ.get(f"{self.name.upper()}_{attr.upper()}")
+            if raw not in (None, "") and hasattr(self, attr):
+                cur = getattr(self, attr)
+                setattr(self, attr, type(cur)(float(raw)))
         self.signal_state: dict = {}
         self.last_manage = 0.0
         self.last_equity_rec = 0.0
@@ -120,7 +138,8 @@ class BaseBot:
                 self.store.put(self.name, "last_entry_check", time.time())
                 self.maybe_enter(now)
 
-        self.heartbeat("paused" if self.paused() else "trading", {"open": len(open_positions)})
+        status = "disabled" if not self.enabled else "paused" if self.paused() else "trading"
+        self.heartbeat(status, {"open": len(open_positions)})
         return 30
 
     def heartbeat(self, status: str, extra: dict | None = None) -> None:
@@ -172,6 +191,8 @@ class BaseBot:
         self.open_trade(prop, qty)
 
     def entry_blocker(self, today: date, direction: str) -> str | None:
+        if not self.enabled:
+            return f"disabled ({self.name.upper()}_ENABLED=0)"
         if self.paused():
             return "paused (PAUSE file present)"
         acct = self.broker.account()
@@ -195,6 +216,9 @@ class BaseBot:
         room = budget - at_risk
         if prop.kind not in ("csp", "covered_call"):   # spreads: also cap the risk of a single trade
             room = min(room, equity * self.settings.risk_per_trade_pct)
+        # all bots together: what every open position could lose must stay within the account-wide cap
+        account_risk = sum(p["max_loss"] * p["qty"] for p in self.store.positions(None))
+        room = min(room, equity * self.settings.account_risk_cap_pct - account_risk)
         qty = math.floor(room / prop.max_loss_per_unit) if prop.max_loss_per_unit > 0 else 0
         qty = min(qty, self.settings.max_contracts)
         if qty < 1:
@@ -392,6 +416,8 @@ class BaseBot:
         quotes = self.select(kind, dte[0], dte[1], dte[2], price)
         long = self.nearest_delta(quotes, long_delta)
         short = self.nearest_delta(quotes, short_delta)
+        if long and self.max_width:   # small accounts: a narrow spread costs less (e.g. $1 wide ≈ $40-60)
+            short = self.wing(quotes, long, self.max_width)   # the strike max_width further out of the money
         if not long or not short or long.strike == short.strike:
             return None
         if (kind == "call" and short.strike < long.strike) or (kind == "put" and short.strike > long.strike):

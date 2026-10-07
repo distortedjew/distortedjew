@@ -140,8 +140,8 @@ class BacktestJobs:
             alloc = float(req["allocation_pct"]) if req.get("allocation_pct") not in (None, "") else None
         except (ValueError, TypeError, KeyError) as e:
             return 400, {"error": f"bad parameters: {e}"}
-        if not (date(2005, 1, 1) <= start < end) or (end - start).days > 365 * 12 or not 1_000 <= capital <= 1e9:
-            return 400, {"error": "dates must be in order, at most 12 years apart; capital 1,000 - 1,000,000,000"}
+        if not (date(2005, 1, 1) <= start < end) or (end - start).days > 365 * 12 or not 100 <= capital <= 1e9:
+            return 400, {"error": "dates must be in order, at most 12 years apart; capital 100 - 1,000,000,000"}
         if not self.busy.acquire(blocking=False):
             return 429, {"error": "another backtest is running - try again in a few seconds"}
         jid = uuid.uuid4().hex[:12]

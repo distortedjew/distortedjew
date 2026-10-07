@@ -115,6 +115,29 @@ then set `DISCORD_WEBHOOK_URL` in `.env`.
 Test it with `cd /opt/options-bots && sudo -u optionbots .venv/bin/python -m optionbots.notify`,
 then restart the bots.
 
+## Small accounts (e.g. $100)
+The default settings assume tens of thousands of dollars. A $5-wide spread can lose about
+$400, and one ORCHARD put needs about $25,000 of cash. For a small account, uncomment the
+"Small account" block in `.env` and restart the bots. That block:
+- uses **$1-wide spreads** (`ATLAS_WIDTH=1`, `RANGER_WIDTH=1`, `NOVA_MAX_WIDTH=1`,
+  `VOLT_MAX_WIDTH=1`), so one trade risks about $50–85
+- trades **1 contract**, and allows **one open trade at a time across all bots**
+  (`ACCOUNT_RISK_CAP_PCT=0.95`)
+- switches **ORCHARD off** (`ORCHARD_ENABLED=0`); it can't work below about $25,000
+
+What to expect with $100:
+- **Each trade risks 50–85% of the account.** One stop-out can halve it.
+- **After one loss, the bots usually can't trade again.** What's left no longer covers the next
+  trade's maximum loss, so they correctly refuse. Backtests at $100 show exactly this.
+- **Small credits are eaten by costs.** A $1-wide credit spread collects about $15–30, so bid/ask
+  spreads and fees take a large share.
+- **Alpaca may not allow it.** Accounts under $2,000 are "limited margin", and multi-leg spreads
+  need options level 3. Check your account's options level before funding a live $100 account.
+
+On paper, you can test it by resetting the paper account to $100 in the Alpaca dashboard. In
+the backtester, set the starting capital to 100. Every per-bot setting (`<BOT>_<SETTING>`)
+works for any account size, not just small ones.
+
 ## Safety nets
 - **Order-direction check.** After every fill, the bot re-reads its positions at Alpaca and
   checks that each leg went the intended way: legs it sold are short, legs it bought are

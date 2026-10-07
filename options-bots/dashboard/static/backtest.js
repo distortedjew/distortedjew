@@ -10,6 +10,7 @@ const BT_LABELS = {
   put_delta: ["Put delta", "cash-secured put"],
   call_delta: ["Call delta", "covered call"],
   width: ["Spread width $", "strike distance"],
+  max_width: ["Max debit width $", "0 = by delta; 1 = $1-wide (small accounts)"],
   require_dip: ["Require dip", "1 = enter only on dips, 0 = any uptrend day"],
   allow_bearish: ["Allow bearish", "1 = calls and puts, 0 = bullish only"],
 };
@@ -38,7 +39,7 @@ function btSection(b) {
         </div>
         <label class="fld bt-dates" hidden><span>From</span><input type="date" name="start"></label>
         <label class="fld bt-dates" hidden><span>To</span><input type="date" name="end"></label>
-        <label class="fld"><span>Starting capital $</span><input type="number" name="capital" value="100000" min="1000" step="1000"></label>
+        <label class="fld"><span>Starting capital $</span><input type="number" name="capital" value="100000" min="100" step="100"></label>
       </div>
       <h3>Strategy</h3><div class="bt-grid" id="bt-params"></div>
       <h3>Risk</h3>
