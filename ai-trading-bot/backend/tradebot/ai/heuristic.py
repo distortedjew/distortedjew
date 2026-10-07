@@ -24,26 +24,35 @@ shocks, boosted with a confirming trend, cut when counter-trend) and for the 1h 
 the evidence summary behind every call's reasons, risks and narrative.
 
 **Setups.** The composite alone never trades. On intraday bars momentum by itself is mostly
-noise after costs, and a stretched move tends to retrace part of itself over the next hours,
-so chasing it is the classic way to lose. A LONG/SHORT call needs one of two textbook setups:
+noise after costs, and chasing a stretched move is the classic way to lose. A LONG/SHORT call
+needs one of three textbook setups (the *trend timeframe* sits above the decision timeframe:
+4h for 5m/15m decisions, 1d for 1h/4h):
 
-- *Trend pullback* — the 4h trend is established (EMA 21 at least 0.5 ATR(4h) away from EMA
-  50) and price is still on the trend's side of the 4h EMA 50: buy a pullback (decision-
-  timeframe RSI ≤ 42 and price in the lower 30 % of the Bollinger band), or sell a rally in a
-  downtrend (mirror image). Target 2R.
-- *Range reversion* — no 4h trend and a RANGING / LOW_VOLATILITY regime: fade a stretched move
-  at a Bollinger band (LONG at %B ≤ 0.05 with RSI ≤ 35, SHORT at %B ≥ 0.95 with RSI ≥ 65)
-  unless the 1h trend pushes the same way as the stretch. Target 1.6R.
+- *Trend pullback* — the trend timeframe's EMA 21 is at least 0.5 of its ATR away from its
+  EMA 50 and price is still on the trend's side of that EMA 50: buy a pullback (RSI ≤ 42 and
+  price in the lower 30 % of the Bollinger band on the decision timeframe), or sell a rally in
+  a downtrend (mirror image). Target 2R.
+- *Squeeze breakout* — the regime classifier reads BREAKOUT (a Bollinger squeeze, then a close
+  outside the band): follow it when the bar's volume is at least 1.5× its 20-bar average and
+  the trend timeframe does not oppose it. Target 2.5R.
+- *Range reversion* — no trend on the trend timeframe and a RANGING / LOW_VOLATILITY regime:
+  fade a stretched move at a Bollinger band (LONG at %B ≤ 0.05 with RSI ≤ 35, SHORT at
+  %B ≥ 0.95 with RSI ≥ 65) unless the 1h trend pushes the same way. Target 1.6R.
 
-HIGH_VOLATILITY, BREAKOUT (until it holds or fails) and UNKNOWN regimes stand aside.
+HIGH_VOLATILITY and UNKNOWN regimes stand aside.
 
 **Confidence** is a monotone evidence score in 50–90, never a claim of certainty: pullbacks
 start at 58 and gain up to 10 for the depth of the pullback, up to 10 for the strength of the
-4h trend, 4 when the MACD histogram is already turning back with the trend and 2 when the 1h
-trend agrees; range fades start at 56 and gain up to 26 for how stretched the move is.
-Penalties apply for strong short-term momentum against a pullback, a rising ADX inside a range
-and thin volume. The shadow evaluation of every signal (TP before SL within the holding
+trend, 4 when the MACD histogram is already turning back with the trend and 2 when the 1h trend
+agrees; breakouts start at 58 and gain for volume, for how far the close clears the band and
+for a confirming trend; range fades start at 56 and gain up to 26 for how stretched the move
+is. Penalties apply for strong short-term momentum against a pullback, a rising ADX inside a
+range and thin volume. The shadow evaluation of every signal (TP before SL within the holding
 horizon) measures how well it is calibrated.
+
+Measured honestly (backtests over 5 seeds × several date ranges of the calibrated simulator),
+these rules lose far less than momentum chasing but show no robust edge after costs — which
+is what simple technical rules achieve on a nearly efficient market.
 
 Levels come from ``levels.plan``: an ATR / swing stop with the round-trip-cost floor and the
 setup's R target.

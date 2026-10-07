@@ -5,13 +5,17 @@ the defaults), so a stop of a few basis points would turn every trade into a nea
 loss after costs. The stop distance is therefore the largest of
 
 - 1.5 × ATR of the decision timeframe,
-- 1.5 × ATR of the 15m timeframe (intraday noise one level up),
+- for intraday decisions (below 1h), 1.5 × ATR of the 1h timeframe: the trade's thesis is a
+  higher-timeframe trend and the decision bar only times the entry, so the stop must sit outside
+  an hour of ordinary noise,
 - 4.5 × the round-trip cost (≈ 0.63 % at the defaults),
 
 moved beyond the nearest swing (lowest low / highest high of the last 12 decision bars, plus
 a 0.2 ATR buffer) when that swing is no more than twice as far, and capped at 8 % of price.
-The target is a regime-dependent multiple of that distance: trends and breakouts aim further,
-ranges take profits sooner.
+Wider stops also keep the cost per unit of risk low: at a 0.65 % stop a round trip costs about
+0.25 R, at 1.3 % about 0.12 R. The target is a multiple of that distance chosen by the setup
+(or by the regime when no setup applies): trends and breakouts aim further, ranges take
+profits sooner.
 """
 
 from __future__ import annotations

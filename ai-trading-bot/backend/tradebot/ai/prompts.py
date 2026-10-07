@@ -31,8 +31,8 @@ price at a Bollinger band extreme.
 4. Levels: for LONG, stop_loss < entry < take_profit; for SHORT, take_profit < entry < stop_loss. Use the \
 current price as entry unless you have a concrete reason (entry becomes the limit price when the account \
 uses limit orders).
-5. Stop distance: at least the larger of 1.5 x ATR(15m) and account.min_stop_pct percent of price, beyond \
-the nearest swing high/low when that is reasonable, never more than 8 percent.
+5. Stop distance: at least account.min_stop_pct percent of price (the larger of 1.5 x ATR(1h) and 4.5 x the \
+round-trip cost), beyond the nearest swing high/low when that is reasonable, never more than 8 percent.
 6. Reward-to-risk (|take_profit - entry| / |entry - stop_loss|) must be at least account.min_risk_reward. \
 Do not stretch targets to manufacture it - HOLD instead.
 7. Confidence (0-100) is your conviction that the trade reaches its target before its stop: 50 = coin \
@@ -109,7 +109,7 @@ def context_payload(ctx: MarketContext) -> dict[str, Any]:
         "levels": {
             "swing_high_12": _num(f.swing_high, 8),
             "swing_low_12": _num(f.swing_low, 8),
-            "atr_15m": _num(ctx.features["15m"].atr) if "15m" in ctx.features else None,
+            "atr_1h": _num(ctx.features["1h"].atr) if "1h" in ctx.features else None,
         },
         "recent_candles": {
             "timeframe": ctx.timeframe,
