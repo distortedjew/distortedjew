@@ -199,3 +199,65 @@ class BotLoopTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DashboardTests(unittest.TestCase):
+    def test_status_endpoint_and_token(self):
+        import json as _json
+        import urllib.error
+        import urllib.request
+
+        from goldbot.dashboard import start_dashboard
+
+        df = synthetic(2500)
+        broker = FakeBroker(df)
+        with tempfile.TemporaryDirectory() as d:
+            cfg = Config(state_file=f"{d}/s.json", log_dir=d, dashboard_port=0,
+                         dashboard_token="t" * 20)
+            bot = GoldBot(cfg, broker=broker, notifier=Notifier())
+            for upto in range(700, 2500):
+                broker.upto = upto
+                if broker.pos and upto % 12 == 0:
+                    broker.pos = None  # broker-side exit
+                bot.on_bar(now=df["time"].iloc[upto - 1].to_pydatetime() + timedelta(minutes=15, seconds=10))
+            cfg.dashboard_port = 0
+            srv = start_dashboard(bot)
+            port = srv.server_address[1]
+            base = f"http://127.0.0.1:{port}"
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                urllib.request.urlopen(base + "/api/status")
+            self.assertEqual(ctx.exception.code, 401)
+            body = _json.loads(urllib.request.urlopen(base + "/api/status?token=" + "t" * 20).read())
+            self.assertEqual(body["status"], "running")
+            self.assertEqual(len(body["candles"]), 80)
+            self.assertGreater(len(body["equity_curve"]), 100)
+            self.assertTrue(body["trades"])
+            self.assertEqual(len(body["checks"]["long"]), 7)
+            page = urllib.request.urlopen(base + "/?token=" + "t" * 20).read()
+            self.assertIn(b"Gold Bot", page)
+            srv.shutdown()
+
+    def test_public_dashboard_needs_token(self):
+        self.assertRaises(ValueError, Config(dashboard_host="0.0.0.0").validate)
+
+
+class EnvTemplateTests(unittest.TestCase):
+    def test_env_example_parses_as_shipped(self):
+        import os
+        import shutil
+        from pathlib import Path
+        from unittest import mock
+
+        src = Path(__file__).resolve().parents[1] / ".env.example"
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {}, clear=True):
+            shutil.copy(src, Path(d) / ".env")
+            cwd = os.getcwd()
+            os.chdir(d)
+            try:
+                cfg = Config.from_env()
+            finally:
+                os.chdir(cwd)
+            cfg.validate()
+            self.assertEqual(cfg.risk_per_trade, 0.005)
+            self.assertFalse(cfg.live_trading)
+            self.assertEqual(cfg.dashboard_host, "127.0.0.1")

@@ -121,3 +121,39 @@ def manage(side: str, entry: float, sl: float, initial_risk: float, close: float
         if profit_r >= p.breakeven_r and not at_breakeven:
             return "move_sl", entry + sign * 0.05 * initial_risk  # a hair past entry covers costs
     return "hold", None
+
+
+def checklist(ind: pd.DataFrame, i: int, p: StrategyParams) -> dict[str, list[dict]]:
+    """Each entry condition at bar i, for both sides, for the dashboard."""
+    if i < 1:
+        return {"long": [], "short": []}
+    row = ind.iloc[i]
+    close_time = row["time"] + BAR
+    window = ind["rsi"].iloc[max(0, i - p.pullback_lookback): i]
+    prev_rsi, r = ind["rsi"].iloc[i - 1], row["rsi"]
+    c, f, s, t, a, med = (row[k] for k in ("close", "ema_fast", "ema_slow", "ema_trend", "atr", "atr_med"))
+    sess = in_session(close_time, p)
+    vol_ok = bool(np.isfinite(a) and (not np.isfinite(med) or a >= p.atr_floor_ratio * med))
+    vol = f"{a:.2f} / {med:.2f}" if np.isfinite(med) else f"{a:.2f}"
+    common = [
+        {"name": f"Session {p.session_start_utc:02d}-{p.session_end_utc:02d} UTC", "ok": sess,
+         "detail": close_time.strftime("%a %H:%M")},
+        {"name": f"ATR >= {p.atr_floor_ratio:.0%} of median", "ok": vol_ok, "detail": vol},
+        {"name": "History warmed up", "ok": i >= warmup(p), "detail": f"{i + 1} bars"},
+    ]
+    return {
+        "long": [
+            {"name": "Trend stack 20 > 50 > 200", "ok": bool(f > s > t), "detail": f"{f - s:+.1f} / {s - t:+.1f}"},
+            {"name": "Close above EMA 200 and EMA 20", "ok": bool(c > t and c > f), "detail": f"{c - t:+.1f}"},
+            {"name": f"RSI dipped below {p.rsi_pullback_long:.0f}", "ok": bool(window.min() < p.rsi_pullback_long),
+             "detail": f"min {window.min():.0f}"},
+            {"name": "RSI crosses above 50", "ok": bool(prev_rsi <= 50 < r), "detail": f"{prev_rsi:.0f} -> {r:.0f}"},
+        ] + common,
+        "short": [
+            {"name": "Trend stack 20 < 50 < 200", "ok": bool(f < s < t), "detail": f"{f - s:+.1f} / {s - t:+.1f}"},
+            {"name": "Close below EMA 200 and EMA 20", "ok": bool(c < t and c < f), "detail": f"{c - t:+.1f}"},
+            {"name": f"RSI rose above {p.rsi_pullback_short:.0f}", "ok": bool(window.max() > p.rsi_pullback_short),
+             "detail": f"max {window.max():.0f}"},
+            {"name": "RSI crosses below 50", "ok": bool(prev_rsi >= 50 > r), "detail": f"{prev_rsi:.0f} -> {r:.0f}"},
+        ] + common,
+    }

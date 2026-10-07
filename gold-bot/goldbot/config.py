@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -16,15 +17,16 @@ def load_dotenv(path: str | Path = ".env") -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
+        value = re.split(r"\s+#", value, maxsplit=1)[0]  # allow "KEY=value  # comment"
         os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 def _f(name: str, default: float) -> float:
-    return float(os.environ.get(name, default))
+    return float(os.environ.get(name) or default)  # empty counts as unset
 
 
 def _i(name: str, default: int) -> int:
-    return int(os.environ.get(name, default))
+    return int(os.environ.get(name) or default)
 
 
 def _s(name: str, default: str = "") -> str:
@@ -73,6 +75,9 @@ class Config:
     candles: int = 600                 # history fetched each bar (enough for EMA200 + ATR median)
     state_file: str = "data/state.json"
     log_dir: str = "logs"
+    dashboard_host: str = "127.0.0.1"   # 0.0.0.0 exposes it; then DASHBOARD_TOKEN is required
+    dashboard_port: int = 8050           # 0 turns the dashboard off
+    dashboard_token: str = ""
     telegram_token: str = ""
     telegram_chat_id: str = ""
     # OANDA
@@ -104,6 +109,9 @@ class Config:
             candles=_i("CANDLES", 600),
             state_file=_s("STATE_FILE", "data/state.json"),
             log_dir=_s("LOG_DIR", "logs"),
+            dashboard_host=_s("DASHBOARD_HOST", "127.0.0.1"),
+            dashboard_port=_i("DASHBOARD_PORT", 8050),
+            dashboard_token=_s("DASHBOARD_TOKEN"),
             telegram_token=_s("TELEGRAM_BOT_TOKEN"),
             telegram_chat_id=_s("TELEGRAM_CHAT_ID"),
             oanda_token=_s("OANDA_TOKEN"),
@@ -126,5 +134,8 @@ class Config:
             raise ValueError("MAX_DAILY_LOSS must be between 0 and 0.10 (10%)")
         if self.broker not in ("oanda", "mt5"):
             raise ValueError("BROKER must be oanda or mt5")
+        if self.dashboard_port and self.dashboard_host not in ("127.0.0.1", "localhost", "::1") \
+                and len(self.dashboard_token) < 16:
+            raise ValueError("DASHBOARD_HOST is public: set DASHBOARD_TOKEN (16+ random characters)")
         if self.broker == "oanda" and self.oanda_env == "live" and not self.live_trading:
             raise ValueError("OANDA_ENV=live needs LIVE_TRADING=yes (real money). Use practice first.")

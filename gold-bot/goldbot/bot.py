@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import signal
+import threading
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
@@ -16,7 +17,7 @@ from .brokers import Broker, make_broker
 from .config import Config
 from .notify import Notifier
 from .risk import position_units
-from .strategy import BAR, add_indicators, manage, signal_at
+from .strategy import BAR, add_indicators, checklist, manage, signal_at
 
 log = logging.getLogger("goldbot")
 
@@ -25,6 +26,7 @@ log = logging.getLogger("goldbot")
 class State:
     day: str = ""
     day_start_equity: float = 0.0
+    start_equity: float = 0.0       # equity when the bot first ran
     trades_today: int = 0
     halted_day: str = ""          # UTC day on which the daily-loss stop fired
     last_bar: str = ""            # open time of the last candle processed
@@ -67,6 +69,10 @@ class GoldBot:
         self.running = True
         self.journal = Path(cfg.log_dir) / "trades.jsonl"
         self.journal.parent.mkdir(parents=True, exist_ok=True)
+        self.equity_log = Path(cfg.log_dir) / "equity.jsonl"
+        self.lock = threading.Lock()
+        self.snapshot: dict = {"status": "starting", "broker": self.broker.name,
+                               "mode": "live" if cfg.live_trading else "demo"}
 
     def record(self, event: str, **data) -> None:
         row = {"ts": datetime.now(timezone.utc).isoformat(), "event": event, **data}
@@ -90,6 +96,8 @@ class GoldBot:
 
         equity = b.equity()
         today = now.strftime("%Y-%m-%d")
+        if not st.start_equity:
+            st.start_equity = equity
         if st.day != today:
             st.day, st.day_start_equity, st.trades_today = today, equity, 0
             log.info("new UTC day %s, equity %.2f", today, equity)
@@ -110,7 +118,7 @@ class GoldBot:
             self.notify.send(f"Daily loss limit hit ({dd:.1%}). Flat until tomorrow (UTC).")
             if pos:
                 b.close(pos)
-                self.record("kill_switch_close", trade_id=pos.id, equity=equity)
+                self.record("kill_switch_close", trade_id=pos.id, equity=b.equity())
                 st.trade_id, st.last_exit_bar, pos = "", last_open.isoformat(), None
 
         ind = add_indicators(df, p)
@@ -127,7 +135,7 @@ class GoldBot:
             if action == "close":
                 log.info("closing %s (time stop / weekend)", pos.side)
                 b.close(pos)
-                self.record("time_close", trade_id=pos.id, bars=held)
+                self.record("time_close", trade_id=pos.id, bars=held, equity=b.equity())
                 self.notify.send(f"Closed XAUUSD {pos.side} (time/weekend exit)")
                 st.trade_id, st.last_exit_bar = "", last_open.isoformat()
             elif action == "move_sl" and new_sl is not None:
@@ -139,6 +147,55 @@ class GoldBot:
 
         st.last_bar = last_open.isoformat()
         st.save(cfg.state_file)
+        with self.equity_log.open("a") as f:
+            f.write(json.dumps({"t": bar_close.isoformat(), "equity": round(equity, 2)}) + "\n")
+        self._update_snapshot(ind, i, bar_close, stale)
+
+    def _update_snapshot(self, ind, i: int, bar_close: datetime, stale: bool) -> None:
+        cfg, p, st, b = self.cfg, self.cfg.strategy, self.state, self.broker
+        equity, pos = b.equity(), b.position()
+        try:
+            bid, ask = b.quote()
+        except Exception:  # quotes can be unavailable while the market is closed
+            bid = ask = float("nan")
+        today = st.day
+        position = None
+        if pos:
+            sign = 1 if pos.side == "buy" else -1
+            mid = (bid + ask) / 2 if bid == bid else float(ind["close"].iloc[i])
+            pnl = sign * (mid - pos.entry) * pos.units
+            risk = st.trade_initial_risk or (abs(pos.entry - pos.sl) if pos.sl else 0)
+            position = {"side": pos.side, "units": pos.units, "entry": pos.entry, "sl": pos.sl,
+                        "tp": pos.tp, "pnl": pnl, "r": sign * (mid - pos.entry) / risk if risk else None}
+        tail = ind.tail(80)
+        candles = [{"t": r.time.isoformat(), "o": r.open, "h": r.high, "l": r.low, "c": r.close,
+                    "e20": r.ema_fast, "e50": r.ema_slow, "e200": r.ema_trend} for r in tail.itertuples()]
+        row = ind.iloc[i]
+        halted = st.halted_day == today
+        status = "halted" if halted else ("market closed" if stale else "running")
+        cooldown_left = max(0, cfg.cooldown_bars - bars_between(st.last_exit_bar, row["time"].to_pydatetime()))
+        snap = {
+            "status": status, "error": None, "broker": b.name,
+            "mode": "live" if cfg.live_trading else "demo",
+            "updated": datetime.now(timezone.utc).isoformat(), "last_bar_close": bar_close.isoformat(),
+            "bid": bid, "ask": ask, "spread": ask - bid,
+            "equity": equity, "start_equity": st.start_equity, "day_start_equity": st.day_start_equity,
+            "trades_today": st.trades_today, "position": position,
+            "candles": candles, "rsi": float(row["rsi"]), "atr": float(row["atr"]),
+            "checks": checklist(ind, i, p),
+            "limits": {"risk_per_trade": cfg.risk_per_trade, "max_daily_loss": cfg.max_daily_loss,
+                       "max_trades_per_day": cfg.max_trades_per_day, "max_spread": cfg.max_spread,
+                       "cooldown_left": cooldown_left, "halted": halted,
+                       "breakeven_r": p.breakeven_r, "friday_close_utc": p.friday_close_utc,
+                       "session": [p.session_start_utc, p.session_end_utc]},
+        }
+        with self.lock:
+            self.snapshot = snap
+
+    def set_error(self, err: Exception) -> None:
+        with self.lock:
+            self.snapshot = {**self.snapshot, "status": "error", "error": str(err)[:300],
+                             "updated": datetime.now(timezone.utc).isoformat()}
 
     def _maybe_enter(self, ind, i: int, last_open: datetime, equity: float) -> None:
         cfg, st, b = self.cfg, self.state, self.broker
@@ -153,6 +210,7 @@ class GoldBot:
         spread = ask - bid
         if spread > cfg.max_spread:
             log.info("signal %s skipped: spread %.2f > %.2f", sig.side, spread, cfg.max_spread)
+            self.record("skipped", side=sig.side, why=f"spread {spread:.2f} > {cfg.max_spread:.2f}")
             return
         price = ask if sig.side == "buy" else bid
         units = b.normalize_units(position_units(equity, cfg.risk_per_trade, sig.sl_dist, price,
@@ -160,6 +218,7 @@ class GoldBot:
         if units <= 0:
             log.warning("signal %s skipped: account too small for the broker's minimum size "
                         "at %.2f%% risk", sig.side, cfg.risk_per_trade * 100)
+            self.record("skipped", side=sig.side, why="size below broker minimum")
             return
         sign = 1 if sig.side == "buy" else -1
         sl, tp = price - sign * sig.sl_dist, price + sign * sig.tp_dist
@@ -177,6 +236,9 @@ class GoldBot:
     # ---- forever --------------------------------------------------------------------
     def run(self) -> None:
         signal.signal(signal.SIGTERM, lambda *_: setattr(self, "running", False))
+        if self.cfg.dashboard_port:
+            from .dashboard import start_dashboard
+            start_dashboard(self)
         mode = "LIVE MONEY" if self.cfg.live_trading else "demo/practice"
         log.info("gold bot started: broker=%s mode=%s risk=%.2f%%/trade daily-stop=%.1f%%",
                  self.broker.name, mode, self.cfg.risk_per_trade * 100, self.cfg.max_daily_loss * 100)
@@ -189,6 +251,7 @@ class GoldBot:
             except Exception as e:  # keep running; the broker-side stop protects open trades
                 errors += 1
                 log.exception("bar failed (%d in a row)", errors)
+                self.set_error(e)
                 if errors in (1, 5, 20):
                     self.notify.send(f"Gold bot error ({errors}x): {e}")
                 time.sleep(min(60 * errors, 300))

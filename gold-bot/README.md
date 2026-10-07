@@ -64,6 +64,18 @@ cp .env.example .env       # fill in your demo keys
 python -m goldbot
 ```
 
+## Dashboard
+
+The bot serves a read-only monitor at **http://127.0.0.1:8050**. It shows the bot's status, equity and today's P&L against the daily loss limit, and the open position with its R-multiple. It also has a live M15 chart with EMAs and entry/SL/TP lines, the entry checklist (which conditions are met right now, long or short), the risk guards, the equity curve, recent trades and an activity log. It refreshes every 15 s and works on a phone. It has no trading buttons.
+
+On a VPS it listens on localhost only. To view it from your computer:
+
+```bash
+ssh -L 8050:127.0.0.1:8050 you@your-vps     # then open http://localhost:8050
+```
+
+To expose it publicly instead, set `DASHBOARD_HOST=0.0.0.0` and a long `DASHBOARD_TOKEN`, then open `http://your-vps:8050/?token=...` (and allow port 8050 in your firewall). `DASHBOARD_PORT=0` turns it off.
+
 ## Backtest before you trust it
 
 ```bash
@@ -79,8 +91,9 @@ The backtest calls the same strategy and trade-management functions as the live 
 - `goldbot/bot.py`: the always-on loop, the daily-loss kill switch, and state in `data/state.json` (survives restarts; adopts an open trade after a restart)
 - `goldbot/risk.py`: position sizing
 - `goldbot/brokers/oanda.py`, `goldbot/brokers/mt5.py`: broker adapters
+- `goldbot/dashboard.py` + `goldbot/dashboard.html`: the monitor (stdlib web server, no extra installs)
 - `goldbot/backtest.py`, `goldbot/fetch_data.py`: research tools
-- `logs/trades.jsonl`: every open, breakeven, close, and kill-switch event. `logs/goldbot.log` is the full log.
+- `logs/trades.jsonl`: every open, breakeven, close, and kill-switch event. `logs/equity.jsonl` is equity at every bar. `logs/goldbot.log` is the full log.
 - Tests: `python -m unittest discover -s tests -t .` (no network or account needed)
 
 ## Honest limits
