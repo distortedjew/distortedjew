@@ -1,0 +1,68 @@
+# Copy to config.toml (git-ignored) and fill in. Start with dry_run = true.
+
+[bot]
+# Max compute unit limit per transaction; the bot lowers it to what simulation uses.
+compute_unit_limit = 600000
+# Simulate and log only. Set to false only after a dry run shows real
+# "[dry-run] would send" lines.
+dry_run = true
+# Net profit after network fee and Jito tip that a trade must clear (lamports).
+# 50_000 lamports = 0.00005 SOL.
+min_profit_lamports = 50000
+# Fee-adjusted price gap between two pools needed before simulating (bps).
+# Negative values simulate near-misses too, at the cost of more RPC calls.
+min_spread_bps = 0.0
+# Re-derive tick/bin arrays from the current price this often (seconds).
+pool_refresh_secs = 30
+# Log the checked / simulated / profitable / sent counters this often (seconds).
+stats_interval_secs = 60
+
+[routing]
+# One block per token. Every pool must pair the token with SOL (WSOL).
+# Find pool addresses on dexscreener.com or each DEX's site.
+[[routing.mint_config_list]]
+mint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"                     # USDC
+raydium_pool_list = ["58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"]
+meteora_dlmm_pool_list = ["5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6"]
+whirlpool_pool_list = ["Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE"]
+raydium_clmm_pool_list = ["3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv"]
+raydium_cp_pool_list = []
+lookup_table_accounts = ["8HvgxVyd22Jq9mmoojm4Awqw6sbymbF5pwLr8FtvySHs"]
+# Delay between attempts for this token (ms). Each attempt costs 1 RPC call,
+# plus 1-2 simulations when the pre-filter passes.
+process_delay = 1000
+
+[rpc]
+# Use a paid RPC (Helius, Triton, QuickNode); the public endpoint rate-limits.
+# A value starting with $ is read from that environment variable.
+url = "$SOLANA_RPC_URL"
+
+[spam]
+# Only used when Jito is off: send through every URL listed here.
+enabled = false
+sending_rpc_urls = []
+# Priority fee in micro-lamports per compute unit.
+compute_unit_price = 1000
+max_retries = 3
+
+[jito]
+# Send as Jito bundles: a trade that would fail is dropped instead of landing,
+# so it costs nothing. Strongly recommended.
+enabled = true
+block_engine_urls = ["https://mainnet.block-engine.jito.wtf"]
+# Share of simulated gross profit paid as tip, clamped to [min, max].
+tip_percent = 50
+min_tip_lamports = 10000
+max_tip_lamports = 10000000
+
+[wallet]
+# Base58 secret key or a keypair file path. Prefer an env var: "$SOLANA_PRIVATE_KEY".
+# Use a dedicated wallet holding only what you are willing to lose.
+private_key = "$SOLANA_PRIVATE_KEY"
+
+[kamino_flashloan]
+# Borrow SOL from Kamino for each trade instead of using your own WSOL.
+# The flash-loan fee is charged on the borrowed amount, so a large loan can
+# turn small arbs into losses; the simulation gate accounts for it.
+enabled = false
+# amount_lamports = 100000000000   # 100 SOL
