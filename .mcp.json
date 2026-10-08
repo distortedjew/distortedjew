@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "astral": {
+      "type": "http",
+      "url": "https://stream.astral-prod.heyastral.ai/api/mcp"
+    }
+  }
+}
