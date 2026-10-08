@@ -36,10 +36,30 @@ def warmup(city: City, symbols: list[str], now: datetime) -> None:
                 w.engine.on_bar(b)
 
 
+def catch_up(city: City, symbols: list[str], now: datetime) -> dict[str, datetime]:
+    """Started after the open: replay today's finished candles so VWAP and the opening range start at 09:30.
+
+    Replayed candles never trade; the bot only acts on candles that close from now on.
+    """
+    last: dict[str, datetime] = {}
+    open_ = datetime.combine(now.date(), RTH_OPEN, ET)
+    if now <= open_:
+        return last
+    for s in symbols:
+        bars = [b for b in alpaca_bars(s, open_, now) if b.close_ts <= now]
+        for b in bars:
+            city.on_bar(s, b, trade=False)
+        if bars:
+            last[s] = bars[-1].ts
+            log.info("%s: caught up on %d candles since the open", s, len(bars))
+    city.write_state()
+    return last
+
+
 def run_alpaca(city: City, poll_delay: float = 3.0) -> None:
     syms = list(city.by_symbol)
     warmup(city, syms, datetime.now(ET))
-    last: dict[str, datetime] = {}
+    last = catch_up(city, syms, datetime.now(ET))
     while True:
         now = datetime.now(ET)
         if not is_trading_day(now.date()) or now.time() >= RTH_CLOSE:

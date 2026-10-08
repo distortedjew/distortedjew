@@ -133,6 +133,16 @@ class WorkerRules(unittest.TestCase):
         w = self.feed(c, [600, 600, 600, 601, 600.95, 600.9] + [600.9 - 0.4 * i for i in range(1, 10)])
         self.assertEqual(w.days[str(DAY)].trades[0]["reason"], "stop")
 
+    def test_replayed_bars_never_trade(self):
+        c = cfg(entry_start="09:30")
+        w = Worker(c.workers[0], make_paper_broker(c))
+        for i, px in enumerate([600, 600, 600, 601, 599, 601]):
+            w.on_bar(bar(i, px, v=1e6 if i < 3 else 1), trade=False)
+        dl = w.days[str(DAY)]
+        self.assertEqual(len(dl.bars), 6)
+        self.assertTrue(dl.signals)  # the chart still shows the signals...
+        self.assertEqual((dl.trades, w.pos), ([], None))  # ...but nothing was bought
+
     def test_no_entries_outside_window(self):
         c = cfg(entry_start="10:00")
         w = self.feed(c, [600, 600, 600, 601, 599, 601, 599])

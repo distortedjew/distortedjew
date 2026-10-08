@@ -37,13 +37,14 @@ class City:
         self.tape.appendleft(line)
         log.info(line)
 
-    def on_bar(self, symbol: str, bar: Bar) -> None:
+    def on_bar(self, symbol: str, bar: Bar, trade: bool = True) -> None:
         if bar.ts.date() != self.day:
             self.day, self.vault_closed = bar.ts.date(), False
         self.asof = bar.close_ts
         for w in self.by_symbol.get(symbol, []):
-            w.on_bar(bar)
-        self._vault_limits()
+            w.on_bar(bar, trade)
+        if trade:
+            self._vault_limits()
 
     def today_pnl(self) -> float:
         return sum(w.day_pnl for w in self.workers if w.day == self.day)

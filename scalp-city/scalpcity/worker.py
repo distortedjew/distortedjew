@@ -76,7 +76,8 @@ class Worker:
         self.last_ts: datetime | None = None
 
     # ----------------------------------------------------------------- per-bar loop
-    def on_bar(self, bar: Bar) -> None:
+    def on_bar(self, bar: Bar, trade: bool = True) -> None:
+        """trade=False replays a bar (indicators, chart, signals) without managing or opening positions."""
         if bar.ts.date() != self.day:
             self._new_day(bar.ts.date())
         sig = self.engine.on_bar(bar)
@@ -88,6 +89,8 @@ class Worker:
         dl.opening_range = [_r(lv.or_high), _r(lv.or_low)]
         if sig:
             dl.signals.append({"t": f"{bar.ts:%H:%M}", "dir": sig.direction, "triggers": sig.triggers, "price": round(spot, 2)})
+        if not trade:
+            return
 
         if self.pos and self._manage(sig, spot, now):
             sig = None  # the signal was used to exit and the worker doesn't reverse
