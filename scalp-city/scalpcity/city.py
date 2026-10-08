@@ -7,7 +7,7 @@ import logging
 import os
 import tempfile
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .bars import Bar
 from .brokers.base import Broker
@@ -84,6 +84,7 @@ class City:
             "city": self.cfg.name,
             "mode": self.mode,
             "asof": self.asof.isoformat() if self.asof else None,
+            "written_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "day": str(self.day) if self.day else None,
             "vault": {
                 "today": round(self.today_pnl(), 2),

@@ -184,5 +184,88 @@ class EndToEnd(unittest.TestCase):
         self.assertTrue(all(w.pos is None for w in city.workers))
 
 
+class Dashboard(unittest.TestCase):
+    """The stats module and the HTTP endpoints the 3D dashboard polls."""
+
+    @classmethod
+    def setUpClass(cls):
+        here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        c = load_config(os.path.join(here, "config.example.toml"))
+        cls.city = run(c, SyntheticMarket(c.symbols, seed=5).days(4, date(2026, 10, 2)))
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.path = os.path.join(cls.tmp.name, "state.json")
+        cls.city.write_state(cls.path)
+        from scalpcity.dashboard.server import make_server
+
+        cls.srv = make_server(cls.path, "127.0.0.1", 0)
+        import threading
+
+        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
+        cls.base = f"http://127.0.0.1:{cls.srv.server_address[1]}"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+        cls.srv.server_close()
+        cls.tmp.cleanup()
+
+    def get(self, path, gzip_ok=False):
+        import gzip
+        import urllib.request
+
+        req = urllib.request.Request(self.base + path, headers={"accept-encoding": "gzip"} if gzip_ok else {})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            body = r.read()
+            if r.headers.get("content-encoding") == "gzip":
+                body = gzip.decompress(body)
+            return r.status, r.headers, body
+
+    def test_stats_match_the_trades(self):
+        from scalpcity.stats import compute
+
+        with open(self.path) as f:
+            st = json.load(f)
+        s = compute(st)
+        trades = [t for w in self.city.workers for dl in w.days.values() for t in dl.trades]
+        self.assertEqual(s["totals"]["trades"], len(trades))
+        self.assertAlmostEqual(s["totals"]["total"], sum(h["pnl"] for h in self.city.history()), places=2)
+        self.assertEqual(sum(r["trades"] for r in s["by_worker"]), len(trades))
+        self.assertAlmostEqual(s["equity"][-1]["cum"], s["totals"]["total"], places=2)
+        self.assertTrue(all(e["dd"] <= 0 for e in s["equity"]))
+
+    def test_state_endpoint_sends_one_day_plus_today(self):
+        _, _, body = self.get("/api/state")
+        st = json.loads(body)
+        self.assertEqual({d for w in st["workers"] for d in w["days"]}, {st["day"]})
+        first = st["history"][0]["date"]
+        _, _, body = self.get("/api/state?day=" + first)
+        st2 = json.loads(body)
+        self.assertEqual({d for w in st2["workers"] for d in w["days"]}, {first, st["day"]})
+        bar = st["workers"][0]["days"][st["day"]]["bars"][0]
+        self.assertEqual(len(bar), 7)  # time, close, vwap, ema, open, high, low
+
+    def test_gzip_and_static_page(self):
+        status, headers, body = self.get("/api/state", gzip_ok=True)
+        self.assertEqual(headers.get("content-encoding"), "gzip")
+        self.assertIn("vault", json.loads(body))
+        status, _, page = self.get("/")
+        self.assertEqual(status, 200)
+        self.assertIn(b"js/main.js", page)
+        for js in ("main", "world", "ui", "charts", "shaders", "util"):
+            self.assertEqual(self.get(f"/js/{js}.js")[0], 200)
+
+    def test_stats_endpoint(self):
+        _, _, body = self.get("/api/stats")
+        s = json.loads(body)
+        self.assertEqual(s["totals"]["days"], 4)
+        self.assertIn("by_trigger", s)
+
+    def test_missing_state_is_reported_not_crashed(self):
+        from scalpcity.dashboard.server import StateCache
+
+        with self.assertRaises(FileNotFoundError):
+            StateCache(os.path.join(self.tmp.name, "nope.json")).get()
+
+
 if __name__ == "__main__":
     unittest.main()

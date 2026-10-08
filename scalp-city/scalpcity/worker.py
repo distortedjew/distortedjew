@@ -43,6 +43,8 @@ class Trade:
     triggers: list[str]
     reason: str
     pnl: float
+    spot_in: float = 0.0  # underlying price at entry / exit, for the chart markers
+    spot_out: float = 0.0
 
 
 @dataclass
@@ -51,7 +53,7 @@ class DayLog:
 
     day: str
     pnl: float = 0.0
-    bars: list[list] = field(default_factory=list)  # [hh:mm, close, vwap, ema]
+    bars: list[list] = field(default_factory=list)  # [hh:mm, close, vwap, ema, open, high, low]
     opening_range: list = field(default_factory=lambda: [None, None])
     signals: list[dict] = field(default_factory=list)
     trades: list[dict] = field(default_factory=list)
@@ -85,7 +87,8 @@ class Worker:
         self.last_spot, self.last_ts = spot, now
         lv = self.engine.levels
         dl = self.days[str(self.day)]
-        dl.bars.append([f"{bar.ts:%H:%M}", round(spot, 2), _r(lv.vwap), _r(lv.ema)])
+        dl.bars.append([f"{bar.ts:%H:%M}", round(spot, 2), _r(lv.vwap), _r(lv.ema),
+                        round(bar.open, 2), round(bar.high, 2), round(bar.low, 2)])
         dl.opening_range = [_r(lv.or_high), _r(lv.or_low)]
         if sig:
             dl.signals.append({"t": f"{bar.ts:%H:%M}", "dir": sig.direction, "triggers": sig.triggers, "price": round(spot, 2)})
@@ -180,7 +183,8 @@ class Worker:
         pnl = (f.price - p.entry) * 100 * p.qty - f.fees - p.fees_in
         self.day_pnl += pnl
         t = Trade(self.cfg.symbol, p.contract.occ, p.contract.right, p.qty, p.entry, f.price,
-                  f"{p.opened:%H:%M}", f"{now:%H:%M}", p.triggers, reason, round(pnl, 2))
+                  f"{p.opened:%H:%M}", f"{now:%H:%M}", p.triggers, reason, round(pnl, 2),
+                  round(p.spot_in, 2), round(spot, 2))
         dl = self.days[str(self.day)]
         dl.trades.append(asdict(t))
         dl.pnl = round(self.day_pnl, 2)
@@ -206,6 +210,7 @@ class Worker:
     def snapshot(self) -> dict:
         p = self.pos
         unreal = (p.mark - p.entry) * 100 * p.qty if p else 0.0
+        c = self.cfg
         return {
             "name": self.cfg.name,
             "symbol": self.cfg.symbol,
@@ -214,11 +219,22 @@ class Worker:
             "status": self.status,
             "pnl_today": round(self.day_pnl, 2),
             "unrealized": round(unreal, 2),
-            "target": self.cfg.daily_profit_target,
+            "target": c.daily_profit_target,
+            "max_loss": c.daily_max_loss,
+            "trades_today": self.trades_today,
+            "max_trades": c.max_trades_per_day,
             "spot": round(self.last_spot, 2),
+            "rules": {"dte": c.dte, "contracts": c.contracts, "take_profit_pct": c.take_profit_pct,
+                      "stop_loss_pct": c.stop_loss_pct, "max_hold_min": c.max_hold_min,
+                      "entry": f"{c.entry_start}-{c.entry_end}", "flatten_at": c.flatten_at},
             "position": None if not p else {
                 "contract": str(p.contract), "occ": p.contract.occ, "right": p.contract.right, "qty": p.qty,
                 "entry": p.entry, "mark": round(p.mark, 2), "opened": f"{p.opened:%H:%M}", "triggers": p.triggers,
+                "spot_in": round(p.spot_in, 2),
+                "tp": round(p.entry * (1 + c.take_profit_pct / 100), 2),
+                "sl": round(p.entry * (1 - c.stop_loss_pct / 100), 2),
+                "held_min": int((self.last_ts - p.opened).total_seconds() // 60) if self.last_ts else 0,
+                "max_hold_min": c.max_hold_min,
             },
         }
 

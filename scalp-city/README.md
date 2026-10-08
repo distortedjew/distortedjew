@@ -44,7 +44,7 @@ You need Python 3.11+. The core uses only the standard library.
 
 ```bash
 cd scalp-city
-python -m unittest discover -s tests            # 16 tests
+python -m unittest discover -s tests            # 22 tests
 
 # Backtest, then open the dashboard on the result
 python -m scalpcity.backtest --synthetic 20     # no data or keys needed (random-walk market)
@@ -62,14 +62,37 @@ python -m scalpcity.live --feed alpaca                    # real 1-min bars, mod
 python -m scalpcity.live --feed alpaca --broker alpaca    # real orders on your Alpaca PAPER account
 ```
 
-Run the dashboard in a second terminal while the live bot runs. It polls `state.json` every 2 seconds.
+Run the dashboard in a second terminal while the live bot runs. It polls `state.json` every 2 seconds (gzipped, one day of candles at a time, so it stays light over an SSH tunnel).
 
-- **Click a tower** to see that bot's chart for the day: price, VWAP, 50 EMA, the opening-range band, call/put signal arrows and shaded trades, plus its trade and signal tables.
-- **Click the vault** for payroll (P&L per worker).
-- **Click a day** in the bottom ribbon to replay it.
-- **Beams:** a green beam means a call is open, a red beam means a put is open.
+**The city**
+
+| What you see | What it means |
+|---|---|
+| Tower height | That bot's P&L today (realised + open). |
+| Ring on the tower top | Fills green toward the daily profit target, red toward the daily loss limit, and turns gold when the target is hit. |
+| Tower colour | Cyan watching, green in a call, red in a put, gold target hit, grey clocked out. |
+| Beam | Green = a call is open, red = a put is open. It flashes on a new entry. |
+| Flying orb | A trade closed: gold flies into the vault on a win, red flies back to the tower on a loss. |
+| Links to the vault | Pulse faster while the bot holds a position. |
+| Vault dome and ground pulse | Green or red with the city's day. Gold sparks rise while the day is green. |
+
+Everything is drawn with custom shaders: lit windows that flicker, glowing building edges, a grid ground with a radar pulse, a sky with stars and an aurora, energy beams and bloom glow. Cars drive the ring road, drones circle, and the street lamps, trees and neon billboards are 3D models.
+
+**Panels and controls**
+
+- **Top bar:** today's P&L, open P&L, trades, win rate, open positions, progress to the vault target, market open/closed countdown, and a status dot (green live, blue backtest replay, amber stale, red offline).
+- **Bot list:** each bot's price and % change, status, P&L, progress to target and a sparkline. On a phone it's behind the bars button.
+- **Tower panel:** click a tower, a label or a bot. It shows:
+  - a candlestick chart with VWAP, 50 EMA and the opening range, plus entry and exit markers. Hover or touch it for a crosshair with OHLC values.
+  - the open position, with a stop/target bar and a held-time bar.
+  - the day's trades, signals and rules.
+- **Performance** (chart button or `S`): equity curve with drawdown, plus win rate, profit factor, expectancy, best/worst day and streak. It also breaks results down by bot, trigger, exit reason, side and entry hour.
+- **Payroll** (vault or `P`), **Help** (`H`), and **Settings**: graphics quality (Low turns off the glow for older phones), labels, auto-orbit, trade pop-ups and sound.
+- **Day ribbon:** click a day, or use `←` `→`, to replay it. Other keys: `1`-`9` pick a bot, `R` resets the camera, `A` toggles auto-orbit, `Esc` closes panels.
 
 ![tower](docs/tower.png)
+
+<img src="docs/phone.png" width="260" alt="phone">
 
 ## Files
 
@@ -80,7 +103,8 @@ Run the dashboard in a second terminal while the live bot runs. It polls `state.
 - `scalpcity/brokers/`: `paper.py` (modelled fills) and `alpaca.py` (Alpaca **paper** options orders; the URL is hard-coded to paper).
 - `scalpcity/feeds.py`: bars from Alpaca, yfinance, CSV, or a synthetic market.
 - `scalpcity/backtest.py` and `scalpcity/live.py`: the two runners.
-- `scalpcity/dashboard/`: a stdlib HTTP server and the three.js city page (three.js loads from jsDelivr).
+- `scalpcity/dashboard/`: a stdlib HTTP server (`/api/state`, `/api/stats`) and the three.js city: `static/js/world.js` (3D scene), `shaders.js`, `ui.js` (panels), `charts.js`. three.js loads from jsDelivr.
+- `scalpcity/stats.py`: performance stats for the dashboard.
 
 ## Caveats
 
