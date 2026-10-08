@@ -1,0 +1,6 @@
+state.json
+trades.csv
+config.toml
+data/*.csv
+__pycache__/
+*.tmp

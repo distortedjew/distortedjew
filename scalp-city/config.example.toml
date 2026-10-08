@@ -1,0 +1,72 @@
+# Scalp City config. Copy to config.toml and edit.
+# Every [[workers]] block is one bot = one tower on the dashboard.
+
+[city]
+name = "Scalp City"
+broker = "paper"            # paper (modelled fills) | alpaca (orders on your Alpaca PAPER account)
+daily_profit_target = 2500  # the "vault": once the whole city is up this much today, everyone clocks out (0 = off)
+daily_max_loss = 1500       # city-wide kill switch (0 = off)
+fee_per_contract = 0.65
+spread_pct = 0.03           # paper fills: bid/ask width as a fraction of the option's price
+min_spread = 0.02
+iv = { QQQ = 0.18, SPY = 0.14, IWM = 0.22 }  # paper fills: implied vol used to price the options
+state_path = "state.json"
+
+# The main QQQ bot: all three triggers, 1-day-to-expiration at-the-money options.
+[[workers]]
+name = "QQQ"
+symbol = "QQQ"
+district = "VWAP"
+triggers = ["vwap", "ema50", "orb"]
+dte = 1
+contracts = 5
+daily_profit_target = 500   # "once it gets up to a set amount, it stops trading for the day"
+daily_max_loss = 400
+
+# Same-day expiry variant: cheaper, faster, more gamma.
+[[workers]]
+name = "QQQ 0DTE"
+symbol = "QQQ"
+district = "0DTE"
+triggers = ["vwap", "ema50", "orb"]
+dte = 0
+contracts = 5
+take_profit_pct = 35
+stop_loss_pct = 20
+flatten_at = "15:45"
+daily_profit_target = 500
+daily_max_loss = 400
+
+# Trend-only: rides 50 EMA crosses and opening-range breaks, ignores VWAP chop. Longer leash.
+[[workers]]
+name = "QQQ TREND"
+symbol = "QQQ"
+district = "BUY THE DIP"
+triggers = ["ema50", "orb"]
+dte = 1
+contracts = 5
+take_profit_pct = 40
+stop_loss_pct = 20
+max_hold_min = 60
+daily_profit_target = 500
+daily_max_loss = 400
+
+[[workers]]
+name = "SPY"
+symbol = "SPY"
+district = "VWAP"
+triggers = ["vwap", "ema50", "orb"]
+dte = 1
+contracts = 5
+daily_profit_target = 500
+daily_max_loss = 400
+
+[[workers]]
+name = "IWM"
+symbol = "IWM"
+district = "0DTE"
+triggers = ["vwap", "ema50", "orb"]
+dte = 1
+contracts = 5
+daily_profit_target = 300
+daily_max_loss = 250
