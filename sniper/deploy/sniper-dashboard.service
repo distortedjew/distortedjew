@@ -1,0 +1,21 @@
+[Unit]
+Description=Sniper paper-trading dashboard
+After=network.target
+
+[Service]
+User=sniper
+WorkingDirectory=/opt/distortedjew/sniper
+# Genera un token con: openssl rand -hex 24
+Environment=DASHBOARD_HOST=127.0.0.1
+Environment=DASHBOARD_PORT=8787
+Environment=DASHBOARD_TOKEN=CAMBIAMI
+ExecStart=/usr/bin/node src/dashboard.ts
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/distortedjew/sniper
+
+[Install]
+WantedBy=multi-user.target

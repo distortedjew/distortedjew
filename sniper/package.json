@@ -4,9 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Paper-trading sniper for new Solana memecoins (no real funds, no keys)",
-  "engines": { "node": ">=22.18" },
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "start": "node src/index.ts",
-    "test": "node --test test/*.test.ts"
+    "test": "node --test test/*.test.ts",
+    "dashboard": "node src/dashboard.ts"
   }
 }

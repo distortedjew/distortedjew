@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sniper Monitor</title>
+<style>
+:root {
+  --bg: #f4f5f8; --panel: #ffffff; --panel-2: #f0f2f7; --line: #e2e5ee;
+  --text: #161a26; --muted: #6a7287; --accent: #6c5ce7; --accent-2: #0aa5c2;
+  --pos: #0f9d6b; --neg: #d6414f; --warn: #c98a00;
+  --shadow: 0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0d14; --panel: #131724; --panel-2: #1a1f30; --line: #242a3f;
+    --text: #e8ebf5; --muted: #8b93ab; --accent: #8b7bff; --accent-2: #3fd0e8;
+    --pos: #3ddc97; --neg: #ff6b7a; --warn: #ffc857;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.35);
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-image: radial-gradient(900px 400px at 85% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent);
+}
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
+header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
+.sp { flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--line); background: var(--panel); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.live .dot { background: var(--pos); box-shadow: 0 0 0 0 var(--pos); animation: pulse 1.8s infinite; }
+.down .dot { background: var(--neg); }
+.paper { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+@keyframes pulse { 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.muted { color: var(--muted); }
+.grid { display: grid; gap: 14px; }
+.kpis { grid-template-columns: repeat(4, 1fr); margin-bottom: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.kpi .v { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+.kpi .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pos { color: var(--pos); } .neg { color: var(--neg); }
+.row2 { grid-template-columns: 2fr 1fr; margin-bottom: 14px; }
+.row3 { grid-template-columns: 1fr 1fr 1fr; margin-bottom: 14px; }
+.row2b { grid-template-columns: 3fr 2fr; }
+#chart { width: 100%; height: 260px; display: block; }
+.tip { position: absolute; pointer-events: none; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 12px; display: none; white-space: nowrap; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 0 8px 8px; }
+td { padding: 8px 6px; border-top: 1px solid var(--line); white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+th { padding-left: 6px; padding-right: 6px; }
+td.r, th.r { text-align: right; }
+.scroll { overflow-x: auto; }
+.empty { color: var(--muted); padding: 18px 4px; text-align: center; }
+.bars .b { margin: 9px 0; }
+.bars .l { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; margin-bottom: 4px; }
+.bars .l span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bars .t { height: 7px; border-radius: 4px; background: var(--panel-2); overflow: hidden; }
+.bars .f { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.feed { max-height: 420px; overflow: auto; }
+.feed .it { display: grid; grid-template-columns: 64px 54px 1fr; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 12.5px; align-items: baseline; }
+.feed .it:first-child { border-top: 0; }
+.tag { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 5px; text-align: center; background: var(--panel-2); }
+.tag.entry { color: var(--accent-2); } .tag.exit { color: var(--pos); } .tag.error { color: var(--neg); } .tag.skip { color: var(--muted); }
+.detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banner { display: none; margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--neg) 50%, var(--line)); background: color-mix(in srgb, var(--neg) 10%, var(--panel)); }
+.pct { font-size: 11px; opacity: .8; margin-left: 4px; }
+@media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, 1fr); } .row2, .row3, .row2b { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .hm { display: none; } td { max-width: 78px; font-size: 12px; padding: 8px 4px; } th { padding-left: 4px; padding-right: 4px; } .kpi .v { font-size: 22px; } .feed .it { grid-template-columns: 56px 48px 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Sniper Monitor</h1>
+    <span class="pill paper">PAPER TRADING</span>
+    <span id="live" class="pill"><span class="dot"></span><span id="liveTxt">connessione…</span></span>
+    <span class="sp"></span>
+    <span class="muted mono" id="upd"></span>
+  </header>
+  <div id="banner" class="banner"></div>
+  <section class="grid kpis" id="kpis"></section>
+  <section class="grid row2">
+    <div class="card" style="position:relative">
+      <h2>Equity</h2>
+      <svg id="chart" role="img" aria-label="Grafico equity nel tempo"></svg>
+      <div class="tip mono" id="tip"></div>
+    </div>
+    <div class="card"><h2>Posizioni aperte</h2><div class="scroll" id="open"></div></div>
+  </section>
+  <section class="grid row3">
+    <div class="card"><h2>Motivi di uscita</h2><div class="bars" id="exitR"></div></div>
+    <div class="card"><h2>Perché scartiamo i token</h2><div class="bars" id="skipR"></div></div>
+    <div class="card"><h2>Feed live</h2><div class="feed" id="feed"></div></div>
+  </section>
+  <section class="card"><h2>Ultime operazioni chiuse</h2><div class="scroll" id="trades"></div></section>
+</div>
+<script>
+"use strict";
+// All log-derived strings (token symbols are attacker-controlled) are inserted as text, never as HTML.
+const $ = (id) => document.getElementById(id);
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "class") e.className = v; else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return e;
+}
+const token = new URLSearchParams(location.search).get("token");
+const api = "/api/state" + (token ? "?token=" + encodeURIComponent(token) : "");
+
+const usd = (n, d = 2) => (n < 0 ? "-" : "") + "$" + Math.abs(n).toLocaleString("it-IT", { minimumFractionDigits: d, maximumFractionDigits: d });
+const sgn = (n) => (n > 0 ? "+" : n < 0 ? "-" : "") ;
+const sUsd = (n) => sgn(n) + "$" + Math.abs(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const cls = (n) => (n > 0 ? "pos" : n < 0 ? "neg" : "");
+function ago(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 60) return s + "s"; if (s < 3600) return Math.floor(s / 60) + "m"; if (s < 86400) return Math.floor(s / 3600) + "h " + Math.floor((s % 3600) / 60) + "m";
+  return Math.floor(s / 86400) + "g";
+}
+const hhmm = (iso) => new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+function kpi(label, value, sub, c) {
+  return h("div", { class: "card kpi" }, h("h2", {}, label), h("div", { class: "v mono " + (c || "") }, value), h("div", { class: "s" }, sub || " "));
+}
+
+function renderKpis(k) {
+  const root = $("kpis"); root.replaceChildren(
+    kpi("Equity", usd(k.equityUsd), sgn(k.totalReturnPct) + Math.abs(k.totalReturnPct).toFixed(2) + "% da " + usd(k.startingBalanceUsd, 0), cls(k.totalReturnPct)),
+    kpi("PnL realizzato", sUsd(k.realizedPnlUsd), "best " + sUsd(k.bestUsd) + " · worst " + sUsd(k.worstUsd), cls(k.realizedPnlUsd)),
+    kpi("Win rate", k.winRatePct == null ? "—" : k.winRatePct.toFixed(1) + "%", k.closedPositions + " posizioni chiuse"),
+    kpi("Profit factor", k.profitFactor == null ? "∞" : k.profitFactor.toFixed(2), "avg win " + sUsd(k.avgWinUsd) + " · avg loss " + sUsd(k.avgLossUsd), k.profitFactor == null || k.profitFactor >= 1 ? "pos" : "neg"),
+    kpi("Max drawdown", k.maxDrawdownUsd ? "-" + usd(k.maxDrawdownUsd) : "$0.00", k.maxDrawdownPct.toFixed(2) + "% dal picco", k.maxDrawdownUsd ? "neg" : ""),
+    kpi("Posizioni aperte", String(k.openCount), k.entries + " ingressi totali"),
+    kpi("Token analizzati", k.scanned.toLocaleString("it-IT"), k.scanned ? (k.entries / k.scanned * 100).toFixed(2) + "% passa i filtri" : ""),
+    kpi("Parziali (TP) aperti", sUsd(k.partialRealizedUsd), "incassati su posizioni ancora aperte", cls(k.partialRealizedUsd)),
+  );
+}
+
+function renderChart(points, base) {
+  const svg = $("chart"); svg.replaceChildren();
+  const W = svg.clientWidth || 700, H = 260, pl = 54, pr = 12, pt = 10, pb = 24;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  if (points.length < 2) { const t = document.createElementNS("http://www.w3.org/2000/svg", "text"); t.setAttribute("x", W / 2); t.setAttribute("y", H / 2); t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "currentColor"); t.setAttribute("opacity", ".5"); t.textContent = "In attesa di dati…"; svg.append(t); return; }
+  const ns = (n, a) => { const e = document.createElementNS("http://www.w3.org/2000/svg", n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const vs = points.map((p) => p.v).concat(base ? [base] : []);
+  let lo = Math.min(...vs), hi = Math.max(...vs); if (hi - lo < 1) { hi += .5; lo -= .5; }
+  const padv = (hi - lo) * .08; lo -= padv; hi += padv;
+  const t0 = points[0].t, t1 = points.at(-1).t || t0 + 1;
+  const x = (t) => pl + ((t - t0) / Math.max(1, t1 - t0)) * (W - pl - pr);
+  const y = (v) => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
+  const up = points.at(-1).v >= (base || points[0].v);
+  const col = getComputedStyle(document.documentElement).getPropertyValue(up ? "--pos" : "--neg").trim();
+  const defs = ns("defs", {}); const g = ns("linearGradient", { id: "gr", x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.append(ns("stop", { offset: "0%", "stop-color": col, "stop-opacity": ".35" }), ns("stop", { offset: "100%", "stop-color": col, "stop-opacity": "0" }));
+  defs.append(g); svg.append(defs);
+  for (let i = 0; i <= 4; i++) {
+    const v = lo + ((hi - lo) * i) / 4, yy = y(v);
+    svg.append(ns("line", { x1: pl, x2: W - pr, y1: yy, y2: yy, stroke: "currentColor", "stroke-opacity": ".09" }));
+    const tx = ns("text", { x: pl - 8, y: yy + 4, "text-anchor": "end", "font-size": 11, fill: "currentColor", "fill-opacity": ".55" }); tx.textContent = "$" + v.toFixed(0); svg.append(tx);
+  }
+  if (base) svg.append(ns("line", { x1: pl, x2: W - pr, y1: y(base), y2: y(base), stroke: "currentColor", "stroke-opacity": ".35", "stroke-dasharray": "4 4" }));
+  const d = points.map((p, i) => (i ? "L" : "M") + x(p.t).toFixed(1) + " " + y(p.v).toFixed(1)).join(" ");
+  svg.append(ns("path", { d: d + ` L${x(t1).toFixed(1)} ${H - pb} L${pl} ${H - pb} Z`, fill: "url(#gr)" }));
+  svg.append(ns("path", { d, fill: "none", stroke: col, "stroke-width": 2, "stroke-linejoin": "round" }));
+  const lbl = (t, anchor, xx) => { const e = ns("text", { x: xx, y: H - 6, "text-anchor": anchor, "font-size": 11, fill: "currentColor", "fill-opacity": ".55" }); e.textContent = new Date(t).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); svg.append(e); };
+  lbl(t0, "start", pl); lbl(t1, "end", W - pr);
+  const cur = ns("circle", { r: 4, fill: col, stroke: "var(--panel)", "stroke-width": 2, cx: x(t1), cy: y(points.at(-1).v) }); svg.append(cur);
+  const hover = ns("circle", { r: 5, fill: col, stroke: "var(--panel)", "stroke-width": 2, opacity: 0 }); svg.append(hover);
+  const tip = $("tip");
+  svg.onmousemove = (ev) => {
+    const r = svg.getBoundingClientRect(); const mx = ((ev.clientX - r.left) / r.width) * W;
+    let best = points[0]; for (const p of points) if (Math.abs(x(p.t) - mx) < Math.abs(x(best.t) - mx)) best = p;
+    hover.setAttribute("cx", x(best.t)); hover.setAttribute("cy", y(best.v)); hover.setAttribute("opacity", 1);
+    tip.style.display = "block"; tip.textContent = new Date(best.t).toLocaleString("it-IT") + "  " + usd(best.v);
+    tip.style.left = Math.min(r.width - 190, Math.max(0, ev.clientX - r.left + 12)) + "px"; tip.style.top = (ev.clientY - r.top + 8) + "px";
+  };
+  svg.onmouseleave = () => { hover.setAttribute("opacity", 0); tip.style.display = "none"; };
+}
+
+function table(cols, rows, emptyMsg) {
+  if (!rows.length) return h("div", { class: "empty" }, emptyMsg);
+  return h("table", {}, h("thead", {}, h("tr", {}, ...cols.map((c) => h("th", { class: (c.r ? "r " : "") + (c.hm ? "hm" : "") }, c.h)))),
+    h("tbody", {}, ...rows.map((r) => h("tr", {}, ...cols.map((c, i) => { const v = c.f(r); return h("td", { class: (c.r ? "r " : "") + (c.hm ? "hm " : "") + "mono " + (c.c ? c.c(r) : "") }, v); })))));
+}
+
+function bars(items, emptyMsg) {
+  if (!items.length) return h("div", { class: "empty" }, emptyMsg);
+  const max = Math.max(...items.map((i) => i.n)), tot = items.reduce((s, i) => s + i.n, 0);
+  return h("div", {}, ...items.map((i) => h("div", { class: "b" },
+    h("div", { class: "l" }, h("span", { title: i.label }, i.label), h("span", { class: "mono muted" }, i.n + " · " + (i.n / tot * 100).toFixed(0) + "%")),
+    h("div", { class: "t" }, h("div", { class: "f", style: "width:" + (i.n / max * 100) + "%" })))));
+}
+
+function render(s) {
+  const hl = $("live"), txt = $("liveTxt");
+  hl.className = "pill " + (s.health.live ? "live" : "down");
+  txt.textContent = s.health.live ? "bot attivo · ultimo tick " + s.health.lastTickAgoSec + "s fa" : s.health.lastTickAgoSec == null ? "nessun dato dal bot" : "bot FERMO · ultimo tick " + ago(s.health.lastTickAgoSec * 1000) + " fa";
+  const b = $("banner");
+  if (!s.health.live || s.health.errorsLastHour > 5) {
+    b.style.display = "block";
+    b.textContent = !s.health.live ? "Il bot non scrive log da troppo tempo: controlla il servizio systemd." : s.health.errorsLastHour + " errori nell'ultima ora. Ultimo: " + (s.health.lastError ? s.health.lastError.message : "");
+  } else b.style.display = "none";
+  $("upd").textContent = "agg. " + new Date(s.generatedAt).toLocaleTimeString("it-IT");
+  renderKpis(s.kpis);
+  renderChart(s.equity, s.kpis.startingBalanceUsd);
+  const now = s.generatedAt;
+  $("open").replaceChildren(table([
+    { h: "Token", f: (p) => p.symbol || p.mint.slice(0, 6) },
+    { h: "Età", f: (p) => ago(now - p.entryTime), r: 1 },
+    { h: "Size", f: (p) => usd(p.sizeUsd * p.remainingFraction, 0), r: 1 },
+    { h: "PnL", f: (p) => { const v = (p.price / p.entryPrice - 1) * 100; return sgn(v) + Math.abs(v).toFixed(1) + "%"; }, c: (p) => cls(p.price - p.entryPrice), r: 1 },
+  ], s.openPositions, "Nessuna posizione aperta"));
+  $("exitR").replaceChildren(bars(s.exitReasons, "Ancora nessuna uscita"));
+  $("skipR").replaceChildren(bars(s.skipReasons, "Ancora nessuno scarto"));
+  $("feed").replaceChildren(...(s.feed.length ? s.feed.map((f) => h("div", { class: "it mono" }, h("span", { class: "muted" }, hhmm(f.t)), h("span", { class: "tag " + f.event }, f.event), h("span", { class: "detail", title: f.detail }, (f.symbol ? f.symbol + " · " : "") + f.detail))) : [h("div", { class: "empty" }, "Nessun evento")]));
+  $("trades").replaceChildren(table([
+    { h: "Chiusa", f: (t) => new Date(t.exitTime).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) },
+    { h: "Token", f: (t) => t.symbol || t.mint.slice(0, 6) },
+    { h: "Durata", f: (t) => ago(t.exitTime - t.entryTime), r: 1, hm: 1 },
+    { h: "Uscita", f: (t) => t.reason },
+    { h: "Fill", f: (t) => t.fills, r: 1, hm: 1 },
+    { h: "PnL", f: (t) => sUsd(t.pnlUsd), c: (t) => cls(t.pnlUsd), r: 1 },
+  ], s.recentTrades, "Ancora nessuna operazione chiusa"));
+}
+
+let failures = 0;
+async function load() {
+  try {
+    const r = await fetch(api, { cache: "no-store" });
+    if (r.status === 401) { $("liveTxt").textContent = "token mancante o errato (?token=…)"; return; }
+    if (!r.ok) throw new Error(r.status);
+    render(await r.json()); failures = 0;
+  } catch {
+    failures++; $("live").className = "pill down"; $("liveTxt").textContent = "dashboard non raggiungibile (" + failures + ")";
+  }
+}
+load(); setInterval(load, 5000);
+addEventListener("resize", () => { clearTimeout(window.__rz); window.__rz = setTimeout(load, 200); });
+</script>
+</body>
+</html>
