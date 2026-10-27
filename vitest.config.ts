@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import { config } from "dotenv";
 import path from "node:path";
 
@@ -12,6 +12,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    exclude: [...configDefaults.exclude, "ai-trading-bot/**"],
     testTimeout: 15000,
     hookTimeout: 15000,
   },

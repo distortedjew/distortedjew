@@ -10,3 +10,4 @@ backups
 !.env.production.example
 npm-debug.log*
 public/uploads
+ai-trading-bot
