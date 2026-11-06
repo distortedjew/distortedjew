@@ -1,0 +1,872 @@
+[
+{
+"word": "Boston,",
+"start": 0.0,
+"end": 0.646
+},
+{
+"word": "1919.",
+"start": 0.646,
+"end": 1.148
+},
+{
+"word": "A",
+"start": 1.148,
+"end": 1.363
+},
+{
+"word": "wave",
+"start": 1.363,
+"end": 1.793
+},
+{
+"word": "of",
+"start": 1.793,
+"end": 2.08
+},
+{
+"word": "molasses,",
+"start": 2.08,
+"end": 2.87
+},
+{
+"word": "twenty-five",
+"start": 2.87,
+"end": 3.802
+},
+{
+"word": "feet",
+"start": 3.802,
+"end": 4.233
+},
+{
+"word": "tall,",
+"start": 4.233,
+"end": 4.735
+},
+{
+"word": "chased",
+"start": 4.735,
+"end": 5.309
+},
+{
+"word": "people",
+"start": 5.309,
+"end": 5.883
+},
+{
+"word": "down",
+"start": 5.883,
+"end": 6.313
+},
+{
+"word": "the",
+"start": 6.313,
+"end": 6.672
+},
+{
+"word": "street.",
+"start": 6.672,
+"end": 7.317
+},
+{
+"word": "It",
+"start": 7.667,
+"end": 7.882
+},
+{
+"word": "was",
+"start": 7.882,
+"end": 8.151
+},
+{
+"word": "a",
+"start": 8.151,
+"end": 8.313
+},
+{
+"word": "tank",
+"start": 8.313,
+"end": 8.635
+},
+{
+"word": "the",
+"start": 8.635,
+"end": 8.904
+},
+{
+"word": "size",
+"start": 8.904,
+"end": 9.227
+},
+{
+"word": "of",
+"start": 9.227,
+"end": 9.442
+},
+{
+"word": "a",
+"start": 9.442,
+"end": 9.603
+},
+{
+"word": "small",
+"start": 9.603,
+"end": 9.979
+},
+{
+"word": "block,",
+"start": 9.979,
+"end": 10.41
+},
+{
+"word": "holding",
+"start": 10.41,
+"end": 10.893
+},
+{
+"word": "two",
+"start": 10.893,
+"end": 11.162
+},
+{
+"word": "million",
+"start": 11.162,
+"end": 11.646
+},
+{
+"word": "gallons",
+"start": 11.646,
+"end": 12.13
+},
+{
+"word": "of",
+"start": 12.13,
+"end": 12.345
+},
+{
+"word": "molasses.",
+"start": 12.345,
+"end": 12.937
+},
+{
+"word": "The",
+"start": 13.287,
+"end": 13.548
+},
+{
+"word": "company",
+"start": 13.548,
+"end": 14.019
+},
+{
+"word": "knew",
+"start": 14.019,
+"end": 14.333
+},
+{
+"word": "it",
+"start": 14.333,
+"end": 14.543
+},
+{
+"word": "leaked.",
+"start": 14.543,
+"end": 15.014
+},
+{
+"word": "So",
+"start": 15.014,
+"end": 15.223
+},
+{
+"word": "they",
+"start": 15.223,
+"end": 15.537
+},
+{
+"word": "painted",
+"start": 15.537,
+"end": 16.008
+},
+{
+"word": "it",
+"start": 16.008,
+"end": 16.217
+},
+{
+"word": "brown.",
+"start": 16.217,
+"end": 16.636
+},
+{
+"word": "Nobody",
+"start": 16.986,
+"end": 17.391
+},
+{
+"word": "tested",
+"start": 17.391,
+"end": 17.797
+},
+{
+"word": "it.",
+"start": 17.797,
+"end": 18.05
+},
+{
+"word": "Nobody",
+"start": 18.05,
+"end": 18.455
+},
+{
+"word": "checked",
+"start": 18.455,
+"end": 18.911
+},
+{
+"word": "it.",
+"start": 18.911,
+"end": 19.165
+},
+{
+"word": "They",
+"start": 19.165,
+"end": 19.469
+},
+{
+"word": "just",
+"start": 19.469,
+"end": 19.773
+},
+{
+"word": "filled",
+"start": 19.773,
+"end": 20.178
+},
+{
+"word": "it",
+"start": 20.178,
+"end": 20.381
+},
+{
+"word": "up.",
+"start": 20.381,
+"end": 20.634
+},
+{
+"word": "Then",
+"start": 20.984,
+"end": 21.29
+},
+{
+"word": "a",
+"start": 21.29,
+"end": 21.444
+},
+{
+"word": "warm",
+"start": 21.444,
+"end": 21.75
+},
+{
+"word": "day",
+"start": 21.75,
+"end": 22.005
+},
+{
+"word": "arrived,",
+"start": 22.005,
+"end": 22.516
+},
+{
+"word": "and",
+"start": 22.516,
+"end": 22.771
+},
+{
+"word": "a",
+"start": 22.771,
+"end": 22.925
+},
+{
+"word": "fresh",
+"start": 22.925,
+"end": 23.282
+},
+{
+"word": "warm",
+"start": 23.282,
+"end": 23.589
+},
+{
+"word": "load",
+"start": 23.589,
+"end": 23.895
+},
+{
+"word": "went",
+"start": 23.895,
+"end": 24.201
+},
+{
+"word": "in",
+"start": 24.201,
+"end": 24.406
+},
+{
+"word": "on",
+"start": 24.406,
+"end": 24.61
+},
+{
+"word": "top",
+"start": 24.61,
+"end": 24.865
+},
+{
+"word": "of",
+"start": 24.865,
+"end": 25.07
+},
+{
+"word": "the",
+"start": 25.07,
+"end": 25.325
+},
+{
+"word": "cold",
+"start": 25.325,
+"end": 25.631
+},
+{
+"word": "syrup.",
+"start": 25.631,
+"end": 26.04
+},
+{
+"word": "The",
+"start": 26.39,
+"end": 26.671
+},
+{
+"word": "steel",
+"start": 26.671,
+"end": 27.066
+},
+{
+"word": "groaned.",
+"start": 27.066,
+"end": 27.629
+},
+{
+"word": "Rivets",
+"start": 27.629,
+"end": 28.079
+},
+{
+"word": "popped.",
+"start": 28.079,
+"end": 28.586
+},
+{
+"word": "And",
+"start": 28.586,
+"end": 28.867
+},
+{
+"word": "the",
+"start": 28.867,
+"end": 29.149
+},
+{
+"word": "whole",
+"start": 29.149,
+"end": 29.543
+},
+{
+"word": "tank",
+"start": 29.543,
+"end": 29.88
+},
+{
+"word": "let",
+"start": 29.88,
+"end": 30.162
+},
+{
+"word": "go.",
+"start": 30.162,
+"end": 30.443
+},
+{
+"word": "The",
+"start": 30.793,
+"end": 31.065
+},
+{
+"word": "wave",
+"start": 31.065,
+"end": 31.391
+},
+{
+"word": "hit",
+"start": 31.391,
+"end": 31.663
+},
+{
+"word": "at",
+"start": 31.663,
+"end": 31.88
+},
+{
+"word": "thirty-five",
+"start": 31.88,
+"end": 32.586
+},
+{
+"word": "miles",
+"start": 32.586,
+"end": 32.966
+},
+{
+"word": "an",
+"start": 32.966,
+"end": 33.184
+},
+{
+"word": "hour.",
+"start": 33.184,
+"end": 33.564
+},
+{
+"word": "Faster",
+"start": 33.564,
+"end": 33.999
+},
+{
+"word": "than",
+"start": 33.999,
+"end": 34.324
+},
+{
+"word": "anyone",
+"start": 34.324,
+"end": 34.759
+},
+{
+"word": "could",
+"start": 34.759,
+"end": 35.139
+},
+{
+"word": "run.",
+"start": 35.139,
+"end": 35.465
+},
+{
+"word": "Luckily,",
+"start": 35.815,
+"end": 36.383
+},
+{
+"word": "it",
+"start": 36.383,
+"end": 36.61
+},
+{
+"word": "smelled",
+"start": 36.61,
+"end": 37.12
+},
+{
+"word": "lovely.",
+"start": 37.12,
+"end": 37.631
+},
+{
+"word": "Unluckily,",
+"start": 37.631,
+"end": 38.312
+},
+{
+"word": "that",
+"start": 38.312,
+"end": 38.652
+},
+{
+"word": "is",
+"start": 38.652,
+"end": 38.879
+},
+{
+"word": "not",
+"start": 38.879,
+"end": 39.163
+},
+{
+"word": "why",
+"start": 39.163,
+"end": 39.447
+},
+{
+"word": "it",
+"start": 39.447,
+"end": 39.674
+},
+{
+"word": "killed",
+"start": 39.674,
+"end": 40.128
+},
+{
+"word": "twenty-one",
+"start": 40.128,
+"end": 40.809
+},
+{
+"word": "people.",
+"start": 40.809,
+"end": 41.319
+},
+{
+"word": "Think",
+"start": 41.669,
+"end": 42.062
+},
+{
+"word": "of",
+"start": 42.062,
+"end": 42.287
+},
+{
+"word": "honey",
+"start": 42.287,
+"end": 42.68
+},
+{
+"word": "in",
+"start": 42.68,
+"end": 42.904
+},
+{
+"word": "the",
+"start": 42.904,
+"end": 43.185
+},
+{
+"word": "fridge.",
+"start": 43.185,
+"end": 43.69
+},
+{
+"word": "Cold,",
+"start": 43.69,
+"end": 44.083
+},
+{
+"word": "it",
+"start": 44.083,
+"end": 44.307
+},
+{
+"word": "creeps.",
+"start": 44.307,
+"end": 44.812
+},
+{
+"word": "Warm,",
+"start": 44.812,
+"end": 45.205
+},
+{
+"word": "it",
+"start": 45.205,
+"end": 45.43
+},
+{
+"word": "pours.",
+"start": 45.43,
+"end": 45.879
+},
+{
+"word": "And",
+"start": 45.879,
+"end": 46.159
+},
+{
+"word": "a",
+"start": 46.159,
+"end": 46.328
+},
+{
+"word": "whole",
+"start": 46.328,
+"end": 46.721
+},
+{
+"word": "tank",
+"start": 46.721,
+"end": 47.057
+},
+{
+"word": "of",
+"start": 47.057,
+"end": 47.282
+},
+{
+"word": "it",
+"start": 47.282,
+"end": 47.506
+},
+{
+"word": "pushes",
+"start": 47.506,
+"end": 47.955
+},
+{
+"word": "with",
+"start": 47.955,
+"end": 48.292
+},
+{
+"word": "huge",
+"start": 48.292,
+"end": 48.629
+},
+{
+"word": "force",
+"start": 48.629,
+"end": 49.022
+},
+{
+"word": "on",
+"start": 49.022,
+"end": 49.246
+},
+{
+"word": "every",
+"start": 49.246,
+"end": 49.639
+},
+{
+"word": "wall.",
+"start": 49.639,
+"end": 50.032
+},
+{
+"word": "The",
+"start": 50.382,
+"end": 50.651
+},
+{
+"word": "harbour",
+"start": 50.651,
+"end": 51.135
+},
+{
+"word": "ran",
+"start": 51.135,
+"end": 51.404
+},
+{
+"word": "brown",
+"start": 51.404,
+"end": 51.78
+},
+{
+"word": "for",
+"start": 51.78,
+"end": 52.049
+},
+{
+"word": "months.",
+"start": 52.049,
+"end": 52.533
+},
+{
+"word": "The",
+"start": 52.533,
+"end": 52.802
+},
+{
+"word": "smell",
+"start": 52.802,
+"end": 53.178
+},
+{
+"word": "stayed",
+"start": 53.178,
+"end": 53.608
+},
+{
+"word": "for",
+"start": 53.608,
+"end": 53.877
+},
+{
+"word": "years.",
+"start": 53.877,
+"end": 54.307
+},
+{
+"word": "The",
+"start": 54.657,
+"end": 54.92
+},
+{
+"word": "court",
+"start": 54.92,
+"end": 55.288
+},
+{
+"word": "case",
+"start": 55.288,
+"end": 55.604
+},
+{
+"word": "changed",
+"start": 55.604,
+"end": 56.077
+},
+{
+"word": "the",
+"start": 56.077,
+"end": 56.34
+},
+{
+"word": "rules:",
+"start": 56.34,
+"end": 56.76
+},
+{
+"word": "from",
+"start": 56.76,
+"end": 57.076
+},
+{
+"word": "then",
+"start": 57.076,
+"end": 57.391
+},
+{
+"word": "on,",
+"start": 57.391,
+"end": 57.654
+},
+{
+"word": "an",
+"start": 57.654,
+"end": 57.865
+},
+{
+"word": "engineer",
+"start": 57.865,
+"end": 58.39
+},
+{
+"word": "had",
+"start": 58.39,
+"end": 58.653
+},
+{
+"word": "to",
+"start": 58.653,
+"end": 58.864
+},
+{
+"word": "sign",
+"start": 58.864,
+"end": 59.179
+},
+{
+"word": "the",
+"start": 59.179,
+"end": 59.442
+},
+{
+"word": "plans.",
+"start": 59.442,
+"end": 59.863
+},
+{
+"word": "So",
+"start": 60.213,
+"end": 60.415
+},
+{
+"word": "next",
+"start": 60.415,
+"end": 60.719
+},
+{
+"word": "time",
+"start": 60.719,
+"end": 61.023
+},
+{
+"word": "something",
+"start": 61.023,
+"end": 61.58
+},
+{
+"word": "is",
+"start": 61.58,
+"end": 61.782
+},
+{
+"word": "painted",
+"start": 61.782,
+"end": 62.238
+},
+{
+"word": "to",
+"start": 62.238,
+"end": 62.441
+},
+{
+"word": "hide",
+"start": 62.441,
+"end": 62.745
+},
+{
+"word": "a",
+"start": 62.745,
+"end": 62.897
+},
+{
+"word": "problem,",
+"start": 62.897,
+"end": 63.403
+},
+{
+"word": "ask",
+"start": 63.403,
+"end": 63.656
+},
+{
+"word": "what",
+"start": 63.656,
+"end": 63.96
+},
+{
+"word": "is",
+"start": 63.96,
+"end": 64.163
+},
+{
+"word": "behind",
+"start": 64.163,
+"end": 64.568
+},
+{
+"word": "the",
+"start": 64.568,
+"end": 64.821
+},
+{
+"word": "paint.",
+"start": 64.821,
+"end": 65.226
+}
+]
