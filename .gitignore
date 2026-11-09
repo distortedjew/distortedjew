@@ -46,3 +46,9 @@ next-env.d.ts
 /public/uploads/*
 !/public/uploads/.gitkeep
 /backups/
+
+yt-pipeline/work/
+yt-pipeline/output/
+__pycache__/
+.pytest_cache/
+client_secret*.json
