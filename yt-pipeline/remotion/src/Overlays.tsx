@@ -1,15 +1,16 @@
 import React from 'react';
-import {interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
+import {interpolate, useCurrentFrame} from 'remotion';
+import {PAD} from './types';
 
 const FONT = '"DejaVu Sans", "Helvetica Neue", Arial, sans-serif';
 
-export const Caption: React.FC<{text: string; frames: number}> = ({text, frames}) => {
-  const frame = useCurrentFrame();
+export const Caption: React.FC<{text: string; frames: number; offset?: number}> = ({text, frames, offset = 0}) => {
+  const frame = useCurrentFrame() + offset;
   const words = text.split(/\s+/).filter(Boolean);
   const per = 6; const chunks: string[] = [];
   for (let i = 0; i < words.length; i += per) chunks.push(words.slice(i, i + per).join(' '));
   const total = chunks.reduce((a, c) => a + c.length, 0) || 1;
-  const speech = Math.max(1, frames - 9);         // 0.35s di pausa finale
+  const speech = Math.max(1, frames - PAD);
   let acc = 0, idx = chunks.length - 1;
   for (let i = 0; i < chunks.length; i++) { acc += chunks[i].length / total * speech; if (frame < acc) { idx = i; break; } }
   return (
@@ -39,8 +40,3 @@ export const Center: React.FC<{children: React.ReactNode; bg?: string}> = ({chil
   </div>
 );
 
-export const useFade = (frames: number) => {
-  const frame = useCurrentFrame();
-  return interpolate(frame, [0, 8, frames - 8, frames], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
-};
-export {useVideoConfig};

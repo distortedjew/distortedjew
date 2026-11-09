@@ -36,15 +36,27 @@ Vedi `docs/ANALISI.md` per lo stile e i limiti della ricerca.
 - Personalizza nicchia, stile visivo, voce, durata in `channel.json`.
 
 ## Come funziona il motore Remotion
-Gemini scrive uno script **strutturato**: ogni scena ha un `kind` (`narrate` illustrata, `map`, `timeline`, `stat`, `quote`, `title`) + parametri
-(ambientazione, umore, notte, n. personaggi, titoletto "Londra, 1666"). `edge-tts` produce la voce per scena → la durata in frame → Remotion
-compone: sfondi parallax procedurali, personaggi, mappe con rotta che si disegna, timeline, contatori, sottotitoli, musica. Aggiungere un nuovo tipo
-di scena = un componente React in `remotion/src/scenes/` + il `kind` in `ytp/doc_script.py`.
+Gemini scrive uno script **strutturato e diretto come un film**:
+- **Personaggi stickman con personalità** (`remotion/src/stick.tsx`): rig con braccia/gambe a due segmenti, volto con occhi che sbattono, sopracciglia e bocca
+  per 8 emozioni (neutral, happy, sad, angry, scared, surprised, thinking, smug), 9 azioni (idle, walk, run, wave, point, shrug, think, cower, celebrate),
+  accessori (cappello, capelli, occhiali, barba, baffi, sciarpa) e oggetti (lettera, torcia, lanterna, libro). Ogni personaggio ha un *tratto*
+  (nervous, confident, grumpy, cheerful, wise, energetic) che cambia postura, ritmo dell'idle ed emozione di default; emote sopra la testa (!, ?, sudore, rabbia).
+- **Ambienti dettagliati** (`env.tsx`): 11 ambientazioni (strada, villaggio, campo, foresta, mare, montagna, deserto, stanza, castello, laboratorio, grotta) × 4 momenti
+  (alba/giorno/tramonto/notte) × meteo (pioggia, neve, nebbia, fuoco), a strati con parallax, finestre illuminate, lampioni, fumo, onde, fiamme, ecc.
+- **Camera cinematografica** (`camera.ts`): static, push_in, pull_out, pan_left/right, tilt_up/down, shake, follow + leggero "handheld"; vignettatura e color grading per umore.
+- **Transizioni** (`Story.tsx`): cut, fade, slide, wipe, flip, clock (con sovrapposizione, sottotitoli e audio restano sincronizzati).
+- **Audio** (`ytp/synth_audio.py`): effetti (whoosh, boom, impact, thunder, ding, bell, tick, paper, heartbeat, knock, clang, stinger, passi),
+  ambienti in loop per ogni location/meteo, musica di sottofondo per umore (calm/tense/joy/sad) con crossfade; tutto **sintetizzato da codice** (gratis, senza licenze).
+  Per musica più bella metti i tuoi mp3 *royalty-free* in `assets/music/{calm,tense,joy,sad}.mp3`: hanno la precedenza.
+
+Aggiungere nuove ambientazioni/azioni = un componente in `remotion/src/` + il valore ammesso in `ytp/doc_script.py` (il validatore scarta tutto ciò che non conosce).
 
 **GPU/CPU**: Remotion renderizza via Chromium su CPU; per questa grafica 2D la GPU non serve. Sul tuo PC usa `--concurrency N` (N = core).
+Tempo di render misurato su 4 CPU: circa 25 frame/s → un video da 8 minuti (~12.000 frame) richiede ~8-10 minuti.
 
 ## Stato verifiche
-- ✅ Testato: render Remotion di tutti i tipi di scena (controllati i frame), orchestratore in `--dry-run`, montaggio ffmpeg del motore `images` (`pytest tests`).
+- ✅ Testato: render di personaggi/ambienti/camere (controllati i frame), transizioni (controllate nel video), mix audio (livelli misurati), validatore dello script, `--dry-run` completo con audio (`pytest tests`).
+- ⚠️ **Non ascoltato**: musica ed effetti sintetici sono verificati solo numericamente (non ho un orecchio). Aspettati un suono semplice/"da chiptune morbido": per la musica conviene sostituire con tracce royalty-free.
 - ⚠️ **Non testato end-to-end**: chiamate a Gemini, edge-tts e upload YouTube (il sandbox di sviluppo non raggiungeva questi servizi). Primo run consigliato: `workflow_dispatch` con `no_upload`, controlla l'artifact, poi abilita l'upload.
 - Dettagli API da ricontrollare: la fonte trovata era contraddittoria su costo quota upload e restrizioni per progetti non verificati; se i video restano privati senza programmazione, serve l'audit del progetto API.
 - **Accuratezza storica**: è una nicchia di storie vere e l'LLM può sbagliare date/cifre. Il prompt impone fatti verificabili, citazioni solo attestate e una lista di fonti

@@ -56,3 +56,5 @@ yt-pipeline/remotion/node_modules/
 yt-pipeline/remotion/public/audio/
 yt-pipeline/remotion/public/music/
 yt-pipeline/remotion/public/props*.json
+yt-pipeline/assets/generated/
+yt-pipeline/remotion/public/sfx/

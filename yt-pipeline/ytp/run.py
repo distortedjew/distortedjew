@@ -27,13 +27,20 @@ def load_history() -> list[dict]:
 
 SAMPLE_DOC = {
     "title": "Il Grande Incendio di Londra", "description": "Storia di prova. #storia", "tags": ["storia"],
+    "characters": [
+        {"id": "tom", "name": "Thomas", "trait": "nervous", "hat": "cap", "hatColor": "#e4572e", "glasses": True, "scarf": "#2a9d8f"},
+        {"id": "re", "name": "Il Re", "trait": "confident", "hat": "crown", "beard": True, "hair": "long", "hairColor": "#8d5a3b"},
+    ],
     "scenes": [
-        {"kind": "title", "text": "Londra, settembre 1666. Una scintilla cambiò tutto.", "title": "Il Grande Incendio di Londra", "subtitle": "1666"},
-        {"kind": "narrate", "text": "Era notte fonda, e il fornaio credeva di aver spento il forno.", "headline": "Pudding Lane", "setting": "city", "night": True, "mood": "tense", "people": 1},
-        {"kind": "map", "text": "Il fuoco avanzò verso il Tamigi.", "points": ["Pudding Lane", "London Bridge", "St Paul"]},
-        {"kind": "timeline", "text": "In quattro giorni tutto cambiò.", "items": [{"year": "2 set", "label": "Parte"}, {"year": "6 set", "label": "Si spegne"}]},
-        {"kind": "stat", "text": "Furono distrutte più di tredicimila case.", "value": 13200, "unit": "", "label": "case distrutte"},
-        {"kind": "narrate", "text": "Dalle ceneri nacque la Londra che conosciamo.", "setting": "countryside", "mood": "joy", "people": 3},
+        {"kind": "title", "text": "Londra, settembre 1666. Una scintilla cambiò tutto.", "title": "Il Grande Incendio di Londra", "subtitle": "1666", "mood": "tense", "transition": "cut"},
+        {"kind": "narrate", "text": "Era notte fonda, e il fornaio credeva di aver spento il forno.", "headline": "Pudding Lane", "setting": "street", "time": "night", "weather": "rain",
+         "mood": "tense", "camera": "push_in", "transition": "fade", "cast": [{"id": "tom", "emotion": "scared", "action": "cower", "prop": "lantern", "x": 0.5}], "sfx": [{"name": "knock", "at": 0.3}]},
+        {"kind": "map", "text": "Il fuoco avanzò verso il Tamigi.", "points": ["Pudding Lane", "London Bridge", "St Paul"], "mood": "tense", "transition": "wipe"},
+        {"kind": "narrate", "text": "Il re ascoltava i consiglieri, e non sembrava affatto preoccupato.", "setting": "castle", "time": "day", "mood": "tense", "camera": "static", "transition": "slide_left",
+         "cast": [{"id": "re", "emotion": "smug", "action": "point", "x": 0.7, "face": "l"}, {"id": "tom", "emotion": "surprised", "action": "shrug", "x": 0.3}], "sfx": [{"name": "stinger", "at": 0.2}]},
+        {"kind": "stat", "text": "Furono distrutte più di tredicimila case.", "value": 13200, "unit": "", "label": "case distrutte", "mood": "sad", "transition": "fade"},
+        {"kind": "narrate", "text": "Dalle ceneri nacque la Londra che conosciamo.", "setting": "field", "time": "dawn", "mood": "joy", "camera": "pan_right", "transition": "fade",
+         "cast": [{"id": "tom", "emotion": "happy", "action": "walk", "x": 0.3}, {"id": "re", "emotion": "happy", "action": "wave", "x": 0.7, "face": "l"}]},
     ],
 }
 
@@ -47,10 +54,10 @@ def run_remotion(cfg, a, outdir, history):
         script, tts_p = doc_script.build_script(cfg, topic), "edge"
     safe = re.sub(r"[^a-z0-9]+", "-", script["title"].lower()).strip("-")[:50] or "video"
     video = outdir / f"{safe}.mp4"
-    scenes = remotion_render.render(cfg, script["scenes"], video, tts_p, seed=int(time.time()) % 1000,
+    scenes = remotion_render.render(cfg, script, video, tts_p, seed=int(time.time()) % 1000,
                                     concurrency=a.concurrency)
     (outdir / f"{safe}.script.json").write_text(json.dumps(script, ensure_ascii=False, indent=2))
-    total = sum(s["frames"] for s in scenes) / cfg["fps"]
+    total = sum(s["frames"] for s in scenes) / cfg["fps"]  # (approssimato: le transizioni sovrappongono pochi frame)
     print(f"Video: {video} ({total/60:.1f} min)")
     result = {"title": script["title"], "video": str(video)}
     if not (a.dry_run or a.no_upload):

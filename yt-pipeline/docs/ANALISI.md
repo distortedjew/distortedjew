@@ -51,3 +51,8 @@ Dalle fonti: fern = documentari animati di storie vere, grafica piatta e minimal
 trovati che **si può riprodurre in modo credibile con codice** (forme vettoriali, mappe, testi) senza modelli generativi di immagini.
 Differenza dichiarata: la qualità di illustrazione/animazione di un canale vero è molto superiore; qui si parte da un look pulito ma semplice.
 Come per il resto, **non ho analizzato frame reali di fern** (YouTube non raggiungibile): invia link se vuoi tarare ritmo e palette sui loro video.
+
+## Aggiornamento: stickman con personalità, camera, transizioni, audio
+Richiesta: stickman con personalità, ambienti dettagliati, scene cinematiche con movimenti di camera e transizioni, effetti sonori e musica. Implementato
+nel motore Remotion (vedi README). Limiti onesti: la personalità è affidata a un rig procedurale (tratti + emozioni + azioni), non a animazione disegnata a mano;
+musica/sfx sono sintetici. La qualità percepita dipenderà molto dalla regia scritta dall'LLM (camera/emozioni/transizioni), che è validata ma non "vista" prima del render.
