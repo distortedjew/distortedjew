@@ -52,7 +52,7 @@ Gemini scrive uno script **strutturato e diretto come un film**:
 Aggiungere nuove ambientazioni/azioni = un componente in `remotion/src/` + il valore ammesso in `ytp/doc_script.py` (il validatore scarta tutto ciò che non conosce).
 
 **GPU/CPU**: Remotion renderizza via Chromium su CPU; per questa grafica 2D la GPU non serve. Sul tuo PC usa `--concurrency N` (N = core).
-Tempo di render misurato su 4 CPU: circa 25 frame/s → un video da 8 minuti (~12.000 frame) richiede ~8-10 minuti.
+Tempo di render misurato su 4 CPU: circa 21 frame/s (stress test: 3.816 frame in 3 minuti, 24 scene con tutte le ambientazioni, camere e transizioni) → un video da 8 minuti (~12.000 frame) richiede ~10 minuti.
 
 ## Stato verifiche
 - ✅ Testato: render di personaggi/ambienti/camere (controllati i frame), transizioni (controllate nel video), mix audio (livelli misurati), validatore dello script, `--dry-run` completo con audio (`pytest tests`).
