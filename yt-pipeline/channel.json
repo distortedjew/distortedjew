@@ -1,6 +1,6 @@
 {
   "language": "it",
-  "niche": "storie animate emozionanti con colpo di scena e morale (stile fiaba moderna / racconto di vita)",
+  "niche": "documentari animati su storie VERE (storia, persone, eventi, scoperte), stile minimale e piatto come il canale fern, narratore calmo e ironico",
   "visual_style": "stylized 3D animated movie still, Pixar-like, soft cinematic lighting, warm colors, expressive characters, highly detailed, 16:9",
   "negative_style": "text, watermark, logo, subtitles, extra fingers, deformed",
   "voice": "it-IT-DiegoNeural",
@@ -16,6 +16,12 @@
   "music_volume": 0.07,
   "publish_delay_hours": 3,
   "category_id": "24",
-  "default_tags": ["storie", "animazione", "storytelling", "racconto"],
-  "ai_disclosure_in_description": "Video creato con l'aiuto dell'intelligenza artificiale (script, immagini e voce sintetica)."
+  "default_tags": [
+    "storia",
+    "documentario",
+    "storie vere",
+    "animazione"
+  ],
+  "ai_disclosure_in_description": "Video creato con l'aiuto dell'intelligenza artificiale (script, voce sintetica) e animazione procedurale. Verifica le fonti indicate.",
+  "engine": "remotion"
 }

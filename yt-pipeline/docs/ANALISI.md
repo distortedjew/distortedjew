@@ -45,3 +45,9 @@ con Whisper e ricavo ritmo reale (durata scene, wpm, struttura) per tarare `chan
 - https://longstories.ai/blog/retention-benchmarks-animated-youtube-videos
 - https://channel.farm/blog/storytelling-ai-video-scripts-long-form-youtube
 - https://recapio.com/digest/how-to-make-viral-ai-story-videos-like-botlm-2-0-free-ai-tools-faceless-video-tutorial-2025-by-ai-na
+
+## Aggiornamento: nicchia scelta = stile fern (storie vere, animazione procedurale)
+Dalle fonti: fern = documentari animati di storie vere, grafica piatta e minimale, narrazione forte. Scelta fatta perché è l'unico stile tra quelli
+trovati che **si può riprodurre in modo credibile con codice** (forme vettoriali, mappe, testi) senza modelli generativi di immagini.
+Differenza dichiarata: la qualità di illustrazione/animazione di un canale vero è molto superiore; qui si parte da un look pulito ma semplice.
+Come per il resto, **non ho analizzato frame reali di fern** (YouTube non raggiungibile): invia link se vuoi tarare ritmo e palette sui loro video.
