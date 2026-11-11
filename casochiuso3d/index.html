@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=1920, height=1080"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:#05090c}
+  #root{position:relative;width:1920px;height:1080px;background:#05090c;overflow:hidden}
+  #gl{position:absolute;left:0;top:0;width:1920px;height:1080px;display:block}
+  #vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 48%,rgba(0,0,0,0) 52%,rgba(0,0,0,.62) 100%);pointer-events:none}
+  .bar{position:absolute;left:0;width:1920px;height:84px;background:#000}
+  #bt{top:0}#bb{bottom:0}
+  #grain{position:absolute;inset:0;mix-blend-mode:overlay;opacity:.22;pointer-events:none}
+  .t{position:absolute;left:150px;color:#f1ede4;font-family:Montserrat;font-weight:700;letter-spacing:7px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+  #t1{top:858px;font-size:34px}
+  #t2{top:906px;font-size:24px;letter-spacing:9px;color:#d7a24a}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1920" data-height="1080">
+  <canvas id="gl" width="1920" height="1080"></canvas>
+  <div id="vig"></div>
+  <svg id="grain" width="1920" height="1080" viewBox="0 0 1920 1080"><filter id="gf"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="11"/><feColorMatrix type="saturate" values="0"/></filter><rect width="1920" height="1080" filter="url(#gf)"/></svg>
+  <div class="bar" id="bt"></div><div class="bar" id="bb"></div>
+  <div id="t1" class="clip t" data-start="1.2" data-duration="6" data-track-index="2">SOMERTON BEACH · ADELAIDE</div>
+  <div id="t2" class="clip t" data-start="1.6" data-duration="5.6" data-track-index="2">1° DICEMBRE 1948 — 06:42</div>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+tl.fromTo("#t1",{opacity:0,x:-30},{opacity:1,x:0,duration:.5,ease:"power3.out"},1.2);
+tl.fromTo("#t2",{opacity:0,x:-30},{opacity:1,x:0,duration:.5,ease:"power3.out"},1.6);
+tl.to("#t1",{opacity:0,duration:.4},6.6); tl.to("#t2",{opacity:0,duration:.4},6.8);
+tl.to({}, {duration:20}, 0);
+window.__timelines["main"] = tl;
+</script>
+<script type="module">
+import * as THREE from './lib/three.module.js';
+const W=1920,H=1080,DUR=20;
+// ---------- deterministic helpers ----------
+function mul32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=mul32(1948);
+const hash=(n)=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
+const sstep=(x)=>x*x*(3-2*x);
+// ---------- renderer / scene ----------
+const canvas=document.getElementById('gl');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(1);renderer.setSize(W,H,false);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x16303f,0.036);
+const cam=new THREE.PerspectiveCamera(30,W/H,0.1,200);
+
+// ---------- procedural textures ----------
+function canvasTex(w,h,draw,rep){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;if(rep)t.repeat.set(rep[0],rep[1]);t.anisotropy=4;return t}
+const sandTex=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#8a7a62';g.fillRect(0,0,w,h);for(let i=0;i<26000;i++){const v=90+rnd()*90|0;g.fillStyle=`rgba(${v+30},${v+14},${v-10},${.25+rnd()*.4})`;g.fillRect(rnd()*w,rnd()*h,1+rnd()*2,1+rnd()*2)}},[14,14]);
+const brickTex=canvasTex(512,256,(g,w,h)=>{g.fillStyle='#6b5f55';g.fillRect(0,0,w,h);const bw=64,bh=32;for(let r=0;r<h/bh;r++)for(let c=-1;c<w/bw+1;c++){const x=c*bw+(r%2?bw/2:0),y=r*bh;const v=70+rnd()*40|0;g.fillStyle=`rgb(${v+38},${v+34},${v+30})`;g.fillRect(x+2,y+2,bw-4,bh-4);for(let k=0;k<60;k++){g.fillStyle=`rgba(0,0,0,${rnd()*.18})`;g.fillRect(x+rnd()*bw,y+rnd()*bh,2,2)}}},[10,1]);
+const skyTex=canvasTex(16,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#01040a');gr.addColorStop(.45,'#07131d');gr.addColorStop(.72,'#14303c');gr.addColorStop(.9,'#5a4a3e');gr.addColorStop(1,'#a8723e');g.fillStyle=gr;g.fillRect(0,0,w,h)});
+const moonTex=canvasTex(256,256,(g,w,h)=>{const gr=g.createRadialGradient(128,128,10,128,128,128);gr.addColorStop(0,'rgba(235,240,255,1)');gr.addColorStop(.34,'rgba(220,230,255,.95)');gr.addColorStop(.38,'rgba(160,185,230,.25)');gr.addColorStop(1,'rgba(120,150,210,0)');g.fillStyle=gr;g.fillRect(0,0,w,h)});
+
+// ---------- environment ----------
+const sky=new THREE.Mesh(new THREE.SphereGeometry(120,32,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,fog:false}));
+sky.rotation.y=0;scene.add(sky);
+{const n=700,p=new Float32Array(n*3);for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,e=.12+rnd()*1.2;p[i*3]=Math.cos(a)*Math.cos(e)*110;p[i*3+1]=Math.sin(e)*110;p[i*3+2]=-Math.abs(Math.sin(a))*Math.cos(e)*110-10}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xdfe8ff,size:.5,sizeAttenuation:false,fog:false,transparent:true,opacity:.8})))}
+const moon=new THREE.Mesh(new THREE.PlaneGeometry(14,14),new THREE.MeshBasicMaterial({map:moonTex,transparent:true,fog:false,depthWrite:false}));
+moon.position.set(-17,15,-80);scene.add(moon);
+
+const sand=new THREE.Mesh((()=>{const g=new THREE.PlaneGeometry(80,60,200,150);g.rotateX(-Math.PI/2);const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);p.setY(i,.04*Math.sin(x*1.7+z*.6)+.03*Math.sin(x*.5-z*2.1)+.02*Math.sin(z*5.3+x*.8)+(z<-3?-.08*(-3-z):0))}g.computeVertexNormals();return g})(),new THREE.MeshStandardMaterial({map:sandTex,roughness:.97,metalness:0}));
+sand.position.set(0,0,2);sand.receiveShadow=true;scene.add(sand);
+
+const seaGeo=new THREE.PlaneGeometry(120,70,140,80);seaGeo.rotateX(-Math.PI/2);
+const sea=new THREE.Mesh(seaGeo,new THREE.MeshStandardMaterial({color:0x153d49,roughness:.16,metalness:.55,envMapIntensity:1.4}));
+sea.position.set(0,-.38,-42);scene.add(sea);
+const seaBase=seaGeo.attributes.position.array.slice();
+function updateSea(t){const p=seaGeo.attributes.position;for(let i=0;i<p.count;i++){const x=seaBase[i*3],z=seaBase[i*3+2];p.setY(i,.10*Math.sin(x*.35+t*.9+z*.2)+.07*Math.sin(z*.5-t*1.3+x*.1)+.03*Math.sin(x*1.3+z*.9+t*2.1))}p.needsUpdate=true;seaGeo.computeVertexNormals()}
+
+// seawall
+const wallMat=new THREE.MeshStandardMaterial({map:brickTex,roughness:.92});
+const wall=new THREE.Mesh(new THREE.BoxGeometry(70,1.15,.5),wallMat);wall.position.set(0,.5,-2.75);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
+const cap=new THREE.Mesh(new THREE.BoxGeometry(70,.09,.66),new THREE.MeshStandardMaterial({color:0x54504a,roughness:.8}));cap.position.set(0,1.1,-2.75);cap.castShadow=true;cap.receiveShadow=true;scene.add(cap);
+const step=new THREE.Mesh(new THREE.BoxGeometry(70,.18,.5),wallMat);step.position.set(0,.05,-2.35);step.receiveShadow=true;scene.add(step);
+
+// street lamp
+const lamp=new THREE.Group();lamp.position.set(-2.9,0,-1.9);scene.add(lamp);
+const pole=new THREE.Mesh(new THREE.CylinderGeometry(.045,.07,3.5,12),new THREE.MeshStandardMaterial({color:0x1a1d20,roughness:.5,metalness:.6}));pole.position.y=1.75;pole.castShadow=true;lamp.add(pole);
+const arm=new THREE.Mesh(new THREE.BoxGeometry(.9,.05,.05),pole.material);arm.position.set(.4,3.45,0);lamp.add(arm);
+const head=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,.22,16),new THREE.MeshStandardMaterial({color:0x222,emissive:0xffa648,emissiveIntensity:2.2,roughness:.4}));head.position.set(.85,3.38,0);lamp.add(head);
+const lampLight=new THREE.SpotLight(0xffb468,260,16,.62,.85,1.6);lampLight.position.set(.85,3.35,0);lampLight.castShadow=true;lampLight.shadow.mapSize.set(2048,2048);lampLight.shadow.bias=-.0004;lampLight.shadow.radius=5;
+lamp.add(lampLight);const lampTarget=new THREE.Object3D();lampTarget.position.set(3.1,.45,-.35);lamp.add(lampTarget);lampLight.target=lampTarget;
+const moonLight=new THREE.DirectionalLight(0x7b97c8,1.15);moonLight.position.set(-8,14,-16);moonLight.castShadow=true;moonLight.shadow.mapSize.set(2048,2048);
+Object.assign(moonLight.shadow.camera,{left:-9,right:9,top:9,bottom:-9,near:1,far:60});moonLight.target.position.set(0,0,-2);scene.add(moonLight,moonLight.target);
+scene.add(new THREE.HemisphereLight(0x3a5c80,0x1a1410,.95));
+const fill=new THREE.DirectionalLight(0x93add0,.62);fill.position.set(4,4,12);scene.add(fill);
+// environment reflections from the sky
+const envScene=new THREE.Scene();envScene.add(new THREE.Mesh(new THREE.SphereGeometry(50,32,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide})));
+const mo=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshBasicMaterial({map:moonTex,transparent:true}));mo.position.set(-16,15,-40);mo.lookAt(0,0,0);envScene.add(mo);
+scene.environment=new THREE.PMREMGenerator(renderer).fromScene(envScene,0.02).texture;
+
+// ---------- characters ----------
+const M=(c,r=.8,m=0,extra={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r,metalness:m},extra));
+function limb(len,r,mat){const g=new THREE.Group();const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,Math.max(.001,len-2*r),6,16),mat);m.position.y=-len/2;m.castShadow=m.receiveShadow=true;g.add(m);return g}
+function mesh(geo,mat,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;return m}
+function humanoid(o){
+  const P={};const root=new THREE.Group();const hips=new THREE.Group();root.add(hips);P.root=root;P.hips=hips;
+  const skin=M(o.skin,o.skinR||.7),cloth=M(o.cloth,.88),trou=M(o.trou,.9),shoe=M(0x0b0a0a,.28,.1);
+  // pelvis + torso
+  hips.add(mesh(new THREE.SphereGeometry(.17,20,16),trou,0,0,0)).scale.set(1.1,.8,.8);
+  const spine=new THREE.Group();hips.add(spine);P.spine=spine;
+  const torso=mesh(new THREE.CapsuleGeometry(.165,.40,8,18),cloth,0,.3,0);torso.scale.set(1.12,1,.66);spine.add(torso);P.torso=torso;
+  const hem=mesh(new THREE.CylinderGeometry(.185,.2,.26,28),cloth,0,.03,0);hem.scale.set(1.12,1,.7);spine.add(hem);
+  // shirt + tie + lapels
+  if(o.tie){const sh=mesh(new THREE.PlaneGeometry(.13,.32),M(0xe8e2d4,.9),0,.44,.108);sh.castShadow=false;spine.add(sh);
+    const tie=mesh(new THREE.BoxGeometry(.036,.3,.012),M(o.tie,.55),0,.4,.113);tie.castShadow=false;spine.add(tie);
+    for(const s of[-1,1]){const l=mesh(new THREE.BoxGeometry(.05,.3,.02),cloth,s*.07,.43,.112);l.rotation.z=s*-.2;spine.add(l)}}
+  // neck + head
+  const neck=mesh(new THREE.CylinderGeometry(.05,.058,.12,14),skin,0,.62,0);spine.add(neck);
+  const headG=new THREE.Group();headG.position.set(0,.7,0);spine.add(headG);P.head=headG;
+  const cr=mesh(new THREE.SphereGeometry(.108,32,24),skin,0,.06,0);cr.scale.set(.88,1.08,1);headG.add(cr);
+  const jaw=mesh(new THREE.SphereGeometry(.085,24,18),skin,0,-.012,.02);jaw.scale.set(.9,1.05,.96);headG.add(jaw);
+  headG.add(mesh(new THREE.SphereGeometry(.018,12,10),skin,0,.045,.103));
+  const nose=mesh(new THREE.ConeGeometry(.022,.055,12),skin,0,.03,.112);nose.rotation.x=1.4;headG.add(nose);
+  for(const s of[-1,1])headG.add(mesh(new THREE.SphereGeometry(.026,12,10),skin,s*.093,.045,0)).scale.set(.5,1.1,1);
+  if(o.eyes){for(const s of[-1,1]){headG.add(mesh(new THREE.SphereGeometry(.013,10,8),M(0x101214,.3),s*.035,.062,.098));const b=mesh(new THREE.BoxGeometry(.04,.007,.01),M(0x15110e,.9),s*.036,.082,.1);b.rotation.z=s*-.12;headG.add(b)}
+    headG.add(mesh(new THREE.BoxGeometry(.04,.006,.01),M(0x7a3d36,.7),0,-.02,.1))}
+  if(o.glasses){for(const s of[-1,1]){const t=mesh(new THREE.TorusGeometry(.03,.004,8,24),M(0x1a1410,.4,.5),s*.037,.062,.108);t.castShadow=false;headG.add(t)}}
+  const hair=mesh(new THREE.SphereGeometry(.114,32,20,0,Math.PI*2,0,Math.PI*.52),M(o.hair,.75),0,.058,-.008);hair.scale.set(.9,1.08,1.04);hair.rotation.x=-.18;headG.add(hair);
+  if(o.bun)headG.add(mesh(new THREE.SphereGeometry(.05,16,12),M(o.hair,.75),0,.12,-.1));
+  if(o.hat){const b=mesh(new THREE.CylinderGeometry(.2,.2,.012,32),M(o.hat,.8),0,.125,0);b.rotation.z=.04;headG.add(b);headG.add(mesh(new THREE.CylinderGeometry(.092,.108,.1,28),M(o.hat,.8),0,.17,0));headG.add(mesh(new THREE.TorusGeometry(.1,.011,8,28),M(0x1a1612,.6),0,.14,0)).rotation.x=Math.PI/2}
+  // arms
+  for(const [k,s] of [['L',-1],['R',1]]){
+    const sh=new THREE.Group();sh.position.set(s*.205,.53,0);spine.add(sh);P['arm'+k]=sh;
+    sh.add(mesh(new THREE.SphereGeometry(.062,16,12),cloth,0,0,0));
+    const up=limb(.28,.05,cloth);sh.add(up);const el=new THREE.Group();el.position.y=-.28;sh.add(el);P['fore'+k]=el;
+    el.add(mesh(new THREE.SphereGeometry(.05,14,10),cloth));const fo=limb(.27,.043,cloth);el.add(fo);
+    const hand=mesh(new THREE.SphereGeometry(.046,16,12),skin,0,-.29,0);hand.scale.set(1.1,1.45,.9);el.add(hand);P['hand'+k]=hand}
+  // legs
+  for(const [k,s] of [['L',-1],['R',1]]){
+    const hp=new THREE.Group();hp.position.set(s*.09,-.02,0);hips.add(hp);P['leg'+k]=hp;
+    hp.add(limb(.44,.078,trou));const kn=new THREE.Group();kn.position.y=-.44;hp.add(kn);P['shin'+k]=kn;
+    kn.add(mesh(new THREE.SphereGeometry(.066,14,10),trou));kn.add(limb(.44,.06,trou));
+    const ft=mesh(new THREE.CapsuleGeometry(.05,.14,6,14),shoe,0,-.455,.07);ft.rotation.x=Math.PI/2;ft.scale.set(1,1,.7);kn.add(ft)}
+  // coat for Ines
+  if(o.coat){const coat=mesh(new THREE.CylinderGeometry(.19,.3,.95,32,1,true),M(o.coat,.9,0,{side:THREE.DoubleSide}),0,.0,0);coat.scale.set(1.1,1,.78);spine.add(coat);
+    const belt=mesh(new THREE.TorusGeometry(.205,.017,8,32),M(0x1a1410,.5),0,.2,0);belt.rotation.x=Math.PI/2;belt.scale.set(1.1,.78,1);spine.add(belt);
+    const scarf=mesh(new THREE.TorusGeometry(.075,.032,10,24),M(o.scarf,.9),0,.6,0);scarf.rotation.x=Math.PI/2;spine.add(scarf);
+    for(const s of[-1,1]){const c=mesh(new THREE.BoxGeometry(.09,.2,.02),M(o.coat,.9),s*.07,.5,.11);c.rotation.z=s*-.4;spine.add(c)}}
+  return P}
+
+const man=humanoid({skin:0xd9cfc0,skinR:.92,cloth:0x6e2f2a,trou:0x241816,hair:0x15100e,tie:0xc58f2f});
+scene.add(man.root);
+const ines=humanoid({skin:0xe3b49a,cloth:0x2a4a47,trou:0x15171a,hair:0x1a1210,hat:0x1e2226,bun:false,glasses:true,eyes:true,coat:0x34504a,scarf:0xb98a2c});
+scene.add(ines.root);
+const inesFill=new THREE.PointLight(0xa8c0e6,9,7,1.5);scene.add(inesFill);
+// flashlight
+const fl=new THREE.Group();ines.handR.add(fl);fl.position.set(0,-.03,.02);
+fl.add(mesh(new THREE.CylinderGeometry(.022,.026,.16,12),M(0x15171a,.4,.6),0,0,0.07)).rotation.x=Math.PI/2;
+const flLens=mesh(new THREE.CircleGeometry(.024,16),new THREE.MeshBasicMaterial({color:0xdfeaff,fog:false}),0,0,.15);fl.add(flLens);
+const beam=new THREE.SpotLight(0xcfe0ff,90,14,.32,.7,1.5);beam.position.set(0,0,.14);beam.castShadow=true;beam.shadow.mapSize.set(1024,1024);fl.add(beam);const beamT=new THREE.Object3D();beamT.position.set(0,0,3);fl.add(beamT);beam.target=beamT;
+
+// ---------- poses ----------
+const ROOT_MAN=new THREE.Vector3(.1,0,-2.12);
+function poseMan(t){
+  const b=Math.sin(t*1.5)*.008;
+  man.root.position.copy(ROOT_MAN);man.root.rotation.y=-.1;
+  man.hips.position.set(0,.14,0);
+  man.spine.rotation.set(.12+b,0,.03);
+  man.head.rotation.set(.27+Math.sin(t*.7)*.012,.12,-.08);
+  man.legL.rotation.set(-1.46,0,-.17);man.legR.rotation.set(-1.52,0,.2);
+  man.shinL.rotation.set(.34,0,0);man.shinR.rotation.set(.22,0,0);
+  man.armL.rotation.set(-.08,0,-.14);man.foreL.rotation.set(-.35,0,0);
+  man.armR.rotation.set(.04,0,.18);man.foreR.rotation.set(-.15,0,0);
+}
+function poseInes(t){
+  const t0=11.0,sp=1.25,x0=-9.5;
+  const w=Math.max(0,t-t0);const x=Math.min(x0+sp*w,-1.15);const walking=x<-1.15;
+  const ph=w*5.2*(walking?1:0), a=walking?1:0;
+  ines.root.position.set(x,0,-.55);ines.root.rotation.y=walking?Math.PI/2:(Math.PI/2-.7);
+  const bob=Math.abs(Math.sin(ph))*.02*a;
+  ines.hips.position.set(0,.95+bob,0);ines.spine.rotation.set(.04,Math.sin(ph)*.06*a,0);
+  ines.head.rotation.set(.04,Math.sin(ph*.5)*.2*a+(walking?-.5:-.15),0);
+  const s=Math.sin(ph)*.55*a;
+  ines.legL.rotation.set(s,0,0);ines.legR.rotation.set(-s,0,0);
+  ines.shinL.rotation.set(Math.max(0,-Math.sin(ph))*.7*a,0,0);ines.shinR.rotation.set(Math.max(0,Math.sin(ph))*.7*a,0,0);
+  ines.armL.rotation.set(-s*.8,0,-.08);ines.foreL.rotation.set(-.15,0,0);
+  // right arm holds flashlight forward/down toward the man
+  ines.armR.rotation.set(-1.05,0,.12);ines.foreR.rotation.set(-.35,0,0);
+  inesFill.position.set(x+.9,1.7,.9);
+  const on=t>10.4?1:0;beam.intensity=on*90;flLens.visible=!!on;
+  // aim the beam at the man
+  const target=new THREE.Vector3(ROOT_MAN.x,.5,ROOT_MAN.z);
+  const wp=new THREE.Vector3();fl.getWorldPosition(wp);fl.parent.worldToLocal(target.clone());
+  const local=target.clone();ines.handR.updateWorldMatrix(true,false);ines.handR.worldToLocal(local);
+  fl.lookAt(ines.handR.localToWorld(local.clone()));
+}
+// ---------- camera path ----------
+const K=[
+ {t:0,  p:[.9,.5,9.2],  l:[.1,.95,-2.1]},
+ {t:6,  p:[.55,.72,5.1],l:[.1,.8,-2.1]},
+ {t:10, p:[1.7,.9,2.9], l:[.1,.72,-2.1]},
+ {t:14, p:[3.6,1.05,.4],l:[.0,.72,-2.1]},
+ {t:17.2,p:[2.2,1.15,3.4],l:[-1.0,.85,-1.6]},
+ {t:20, p:[.8,1.45,6.6],l:[-1.6,.9,-1.2]},
+];
+function camAt(t){let i=0;while(i<K.length-2&&t>K[i+1].t)i++;const a=K[i],b=K[i+1];const u=sstep(Math.min(1,Math.max(0,(t-a.t)/(b.t-a.t))));
+  const p=a.p.map((v,j)=>v+(b.p[j]-v)*u),l=a.l.map((v,j)=>v+(b.l[j]-v)*u);
+  const hx=Math.sin(t*.9)*.012+Math.sin(t*2.3)*.006,hy=Math.sin(t*1.1+1)*.01+Math.sin(t*2.9)*.004;
+  cam.position.set(p[0]+hx,p[1]+hy,p[2]);cam.lookAt(l[0],l[1],l[2])}
+
+// ---------- frame ----------
+function renderAt(t){
+  t=Math.max(0,Math.min(DUR,t));
+  const fk=Math.floor(t*12);const flick=1+(hash(fk)-.5)*.12+(hash(fk*7.3)>.96?-.25:0);
+  lampLight.intensity=260*flick;head.material.emissiveIntensity=2.2*flick;
+  updateSea(t);poseMan(t);poseInes(t);camAt(t);
+  renderer.render(scene,cam);
+}
+window.addEventListener('hf-seek',(e)=>renderAt(e.detail.time));
+renderAt(0);
+</script>
+</body>
+</html>
