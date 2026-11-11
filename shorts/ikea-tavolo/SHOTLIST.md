@@ -47,3 +47,9 @@ Voce: genera `voice/voice.wav` in italiano (Kokoro o altro) e `voice/words.json`
 - `voice/voice.mp3` (68,5 s), `voice/words.json` (tempi per parola, da STT Fish con timestamp), `voice/events.json` (momenti chiave reali), `voice/parts.json` (testo dei 4 pezzi), `part1-4.mp3`.
 - La timeline `story_ikea.ts` è ancora scritta per 57 s (1710 f): va riallineata a 68,5 s (~2056 f) con i tempi di `events.json`.
 - Da ascoltare: la trascrizione ha capito "Camparada" invece di "Kamprad" nel pezzo 3; potrebbe essere una pronuncia imprecisa della voce.
+
+## Aggiornamento: timeline sulla voce vera (68,5 s = 2055 f)
+- `story_ikea.ts` riallineata: cambi di inquadratura e `EV` sui tempi reali di `voice/events.json`; i tasti camera sono stati deformati dal piano da 57 s. `cast_ikea.ts` e `world_ikea.ts` aggiornati di conseguenza.
+- Corretti: Kamprad fuori campo nell'inquadratura 7, pareti e pavimento dei set 8-10 (ora crema, non più grigio/viola), terra del cortile meno arancione.
+- Anteprima: `preview/contact-sheet-v2.jpg` (12 fotogrammi).
+- Ancora da fare: tavolo/auto nell'inquadratura 6 (la terra dorata resta molto arancione), set 8-10 ancora vuoti, orizzonte erba piatto, alberi (servono gli asset Kenney), suono e musica, render completo e mux con `voice/voice.mp3`.

@@ -99,8 +99,8 @@ export const stage = (id: number, t: number, cam: CamInfo): Stage => {
       break;
     }
     case 2: { // Kamprad at the catalogue desk, broken parcel arrives
-      put(WHO.kamprad, [KAMPRAD_AT[0], 0, KAMPRAD_AT[2]], t < 8.5 ? "smile_closed" : "pained");
-      put(WHO.driver, lerp3([-6, 0, -6], [-10.2, 0, -6.4], smooth((t - 8.2) / 1.5)), t < 9.5 ? "neutral" : "shock", { mode: t < 9.7 ? "stroll" : "stand", walk: [-1, 0], phase: stepPh(1.6) });
+      put(WHO.kamprad, [KAMPRAD_AT[0], 0, KAMPRAD_AT[2]], t < 11.0 ? "smile_closed" : "pained");
+      put(WHO.driver, lerp3([-6, 0, -6], [-10.2, 0, -6.4], smooth((t - 11.0) / 1.5)), t < 12.6 ? "neutral" : "shock", { mode: t < 12.6 ? "stroll" : "stand", walk: [-1, 0], phase: stepPh(1.6) });
       break;
     }
     case 3: { // three rivals at the factory gate: one says no, the supplier shakes his head
@@ -126,8 +126,8 @@ export const stage = (id: number, t: number, cam: CamInfo): Stage => {
       break;
     }
     case 7: { // Kamprad on the road east with his catalogue; the rivals sulk
-      const k = smooth((t - 32.4) / 2.6);
-      put(WHO.kamprad, lerp3([39, 0, 24], [48, 0, 24], k), t > EV.poland ? "grin" : "smile", { mode: "stroll", walk: [1, 0], phase: stepPh(1.8) });
+      const k = smooth((t - 37.5) / 6.0);
+      put(WHO.kamprad, lerp3([46.8, 0, 24], [49.8, 0, 24], k), t > EV.poland ? "grin" : "smile", { mode: "stroll", walk: [1, 0], phase: stepPh(1.8) });
       WHO.dealer.forEach((w, n) => put(w, [DEALERS_AT[0] + (n - 1) * 1.5, 0, DEALERS_AT[2]], "pained", { look: n - 1 }));
       break;
     }

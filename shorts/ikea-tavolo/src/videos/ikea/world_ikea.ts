@@ -39,14 +39,14 @@ const M = {
   wood: col("woodTable", "#b57a45"), woodDark: col("woodDark2", "#7a4f33"), cardboard: col("cardboard", "#c9a36b"), tape: col("tape", "#e8d8b0"),
   stone: col("gateStone", "#b9b09f"), iron: col("gateIron", "#3d414c"), shed: col("shedWall", "#8c5a3c"), roofShed: col("shedRoof", "#5a4a44"),
   cab: col("truckCab", "#3f6fb5"), bed: col("truckBed", "#8a6a4a"), crate: col("crateM", "#a8794a"), dirt: col("dirtM", "#b99a6b"), road: col("roadM", "#9a8468"),
-  floor: col("studioFloor", "#f1e8d6"), wall: col("studioWall", "#f6ead2"), tag: col("tagRed", "#c0353a"), tagW: col("tagWhite", "#f7f1e1"),
+  floor: new THREE.MeshBasicMaterial({ color: "#f1e8d6" }), wall: new THREE.MeshBasicMaterial({ color: "#eadcc0" }), tag: col("tagRed", "#c0353a"), tagW: col("tagWhite", "#f7f1e1"),
   desk: col("deskM", "#7a4f33"), paper: col("paperM", "#f4efe3"), pole: col("polePole", "#d23b3b"), poleW: col("poleWhite", "#f4efe3"),
   tentR: col("tentRed", "#c25a4a"), tentB: col("tentBlue", "#3f6fb5"), tentY: col("tentYellow", "#d9a441"), shelf: col("shelfM", "#d9c7a4"),
 };
 const GROUND = lam("groundIkea", () => ({ map: grassHD() }));
 const DIRT = lam("dirtTexM", () => ({ map: ctex("dirtTex", 256, 256, (g, r) => {
-  g.fillStyle = "#b99a6b"; g.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 900; i++) { g.fillStyle = r() < 0.5 ? "#a98a5c" : "#c8aa7c"; g.fillRect(r() * 256, r() * 256, 2 + r() * 5, 1 + r() * 3); }
+  g.fillStyle = "#a99d84"; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 900; i++) { g.fillStyle = r() < 0.5 ? "#988c74" : "#bcb096"; g.fillRect(r() * 256, r() * 256, 2 + r() * 5, 1 + r() * 3); }
 }) }));
 const bx = (b: Batch, m: THREE.Material, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => b.add(boxGeo(V(x0, y0, z0), V(x1, y1, z1)), m);
 const cyl = (b: Batch, m: THREE.Material, x: number, y: number, z: number, r: number, h: number, axis: "x" | "y" | "z" = "y", seg = 14) => {
@@ -329,7 +329,7 @@ export class World {
     // fair gate: wide open (hinge angle 1.2 rad) until the slam at EV.fairSlam, then shut
     const shut = smooth((t - (EV.fairSlam - 0.5)) / 0.5);
     this.leaves.forEach((l, i) => { l.rotation.y = (i ? -1 : 1) * 1.25 * (1 - shut); });
-    this.bed2.visible = f >= 1278; this.flatBox.visible = this.tableExplain.g.visible = this.bubble.visible = f < 1278;
+    this.bed2.visible = f >= 1563; this.flatBox.visible = this.tableExplain.g.visible = this.bubble.visible = f < 1563;
     this.tags.forEach((tag, i) => { const u = smooth((t - EV.priceDrop - i * 0.25) / 0.5); tag.position.y = 2.6 - 1.1 * u; tag.rotation.z = 0.1 * Math.sin(t * 2 + i) * (1 - u * 0.5); });
     this.showTable.g.visible = id === 10;
     for (const g of this.fgs) g.o.visible = f >= g.a && f < g.b && g.a < s.b && g.b > s.a;
