@@ -240,8 +240,8 @@ chapters.c9 = (x) => {
   <g id="${p}-s1">${Q.map(([a, b, col, ic], i) => `<g id="${p}-q${i}">${panel(p, p + '-qp' + i, col)}<rect width="1920" height="1080" fill="url(#${p}-dots)" opacity=".1"/>${big(p + '-qa' + i, a, 100, 440, 270, C.ink, { plate: C.bone, pd: 8 })}${big(p + '-qb' + i, b, 100, 720, 270, C.ink, { plate: C.bone, pd: 8 })}<g id="${p}-qi${i}">${place(1580, 430, 1.3, icon(ic))}</g></g>`).join('')}</g>
   <g id="${p}-s2">${dawnBeach(p, C.mus)}
     <g id="${p}-pa">${place(640, 1010, 0.86, man(p, p + '-mn'))}</g><g id="${p}-pb">${place(1280, 1010, 0.86, ines(p, p + '-in'))}</g>
-    <g id="${p}-f1">${big(p + '-ft', 'È FINITO.', 960, 330, 250, C.ink, { plate: C.red, anchor: 'middle' })}<rect id="${p}-strk" x="560" y="238" width="800" height="16" fill="${C.red}"/></g>
-    <g id="${p}-f2">${big(p + '-co', 'COMINCIA.', 960, 590, 300, C.bone, { plate: C.ink, anchor: 'middle', pd: 10 })}</g>
+    <g id="${p}-f1">${big(p + '-ft', 'È FINITO.', 960, 225, 165, C.ink, { plate: C.red, anchor: 'middle' })}<rect id="${p}-strk" x="680" y="148" width="560" height="14" fill="${C.red}"/></g>
+    <g id="${p}-f2">${big(p + '-co', 'COMINCIA.', 960, 440, 230, C.bone, { plate: C.ink, anchor: 'middle', pd: 10 })}</g>
   </g>
   <g id="${p}-s3">${panel(p, p + '-lp', C.mus)}<rect width="1920" height="1080" fill="url(#${p}-dots)" opacity=".1"/>
     <g id="${p}-lock">${big(p + '-l1', 'CASO CHIUSO', 960, 560, 420, C.ink, { anchor: 'middle', plate: C.red, pd: 10 })}${small(p + '-l2', 'UN MISTERO VERO ALLA VOLTA', 960, 690, 60, C.ink, { anchor: 'middle', ls: 14 })}
