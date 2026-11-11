@@ -36,3 +36,9 @@ Voce: genera `voice/voice.wav` in italiano (Kokoro o altro) e `voice/words.json`
 - FATTO: `src/videos/ikea/story_ikea.ts` (10 inquadrature, camere, DOF, kick, ancore di scena, eventi `EV`) e `cast_ikea.ts` (Kamprad, Lundgren, 3 rivali, cliente, autista, guardia; espressioni e posizioni per inquadratura). Compilano senza errori con `tsc --strict`.
 - DA FARE: `world.ts`, `build.ts`, `paint.ts` e `Bridge.tsx` importano ancora `story.ts` e `cast.ts` del ponte. Serve costruire il mondo IKEA (cortile, casetta rossa, officina, cancello della fiera, camion, tavolo con gambe staccabili, scatola piatta), poi cambiare gli import in `story_ikea`/`cast_ikea`.
 - I tempi in `EV` sono stimati: vanno agganciati alle parole di `voice/words.json`.
+
+## Aggiornamento: mondo 3D (v1)
+- FATTO: `world_ikea.ts` (cortile con auto a baule aperto, tavolo con gambe animate, cottage rosso, officina, cancello della fiera che si chiude, camion con casse, set "aria vs scatola piatta", showroom), `Ikea.tsx`, `Root.tsx`, `scripts/ikea-stills.mjs`. Il render dei fotogrammi funziona in questo ambiente (Chromium + swangle): `REMOTION_TMP=/tmp/remotion-tmp node scripts/ikea-stills.mjs out/stills/x_ 30,330,780 0.5`. Anteprima: `preview/contact-sheet-v1.jpg`.
+- DA RIFINIRE (visto nei fotogrammi): inquadratura 7 (strada con Kamprad fuori campo), inquadratura 6 (tavolo a terra troppo arancione e vicino), muro grigio dei set 8-9, scatola piatta viola in 10, orizzonte erba troppo piatto.
+- Asset Kenney opzionali: senza, mancano alberi e cespugli.
+- Voce e audio non ancora fatti.

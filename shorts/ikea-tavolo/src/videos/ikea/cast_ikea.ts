@@ -3,7 +3,7 @@
 // `stage(id, t, cam)` returns the characters for shot `id` at story time `t` as Place[] ready for the card pool.
 import { Outfit, Expr, FrontOpts, SideOpts, bodyFront, bodySide, townsfolk, INK, SKINS } from "./toon";
 import type { Pen } from "./toon";
-import { FPS, EV, KAMPRAD_AT, DEALERS_AT, FAIR_GATE, TRUCK, SHOWROOM, TABLE0, BOOT, V3, clamp01, smooth } from "./story_ikea";
+import { FPS, EV, KAMPRAD_AT, DEALERS_AT, FAIR_GATE, TRUCK, SHOWROOM, EXPLAIN, TABLE0, BOOT, V3, clamp01, smooth } from "./story_ikea";
 
 // ---------------- outfits ----------------
 /** Ingvar Kamprad, young mail-order seller: blond hair, cardigan, tie-less shirt collar */
@@ -132,7 +132,7 @@ export const stage = (id: number, t: number, cam: CamInfo): Stage => {
       break;
     }
     case 8: { // explanation set: a puzzled customer walks between the two boxes
-      put(WHO.customer, [0.2, 0, 3.0], t > EV.airPuffs + 3 ? "smile" : "nervous", { look: t > EV.airPuffs + 3 ? 1 : -1 });
+      put(WHO.customer, [EXPLAIN[0] + 0.2, 0, EXPLAIN[2] + 3.0], t > EV.airPuffs + 3 ? "smile" : "nervous", { look: t > EV.airPuffs + 3 ? 1 : -1 });
       break;
     }
     case 9: { // price tags drop, the customer walks off with the box

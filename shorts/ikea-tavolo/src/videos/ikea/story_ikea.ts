@@ -20,6 +20,7 @@ export const FAIR_GATE: V3 = [32, 0, 12];     // gate of the furniture fair
 export const TRUCK: V3 = [-6, 0, 24];         // supplier lorry with disguised crates
 export const ROAD_EAST: V3 = [60, 0, 24];     // road toward the border / Poland (shot 7)
 export const SHOWROOM: V3 = [0, 0, -40];      // final shot: flat box on the floor
+export const EXPLAIN: V3 = [-40, 0, 60];     // shot 8 studio: assembled table in a bubble of air vs flat box
 
 export const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 export const smooth = (x: number) => { const u = clamp01(x); return u * u * (3 - 2 * u); };
@@ -113,13 +114,13 @@ export const tableState = (t: number) => ({
 
 // ---- framings ----
 // shot 1 (hook): car + standing table, then closer on the stuck table, then low on the boot edge
-const S1a = (f: number) => dolly([-6.5, 2.4, 9], add(BOOT, [-0.8, 0.2, 0]), pushK(f, 0, 0.0025), { fov: 44 });
+const S1a = (f: number) => dolly([-5.5, 2.6, 11], add(BOOT, [1.0, 0.1, 0]), pushK(f, 0, 0.0025), { fov: 46 });
 const S1b = (f: number) => dolly([-5.2, 1.5, 4.2], add(BOOT, [-1.4, 0.4, 0.1]), pushK(f, 40, 0.002, 0.006, 30), { fov: 38, roll: -0.04 });
 const S1c = (f: number) => dolly([-3.6, 0.5, 2.1], add(BOOT, [-0.4, -0.1, 0]), pushK(f, 92, 0.003), { fov: 36, roll: 0.04 });
 // shot 2: cottage + Kamprad with the catalogue; broken parcel
 const S2a = (f: number) => zoom([-3, 6, 4], add(COTTAGE, [2, 3, 3]), 44, pushK(f, 150, 0.002));
 const S2b = (f: number) => dolly([-8.8, 1.7, -4.4], add(KAMPRAD_AT, [0, 1.5, 0]), pushK(f, 205, 0.0025), { fov: 38 });
-const S2c = (f: number) => dolly([-12.2, 0.7, -4.8], [-12.2, 0.55, -8.2], pushK(f, 280, 0.0025, 0.006, 30), { fov: 36, roll: 0.035 }); // the broken parcel
+const S2c = (f: number) => dolly([-11.0, 1.1, -3.4], [-12.2, 0.3, -7.6], pushK(f, 280, 0.0025, 0.006, 30), { fov: 38, roll: 0.035 }); // the broken parcel
 // shot 3: rivals at the factory gate
 const S3a = (f: number) => zoom([13, 2.2, -4], add(DEALERS_AT, [0, 1.5, 0]), 42, pushK(f, 345, 0.002), { roll: -0.03 });
 const S3b = (f: number) => dolly([17.2, 1.7, -7.4], add(DEALERS_AT, [0.6, 1.7, 0]), pushK(f, 418, 0.003, 0.006, 25), { fov: 36 });
@@ -139,9 +140,9 @@ const S7a = (f: number) => dolly([42, 2.4, 14], add(ROAD_EAST, [-12, 1.8, 0]), p
 const S7b = (f: number) => dolly([50.5, 1.4, 20], add(ROAD_EAST, [-3, 1.5, 0]), pushK(f, 1010, 0.0025), { fov: 38, roll: 0.035 });
 const S7c = (f: number) => dolly([12.5, 1.6, -4.5], add(DEALERS_AT, [-1, 1.5, 0]), pushK(f, 1066, 0.0025), { fov: 38 }); // glum rivals
 // shot 8: explanation set (white studio with two tables)
-const S8a = (f: number) => dolly([-3.2, 2.0, 10], [-3.2, 1.3, 0], pushK(f, 1110, 0.002), { fov: 42 });
-const S8b = (f: number) => dolly([3.6, 1.2, 8.6], [3.2, 0.6, 0], pushK(f, 1190, 0.0025, 0.006, 35), { fov: 38, roll: -0.03 });
-const S8c = (f: number) => dolly([0, 3.4, 12], [0, 1.2, 0], pushK(f, 1278, 0.002), { fov: 46 }); // suitcase vs wardrobe on the lorry
+const S8a = (f: number) => dolly(add(EXPLAIN, [-3.2, 2.0, 10]), add(EXPLAIN, [-3.2, 1.3, 0]), pushK(f, 1110, 0.002), { fov: 42 });
+const S8b = (f: number) => dolly(add(EXPLAIN, [3.6, 1.2, 8.6]), add(EXPLAIN, [3.2, 0.6, 0]), pushK(f, 1190, 0.0025, 0.006, 35), { fov: 38, roll: -0.03 });
+const S8c = (f: number) => dolly(add(EXPLAIN, [0, 3.4, 12]), add(EXPLAIN, [0, 1.2, 0]), pushK(f, 1278, 0.002), { fov: 46 }); // suitcase vs wardrobe on the lorry
 // shot 9: price tags + customer
 const S9a = (f: number) => dolly([-2.0, 1.8, SHOWROOM[2] + 8], add(SHOWROOM, [0, 1.6, 0]), pushK(f, 1380, 0.002), { fov: 40 });
 const S9b = (f: number) => dolly([1.2, 1.5, SHOWROOM[2] + 5.4], add(SHOWROOM, [0.4, 1.4, 0]), pushK(f, 1470, 0.0025, 0.005, 30), { fov: 36, roll: 0.04 });
@@ -233,6 +234,6 @@ export const FOREGROUND: Fg[] = [
   { a: 205, b: 280, kit: "crate", pos: [-9.6, 0, -6.2], s: 0.7, yaw: 0.4 },           // Kamprad MS: crate bottom-left
   { a: 418, b: 480, kit: "barrel", pos: [15.2, 0, -8.2], s: 0.9, yaw: 0.2 },          // rivals: barrel
   { a: 642, b: 690, kit: "crate", pos: [-1.4, 0, 18.2], s: 0.8, yaw: -0.5 },          // disguised crates
-  { a: 770, b: 840, kit: "toolbox", pos: [-5.3, 0, 1.4], s: 0.35, yaw: 0.3 },         // Lundgren's tools, bottom-right
+  { a: 770, b: 840, kit: "toolbox", pos: [-4.4, 0, 1.2], s: 0.25, yaw: 0.3 },         // Lundgren's tools, bottom-right
   { a: 1380, b: 1470, kit: "plant_bushDetailed", pos: [-1.6, 0, SHOWROOM[2] + 6.4], s: 1.1, yaw: 0.4 },
 ];

@@ -7,14 +7,18 @@
   },
   "dependencies": {
     "@react-three/fiber": "^8.17.0",
+    "@react-three/postprocessing": "^2.16.0",
+    "@remotion/cli": "4.0.542",
     "@remotion/three": "4.0.542",
     "@types/three": "^0.169.0",
+    "postprocessing": "^6.36.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "remotion": "4.0.542",
-    "@remotion/cli": "4.0.542",
-    "postprocessing": "^6.36.0",
     "three": "^0.169.0",
     "typescript": "^5.6.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31"
   }
 }
