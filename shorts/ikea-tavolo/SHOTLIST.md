@@ -53,3 +53,9 @@ Voce: genera `voice/voice.wav` in italiano (Kokoro o altro) e `voice/words.json`
 - Corretti: Kamprad fuori campo nell'inquadratura 7, pareti e pavimento dei set 8-10 (ora crema, non più grigio/viola), terra del cortile meno arancione.
 - Anteprima: `preview/contact-sheet-v2.jpg` (12 fotogrammi).
 - Ancora da fare: tavolo/auto nell'inquadratura 6 (la terra dorata resta molto arancione), set 8-10 ancora vuoti, orizzonte erba piatto, alberi (servono gli asset Kenney), suono e musica, render completo e mux con `voice/voice.mp3`.
+
+## Aggiornamento: suono, musica e rifiniture mondo (v3)
+- `audio/ikea_audio.py` (nuovo, usa `dsp.py` e `instruments.py`): musica originale a 120 bpm (pizzicato, carillon, glockenspiel, spazzole) con sezioni che seguono le inquadrature, ~45 effetti sincronizzati (whoosh a ogni taglio, cancello, gambe che si svitano, tavolo nel baule, sbuffi d'aria, cartellini, passi, rimshot finale), ambiente con uccelli e vento. Mix: voce -17 LUFS, musica +3 dB, effetti -6 dB, musica abbassata di 8 dB sotto la voce. Risultato: -16,8 LUFS, true peak -3,3 dBTP, 68,50 s. Esegui: `python audio/ikea_audio.py` (serve `pip install numpy scipy`). Uscite in `out/audio/` (non versionate); anteprima in `preview/mix-preview.mp3`; elenco cue in `audio/cues_ikea.md`.
+- Mondo: cortile a ciottoli, alberi e siepi (alberi da cartone animato generati dal codice, senza asset Kenney), tappeto e piante nei set 8-10.
+- NON ancora ascoltato né verificato a orecchio: va ascoltato e regolato.
+- Render finale: `npm run render` poi `ffmpeg -i out/video.mp4 -i out/audio/mix.wav -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 192k -shortest out/ikea-tavolo-final.mp4`.

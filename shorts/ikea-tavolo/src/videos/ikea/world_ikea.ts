@@ -5,8 +5,8 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { staticFile } from "remotion";
-import { Batch, boxGeo, V, lam, house, setSight, kitClone, Kit, Ray } from "./build";
-import { ctex, grassHD, cloudHD } from "./paint";
+import { Batch, boxGeo, V, lam, house, setSight, kitClone, prop, Kit, Ray } from "./build";
+import { ctex, grassHD, cloudHD, cobbleHD } from "./paint";
 import { fxCloud, fxContact } from "./toon";
 import { LIGHTS, LOOK, LightPreset } from "./lights";
 import { TONE, CHAR, untone } from "./shade";
@@ -44,10 +44,7 @@ const M = {
   tentR: col("tentRed", "#c25a4a"), tentB: col("tentBlue", "#3f6fb5"), tentY: col("tentYellow", "#d9a441"), shelf: col("shelfM", "#d9c7a4"),
 };
 const GROUND = lam("groundIkea", () => ({ map: grassHD() }));
-const DIRT = lam("dirtTexM", () => ({ map: ctex("dirtTex", 256, 256, (g, r) => {
-  g.fillStyle = "#a99d84"; g.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 900; i++) { g.fillStyle = r() < 0.5 ? "#988c74" : "#bcb096"; g.fillRect(r() * 256, r() * 256, 2 + r() * 5, 1 + r() * 3); }
-}) }));
+const DIRT = lam("yardCobble", () => ({ map: cobbleHD() }));
 const bx = (b: Batch, m: THREE.Material, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => b.add(boxGeo(V(x0, y0, z0), V(x1, y1, z1)), m);
 const cyl = (b: Batch, m: THREE.Material, x: number, y: number, z: number, r: number, h: number, axis: "x" | "y" | "z" = "y", seg = 14) => {
   const g = new THREE.CylinderGeometry(r, r, h, seg);
@@ -131,24 +128,40 @@ const buildRoad = (b: Batch) => {
   // striped border pole + fence far east (shot 7)
   for (let i = 0; i < 6; i++) bx(b, i % 2 ? M.poleW : M.pole, ROAD_EAST[0] - 0.08, i * 0.5, ROAD_EAST[2] - 3.5, ROAD_EAST[0] + 0.08, i * 0.5 + 0.5, ROAD_EAST[2] - 3.34);
 };
-const buildYard = (b: Batch) => {
+const scatter = (b: Batch, kit: Kit) => {
+  const hh = (i: number, s = 0) => { const v = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const names = ["tree_oak", "tree_fat", "tree_default", "tree_detailed"];
+  for (let i = 0; i < 70; i++) { // a loose ring of trees at 45-140 m, thinned near the shot lines by distance only
+    const a = hh(i) * Math.PI * 2, d = 45 + hh(i, 2) * 95;
+    const x = Math.cos(a) * d + 15, z = Math.sin(a) * d - 5;
+    if (Math.abs(z - TRUCK[2]) < 8 && x > -30) continue;           // keep the lorry road clear
+    prop(b, kit, names[i % 4], x, 0, z, 6 + hh(i, 3) * 6, hh(i, 4) * 6);
+  }
+  for (let i = 0; i < 16; i++) prop(b, kit, "plant_bushDetailed", -26 + i * 3.4, 0, 12.2 + hh(i, 5), 1 + hh(i, 6) * 0.6, hh(i, 7) * 6); // hedge row on the fence line
+  for (let i = 0; i < 20; i++) prop(b, kit, "plant_bush", 38 + hh(i, 8) * 70, 0, 20 + hh(i, 9) * 3, 0.8 + hh(i, 10) * 0.6, hh(i, 11) * 6); // roadside bushes
+  for (let i = 0; i < 14; i++) prop(b, kit, "plant_bushLarge", -22 + hh(i, 12) * 8, 0, -20 + hh(i, 13) * 4, 1.4 + hh(i, 14), hh(i, 15) * 6); // beside the cottage
+};
+const buildYard = (b: Batch, kit: Kit) => {
   slab(b, DIRT, 0, 0, 40, 30, 0.012, 8);
-  buildCar(b); buildCottage(b); buildFactory(b); buildFair(b); buildRoad(b);
+  buildCar(b); buildCottage(b); buildFactory(b); buildFair(b); buildRoad(b); scatter(b, kit);
   // the road to the fair, a few fence posts to give depth
   for (let i = 0; i < 12; i++) bx(b, M.woodDark, -30 + i * 2.2 - 0.05, 0, 14 - 0.05, -30 + i * 2.2 + 0.05, 1.1, 14 + 0.05);
 };
-const buildStudio = (b: Batch, [cx, , cz]: V3, w: number, d: number) => {
+const buildStudio = (b: Batch, [cx, , cz]: V3, w: number, d: number, rug = "#d99a85", kit: Kit = {}) => {
   slab(b, M.floor, cx, cz, w, d, 0.014, 6);
+  slab(b, col("rug" + rug, rug), cx, cz + 1.2, 10, 5.5, 0.02, 6);                                  // coloured rug under the action
+  bx(b, col("band" + rug, "#d9b57a"), cx - w / 2, 1.0, cz - d / 2 - 0.28, cx + w / 2, 1.5, cz - d / 2 - 0.25);   // stripe on the back wall
+  for (const s of [-1, 1]) { prop(b, kit, "plant_bushLarge", cx + s * (w / 2 - 1.2), 0, cz - d / 2 + 1.0, 1.6, s); prop(b, kit, "plant_bushDetailed", cx + s * (w / 2 - 2.6), 0, cz - d / 2 + 0.8, 1.1, s * 2); }
   bx(b, M.wall, cx - w / 2, 0, cz - d / 2 - 0.3, cx + w / 2, 5, cz - d / 2);
 };
-const buildShowroom = (b: Batch) => {
-  buildStudio(b, SHOWROOM, 26, 16);
+const buildShowroom = (b: Batch, kit: Kit) => {
+  buildStudio(b, SHOWROOM, 26, 16, "#e6c9a0", kit);
   const [sx, , sz] = SHOWROOM;
   for (const s of [-1, 1]) for (let r = 0; r < 3; r++) bx(b, M.shelf, sx + s * 8 - 1.2, 0.4 + r * 1.1, sz - 6, sx + s * 8 + 1.2, 0.5 + r * 1.1, sz - 5);
   for (const s of [-1, 1]) for (let r = 0; r < 3; r++) for (let k = 0; k < 3; k++) bx(b, M.cardboard, sx + s * 8 - 1.1 + k * 0.78, 0.5 + r * 1.1, sz - 5.9, sx + s * 8 - 0.4 + k * 0.78, 0.9 + r * 1.1, sz - 5.1);
 };
-const buildExplain = (b: Batch) => {
-  buildStudio(b, EXPLAIN, 24, 14);
+const buildExplain = (b: Batch, kit: Kit) => {
+  buildStudio(b, EXPLAIN, 24, 14, "#d99a85", kit);
 };
 
 // ---------------- table + flat box meshes (dynamic) ----------------
@@ -247,9 +260,9 @@ export class World {
     slab(gb, GROUND, 0, 0, 1800, 1800, 0, 4);
     gb.build(R);
     // ---- scenery groups ----
-    const mainB = new Batch(); buildYard(mainB); mainB.build(this.groups.main);
-    const exB = new Batch(); buildExplain(exB); exB.build(this.groups.explain);
-    const shB = new Batch(); buildShowroom(shB); shB.build(this.groups.showroom);
+    const mainB = new Batch(); buildYard(mainB, kit); mainB.build(this.groups.main);
+    const exB = new Batch(); buildExplain(exB, kit); exB.build(this.groups.explain);
+    const shB = new Batch(); buildShowroom(shB, kit); shB.build(this.groups.showroom);
     R.add(this.groups.main, this.groups.explain, this.groups.showroom);
     // ---- dynamic pieces ----
     this.groups.main.add(this.table.g);
