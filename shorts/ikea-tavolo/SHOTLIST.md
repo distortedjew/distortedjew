@@ -31,3 +31,8 @@ npm run studio                                    # anteprima
 npm run render                                    # 1440x2560
 ```
 Voce: genera `voice/voice.wav` in italiano (Kokoro o altro) e `voice/words.json` con i tempi per parola, poi `python audio/timeline.py`, `python audio/mix.py`.
+
+## Stato adattamento
+- FATTO: `src/videos/ikea/story_ikea.ts` (10 inquadrature, camere, DOF, kick, ancore di scena, eventi `EV`) e `cast_ikea.ts` (Kamprad, Lundgren, 3 rivali, cliente, autista, guardia; espressioni e posizioni per inquadratura). Compilano senza errori con `tsc --strict`.
+- DA FARE: `world.ts`, `build.ts`, `paint.ts` e `Bridge.tsx` importano ancora `story.ts` e `cast.ts` del ponte. Serve costruire il mondo IKEA (cortile, casetta rossa, officina, cancello della fiera, camion, tavolo con gambe staccabili, scatola piatta), poi cambiare gli import in `story_ikea`/`cast_ikea`.
+- I tempi in `EV` sono stimati: vanno agganciati alle parole di `voice/words.json`.
