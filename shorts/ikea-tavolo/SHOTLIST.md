@@ -42,3 +42,8 @@ Voce: genera `voice/voice.wav` in italiano (Kokoro o altro) e `voice/words.json`
 - DA RIFINIRE (visto nei fotogrammi): inquadratura 7 (strada con Kamprad fuori campo), inquadratura 6 (tavolo a terra troppo arancione e vicino), muro grigio dei set 8-9, scatola piatta viola in 10, orizzonte erba troppo piatto.
 - Asset Kenney opzionali: senza, mancano alberi e cespugli.
 - Voce e audio non ancora fatti.
+
+## Aggiornamento: voce (Fish Audio, voce "Chiara", italiano)
+- `voice/voice.mp3` (68,5 s), `voice/words.json` (tempi per parola, da STT Fish con timestamp), `voice/events.json` (momenti chiave reali), `voice/parts.json` (testo dei 4 pezzi), `part1-4.mp3`.
+- La timeline `story_ikea.ts` è ancora scritta per 57 s (1710 f): va riallineata a 68,5 s (~2056 f) con i tempi di `events.json`.
+- Da ascoltare: la trascrizione ha capito "Camparada" invece di "Kamprad" nel pezzo 3; potrebbe essere una pronuncia imprecisa della voce.
