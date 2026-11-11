@@ -1,0 +1,358 @@
+{
+ "duration": 388.266,
+ "chapters": [
+  {
+   "id": "c0",
+   "title": null,
+   "start": 0.25,
+   "lines": [
+    {
+     "text": "Primo dicembre millenovecentoquarantotto. Una spiaggia di Adelaide, in Australia.",
+     "s": 0.25,
+     "e": 5.882
+    },
+    {
+     "text": "Un uomo elegante è seduto contro il muro del lungomare. Sembra addormentato.",
+     "s": 6.582,
+     "e": 11.937
+    },
+    {
+     "text": "Non lo è. E per i settantaquattro anni successivi, nessuno saprà dire chi fosse.",
+     "s": 12.637,
+     "e": 17.991
+    },
+    {
+     "text": "Questa è la storia di un uomo senza nome, di un biglietto strappato, di un codice che nessuno ha mai decifrato… e di un capello rimasto nascosto dentro una maschera di gesso.",
+     "s": 18.691,
+     "e": 30.233
+    }
+   ],
+   "voice_start": 0.25,
+   "end": 31.133
+  },
+  {
+   "id": "brand",
+   "title": [
+    "CASO CHIUSO",
+    "L'UOMO SENZA NOME"
+   ],
+   "start": 31.132666666666665,
+   "lines": [],
+   "voice_start": 34.532666666666664,
+   "end": 34.533
+  },
+  {
+   "id": "c1",
+   "title": [
+    "CAPITOLO UNO",
+    "LA SPIAGGIA"
+   ],
+   "start": 34.532666666666664,
+   "lines": [
+    {
+     "text": "La sera prima, una coppia passeggia sulla sabbia di Somerton. Vede un uomo disteso vicino al muro. Lo vede muovere un braccio, poi più niente.",
+     "s": 37.933,
+     "e": 47.575
+    },
+    {
+     "text": "Pensano che abbia bevuto troppo, e proseguono.",
+     "s": 48.275,
+     "e": 51.454
+    },
+    {
+     "text": "La mattina dopo, un fantino che passa di lì lo trova senza vita.",
+     "s": 52.154,
+     "e": 56.57
+    },
+    {
+     "text": "Indossa giacca, cravatta, scarpe lucidate a specchio. Ha circa quarant'anni, è in forma, e non porta il cappello, cosa stranissima per l'epoca.",
+     "s": 57.27,
+     "e": 66.977
+    },
+    {
+     "text": "Non ha il portafoglio. Non ha documenti. E c'è un dettaglio che gela la polizia: qualcuno ha tagliato via le etichette da tutti i suoi vestiti.",
+     "s": 67.677,
+     "e": 76.999
+    }
+   ],
+   "voice_start": 37.93266666666666,
+   "end": 77.899
+  },
+  {
+   "id": "c2",
+   "title": [
+    "CAPITOLO DUE",
+    "NESSUNO LO CONOSCE"
+   ],
+   "start": 77.89933333333335,
+   "lines": [
+    {
+     "text": "Gli investigatori confrontano le impronte digitali, le fotografie, i registri dei dentisti. Niente.",
+     "s": 81.299,
+     "e": 88.382
+    },
+    {
+     "text": "In tutta l'Australia, nessuno sembra aver denunciato la scomparsa di un uomo come lui.",
+     "s": 89.082,
+     "e": 94.735
+    },
+    {
+     "text": "Il patologo esamina il corpo. Gli organi sono congestionati, e sospetta un veleno, ma non ne trova traccia.",
+     "s": 95.435,
+     "e": 102.625
+    },
+    {
+     "text": "Nota anche i polpacci: sviluppati come quelli di un ballerino, o di un corridore.",
+     "s": 103.325,
+     "e": 108.743
+    },
+    {
+     "text": "Chi era, quest'uomo?",
+     "s": 109.443,
+     "e": 111.129
+    }
+   ],
+   "voice_start": 81.29933333333335,
+   "end": 112.029
+  },
+  {
+   "id": "c3",
+   "title": [
+    "CAPITOLO TRE",
+    "LA VALIGIA"
+   ],
+   "start": 112.02866666666671,
+   "lines": [
+    {
+     "text": "Un indizio arriva dalla stazione ferroviaria di Adelaide. Nel deposito bagagli c'è una valigia, lasciata lì poco prima della morte.",
+     "s": 115.429,
+     "e": 124.325
+    },
+    {
+     "text": "Dentro: vestiti, un pennello da stencil, delle forbici, e un filo arancione di un tipo piuttosto raro.",
+     "s": 125.025,
+     "e": 132.171
+    },
+    {
+     "text": "Anche qui le etichette sono state strappate. Resta soltanto un nome: Keane.",
+     "s": 132.871,
+     "e": 137.991
+    },
+    {
+     "text": "Ma nessun Keane risulta scomparso. Era il suo vero nome? O un depistaggio?",
+     "s": 138.691,
+     "e": 143.833
+    }
+   ],
+   "voice_start": 115.42866666666671,
+   "end": 144.733
+  },
+  {
+   "id": "c4",
+   "title": [
+    "CAPITOLO QUATTRO",
+    "TAMAM SHUD"
+   ],
+   "start": 144.73266666666672,
+   "lines": [
+    {
+     "text": "Gennaio millenovecentoquarantanove. Un patologo guarda meglio i vestiti, e in una tasca nascosta trova un pezzetto di carta arrotolato.",
+     "s": 148.133,
+     "e": 157.669
+    },
+    {
+     "text": "Due parole, in persiano: Tamam Shud. Significano: è finito.",
+     "s": 158.369,
+     "e": 162.55
+    },
+    {
+     "text": "Sono state strappate dall'ultima pagina di un libro di poesie, il Rubaiyat di Omar Khayyam.",
+     "s": 163.25,
+     "e": 169.287
+    },
+    {
+     "text": "La polizia lancia un appello. E un uomo si presenta: pochi giorni prima del ritrovamento, aveva trovato una copia del libro sul sedile posteriore della sua auto.",
+     "s": 169.987,
+     "e": 181.23
+    },
+    {
+     "text": "L'ultima pagina era stata strappata. Il pezzetto combacia perfettamente.",
+     "s": 181.93,
+     "e": 187.178
+    }
+   ],
+   "voice_start": 148.13266666666672,
+   "end": 188.078
+  },
+  {
+   "id": "c5",
+   "title": [
+    "CAPITOLO CINQUE",
+    "IL CODICE"
+   ],
+   "start": 188.078,
+   "lines": [
+    {
+     "text": "Sul retro del libro, scritte a matita in lettere maiuscole, ci sono cinque righe di lettere senza senso. Una è stata cancellata.",
+     "s": 191.478,
+     "e": 200.374
+    },
+    {
+     "text": "C'è anche un numero di telefono. Porta a un'infermiera che abitava vicinissima alla spiaggia.",
+     "s": 201.074,
+     "e": 207.218
+    },
+    {
+     "text": "Lei dice di non conoscere l'uomo. Ma, secondo alcune testimonianze, davanti al suo volto di gesso sembrò turbata.",
+     "s": 207.918,
+     "e": 215.662
+    },
+    {
+     "text": "Le lettere restano un enigma. Crittografi, militari e appassionati ci provano per decenni. Nessuno riesce a decifrarle.",
+     "s": 216.362,
+     "e": 224.831
+    }
+   ],
+   "voice_start": 191.478,
+   "end": 225.731
+  },
+  {
+   "id": "c6",
+   "title": [
+    "CAPITOLO SEI",
+    "LE TEORIE"
+   ],
+   "start": 225.73133333333334,
+   "lines": [
+    {
+     "text": "Il caso diventa leggenda.",
+     "s": 229.131,
+     "e": 231.457
+    },
+    {
+     "text": "Una spia della Guerra Fredda, perché a poche centinaia di chilometri c'è Woomera, il grande poligono missilistico.",
+     "s": 232.157,
+     "e": 239.709
+    },
+    {
+     "text": "Un amore finito male.",
+     "s": 240.409,
+     "e": 242.393
+    },
+    {
+     "text": "Un veleno impossibile da trovare.",
+     "s": 243.093,
+     "e": 245.674
+    },
+    {
+     "text": "Ogni ipotesi ha un pezzo che non torna. Il corpo viene sepolto. Ma prima, il suo volto viene copiato in una maschera di gesso. E nessuno sa che quella maschera conserva ancora qualcosa.",
+     "s": 246.374,
+     "e": 259.707
+    }
+   ],
+   "voice_start": 229.13133333333334,
+   "end": 260.607
+  },
+  {
+   "id": "c7",
+   "title": [
+    "CAPITOLO SETTE",
+    "IL CAPELLO"
+   ],
+   "start": 260.60733333333326,
+   "lines": [
+    {
+     "text": "Passano più di settant'anni. All'Università di Adelaide, il professor Derek Abbott non ha mai smesso di inseguire il caso.",
+     "s": 264.007,
+     "e": 272.242
+    },
+    {
+     "text": "Insieme alla genealogista americana Colleen Fitzpatrick prova una strada nuova: il DNA.",
+     "s": 272.942,
+     "e": 279.683
+    },
+    {
+     "text": "Ma del corpo non si può più ricavare nulla di utile. Resta la maschera di gesso.",
+     "s": 280.383,
+     "e": 285.973
+    },
+    {
+     "text": "Dentro, intrappolato nel gesso, c'è un capello. Uno solo, con la sua radice.",
+     "s": 286.673,
+     "e": 291.899
+    },
+    {
+     "text": "Da quel capello ricavano un profilo genetico. Lo confrontano con i database di genealogia, e ramo dopo ramo, costruiscono un albero di famiglia partendo da cugini lontani che non sapevano nemmeno di esistere.",
+     "s": 292.599,
+     "e": 307.277
+    }
+   ],
+   "voice_start": 264.00733333333324,
+   "end": 308.177
+  },
+  {
+   "id": "c8",
+   "title": [
+    "CAPITOLO OTTO",
+    "IL NOME"
+   ],
+   "start": 308.1766666666665,
+   "lines": [
+    {
+     "text": "Luglio duemilaventidue. Arriva la risposta.",
+     "s": 311.577,
+     "e": 314.734
+    },
+    {
+     "text": "L'uomo della spiaggia si chiamava Carl Webb, detto Charles. Ingegnere elettrico e costruttore di strumenti, nato a Melbourne nel millenovecentocinque.",
+     "s": 315.434,
+     "e": 325.567
+    },
+    {
+     "text": "Aveva quarantatré anni. L'ultima traccia di lui è dell'aprile del millenovecentoquarantasette, quando lasciò la moglie.",
+     "s": 326.267,
+     "e": 334.075
+    },
+    {
+     "text": "Poi, più niente. Per settantaquattro anni, un uomo con una famiglia, una casa, una vita intera, è rimasto un punto interrogativo sulla sabbia.",
+     "s": 334.775,
+     "e": 344.461
+    }
+   ],
+   "voice_start": 311.5766666666665,
+   "end": 345.361
+  },
+  {
+   "id": "c9",
+   "title": [
+    "EPILOGO",
+    "COSA RESTA"
+   ],
+   "start": 345.3606666666664,
+   "lines": [
+    {
+     "text": "Il caso è chiuso? Non del tutto. La polizia dell'Australia Meridionale non ha ancora verificato ufficialmente l'identificazione.",
+     "s": 348.761,
+     "e": 357.742
+    },
+    {
+     "text": "E le domande più grandi restano senza risposta. Di cosa è morto? Cosa dicono quelle lettere? Perché tagliare le etichette? E cosa ci faceva Carl Webb, quella notte, su quella spiaggia?",
+     "s": 358.442,
+     "e": 371.135
+    },
+    {
+     "text": "Forse è questo il vero significato di Tamam Shud. Non soltanto: è finito. Ma: ora che sappiamo chi era, qualcosa può cominciare.",
+     "s": 371.835,
+     "e": 380.625
+    },
+    {
+     "text": "Questo era Caso Chiuso. Un mistero vero alla volta.",
+     "s": 381.325,
+     "e": 384.866
+    }
+   ],
+   "voice_start": 348.7606666666664,
+   "end": 385.766
+  }
+ ]
+}

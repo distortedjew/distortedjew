@@ -1,0 +1,33 @@
+<template>
+<style>
+  #root{position:absolute;inset:0;overflow:hidden;background:#F2B632;}
+  #root .cam{position:absolute;inset:0;}
+  #root svg{position:absolute;left:0;top:0;width:1920px;height:1080px;}
+  #root svg text{font-family:Montserrat;}
+  #root svg text[font-family*="League"]{font-family:'League Gothic',sans-serif;}
+  
+</style>
+<div id="root" data-composition-id="brand" data-width="1920" data-height="1080">
+  <div class="cam" id="brand-cam"><svg id="brand-world" viewBox="0 0 1920 1080"><defs>
+<pattern id="brand-dots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="2.4" fill="#2A1215"/></pattern>
+<pattern id="brand-dots2" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="4.5" cy="4.5" r="1.7" fill="#2A1215"/></pattern>
+<linearGradient id="brand-fadeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+<mask id="brand-fade"><rect width="1920" height="1080" fill="url(#brand-fadeg)"/></mask>
+</defs></svg></div>
+  <svg id="brand-ovl" viewBox="0 0 1920 1080"></svg>
+  <svg id="brand-cardsvg" viewBox="0 0 1920 1080"><g id="brand-card"><rect width="1920" height="1080" fill="#F2B632"/><rect y="0" width="1920" height="1080" fill="url(#brand-dots)" opacity=".10"/>
+       <g id="brand-t1"><g transform="rotate(0 960 560)"><text data-layout-allow-overlap x="970" y="570" font-family="'League Gothic'" font-weight="400" font-size="420" letter-spacing="2" text-anchor="middle" fill="#C8342B" >CASO CHIUSO</text><text data-layout-allow-overlap x="960" y="560" font-family="'League Gothic'" font-weight="400" font-size="420" letter-spacing="2" text-anchor="middle" fill="#2A1215" >CASO CHIUSO</text></g></g>
+       <text data-layout-allow-overlap id="brand-t2" x="960" y="700" font-family="Montserrat" font-weight="800" font-size="64" letter-spacing="14" text-anchor="middle" fill="#2A1215" transform="rotate(0 960 700)">L'UOMO SENZA NOME</text>
+       <g id="brand-st"><g transform="translate(1480 170) rotate(-8)"><rect x="-210" y="-80" width="420" height="160" rx="6" fill="none" stroke="#C8342B" stroke-width="10"/><rect x="-198" y="-68" width="396" height="136" fill="none" stroke="#C8342B" stroke-width="3"/><text data-layout-allow-overlap x="0" y="40.800000000000004" text-anchor="middle" font-family="'League Gothic'" font-size="120" letter-spacing="4" fill="#C8342B">CHIUSO</text></g></g></g></svg>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+tl.fromTo("#brand-t1",{scale:1.18,transformOrigin:"50% 50%",opacity:0},{scale:1,opacity:1,duration:.22,ease:"power4.out"},.05);
+       tl.fromTo("#brand-t2",{opacity:0,y:30},{opacity:1,y:0,duration:.35,ease:"power3.out"},.5);
+       tl.fromTo("#brand-st",{scale:2.4,transformOrigin:"50% 50%",opacity:0},{scale:1,opacity:1,duration:.16,ease:"power4.in"},1.2);
+       tl.to("#brand-card",{y:-1080,duration:.42,ease:"power3.inOut"},3.0);
+
+gsap.set("#brand-world",{transformOrigin:"50% 55%"});tl.fromTo("#brand-world",{scale:1},{scale:1.04,duration:3.40,ease:"none",immediateRender:false},0);
+window.__timelines["brand"] = tl;
+</script>
+</template>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=1920, height=1080"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:#E0704F}
+  #root{position:relative;width:1920px;height:1080px;}
+  #grain{position:absolute;inset:0;z-index:60;mix-blend-mode:multiply;opacity:.16;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="388.267" data-width="1920" data-height="1080">
+    <div id="c0" data-composition-id="c0" data-composition-src="compositions/c0.html" data-start="0" data-duration="31.133" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:10"></div>
+    <div id="brand" data-composition-id="brand" data-composition-src="compositions/brand.html" data-start="31.133" data-duration="3.4" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:11"></div>
+    <div id="c1" data-composition-id="c1" data-composition-src="compositions/c1.html" data-start="34.533" data-duration="43.366" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:12"></div>
+    <div id="c2" data-composition-id="c2" data-composition-src="compositions/c2.html" data-start="77.899" data-duration="34.13" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:13"></div>
+    <div id="c3" data-composition-id="c3" data-composition-src="compositions/c3.html" data-start="112.029" data-duration="32.704" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:14"></div>
+    <div id="c4" data-composition-id="c4" data-composition-src="compositions/c4.html" data-start="144.733" data-duration="43.345" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:15"></div>
+    <div id="c5" data-composition-id="c5" data-composition-src="compositions/c5.html" data-start="188.078" data-duration="37.653" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:16"></div>
+    <div id="c6" data-composition-id="c6" data-composition-src="compositions/c6.html" data-start="225.731" data-duration="34.876" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:17"></div>
+    <div id="c7" data-composition-id="c7" data-composition-src="compositions/c7.html" data-start="260.607" data-duration="47.57" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:18"></div>
+    <div id="c8" data-composition-id="c8" data-composition-src="compositions/c8.html" data-start="308.177" data-duration="37.184" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:19"></div>
+    <div id="c9" data-composition-id="c9" data-composition-src="compositions/c9.html" data-start="345.361" data-duration="42.905" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index:20"></div>
+    <div id="captions" data-composition-id="captions" data-composition-src="compositions/captions.html" data-start="0" data-duration="388.267" data-track-index="2" data-track-kind="captions" data-width="1920" data-height="1080" style="z-index:50"></div>
+    <svg id="grain" width="1920" height="1080" viewBox="0 0 1920 1080"><filter id="gf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/><feColorMatrix type="matrix" values="0 0 0 0 .16  0 0 0 0 .07  0 0 0 0 .08  0 0 0 1.1 -.35"/></filter><rect width="1920" height="1080" filter="url(#gf)"/></svg>
+    <audio id="mix" class="clip" src="assets/audio/mix.wav" data-start="0" data-duration="388.267" data-track-index="3" data-volume="1"></audio>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+window.__timelines["main"] = tl;
+</script>
+</body>
+</html>
