@@ -73,7 +73,11 @@ function markdown(src = '') {
 
 /* ---------- Locandina dei personaggi: foto ufficiale se presente, altrimenti poster tipografico ---------- */
 const fit = (txt, max, len) => Math.min(max, Math.floor(len / (Math.max(1, txt.length) * 0.6))); // adatta il corpo del testo alla lunghezza disponibile
-function poster(c) {
+/* Contrasto WCAG: usato per scegliere colori sempre leggibili sopra i fondi dei personaggi */
+const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const readableOn = (fg, bg) => (contrast(fg, bg) >= 4.5 ? fg : contrast('#fff4e3', bg) >= contrast('#0e0620', bg) ? '#fff4e3' : '#0e0620');
+function poster(c, tag = true) {
   const id = 'p' + c.slug.replace(/[^a-z0-9]/g, '');
   const [first, ...rest] = c.name.replace('&', '+').split(' ');
   const last = rest.join(' ');
@@ -86,15 +90,15 @@ function poster(c) {
   <rect width="400" height="500" fill="url(#${id}d)"/>
   <circle cx="290" cy="150" r="92" fill="${c.accent}" opacity=".92"/>
   <g fill="#0e0620" opacity=".9"><rect x="198" y="136" width="200" height="7"/><rect x="198" y="152" width="200" height="9"/><rect x="198" y="170" width="200" height="11"/><rect x="198" y="190" width="200" height="13"/></g>
-  <text transform="translate(120 388) rotate(-90)" class="poster__first" font-size="${fit(first, 104, 330)}" fill="#fff4e3">${esc(first.toUpperCase())}</text>
-  ${last ? `<text transform="translate(200 388) rotate(-90)" class="poster__last" font-size="${fit(last, 64, 300)}" fill="none" stroke="${c.accent}" stroke-width="2">${esc(last.toUpperCase())}</text>` : ''}
-  <text x="380" y="34" text-anchor="end" class="poster__tag" fill="#fff4e3">FOTO IN ARRIVO</text>
+  <text transform="translate(120 450) rotate(-90)" class="poster__first" font-size="${fit(first, 112, 400)}" fill="#fff4e3">${esc(first.toUpperCase())}</text>
+  ${last ? `<text transform="translate(204 450) rotate(-90)" class="poster__last" font-size="${fit(last, 66, 360)}" fill="none" stroke="${c.accent}" stroke-width="2">${esc(last.toUpperCase())}</text>` : ''}
+  ${tag ? `<text x="380" y="34" text-anchor="end" class="poster__tag" fill="${readableOn('#fff4e3', c.color)}">FOTO IN ARRIVO</text>` : ''}
 </svg>`;
 }
-const charArt = (c, eager = false) =>
+const charArt = (c, eager = false, tag = true) =>
   c.photo
     ? `<img class="photo" src="${href(c.photo)}" alt="${esc(c.name)}, ritratto ufficiale" width="800" height="1000" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`
-    : poster(c);
+    : poster(c, tag);
 
 /* ---------- Componenti ---------- */
 const badge = (status) => `<span class="badge badge--${STATUS[status][1]}">${STATUS[status][0]}</span>`;
@@ -113,15 +117,22 @@ const pager = (arr, i, base, label) => {
   return `<nav class="pager" aria-label="${label}">${prev ? `<a class="pager__a" href="${href(`${base}${prev.slug}/`)}" rel="prev"><small>← Precedente</small>${esc(prev.name || prev.title)}</a>` : '<span></span>'}${next ? `<a class="pager__a pager__a--next" href="${href(`${base}${next.slug}/`)}" rel="next"><small>Successivo →</small>${esc(next.name || next.title)}</a>` : ''}</nav>`;
 };
 
-function charCard(c, i) {
-  return `<a class="char-card ch-${c.slug}" href="${href(`personaggi/${c.slug}/`)}">
-    <span class="char-card__no">${String(i + 1).padStart(2, '0')}</span>
-    <span class="char-card__art">${charArt(c)}</span>
+// I protagonisti giocabili sono più grandi; senza foto il nome sta nella locandina e resta solo per i lettori di schermo.
+function charCard(c) {
+  return `<a class="char-card ch-${c.slug}${c.playable ? ' char-card--lead' : ''}${c.photo ? '' : ' char-card--poster'}" href="${href(`personaggi/${c.slug}/`)}">
+    <span class="char-card__art">${charArt(c, false, false)}</span>
     <span class="char-card__body">
       <span class="char-card__role">${esc(c.role)}${c.playable ? ' · giocabile' : ''}</span>
       <span class="char-card__name">${esc(c.name)}</span>
     </span>
   </a>`;
+}
+
+// Card di una sezione della wiki. Senza voci pubblicate resta cliccabile ma appare chiaramente «in arrivo».
+function secCard(s, withDesc = false) {
+  const t = topics.filter((x) => x.section === s.slug);
+  const ok = t.filter((x) => x.status !== 'planned').length;
+  return `<a class="sec-card${ok ? '' : ' sec-card--soon'}" href="${href(`wiki/${s.slug}/`)}"><span class="sec-card__name">${esc(s.label)}</span>${withDesc ? `<span class="sec-card__desc">${esc(s.desc)}</span>` : ''}<span class="sec-card__meta">${ok ? `${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}` : 'In arrivo dal lancio'}</span></a>`;
 }
 
 /* ---------- Layout con SEO, CSP e dati strutturati ---------- */
@@ -185,7 +196,7 @@ ${[...schema, ...ldCrumbs].map(ldJson).join('\n')}
     ${NAV.map(([s, l]) => `<a href="${href(s + '/')}"${section === s ? ' aria-current="page"' : ''}>${l}</a>`).join('')}
   </nav>
   <div class="top__tools">
-    <button class="tool" id="spoiler-toggle" type="button" aria-pressed="false" title="Mostra o nascondi gli spoiler"><span class="tool__dot"></span>Spoiler</button>
+    <button class="tool" id="spoiler-toggle" type="button" aria-pressed="false" title="Mostra o nascondi gli spoiler"><span class="tool__dot"></span><span id="spoiler-label">Spoiler: nascosti</span></button>
     <button class="tool tool--search" id="search-open" type="button" aria-label="Cerca nella wiki"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Cerca</span><kbd>/</kbd></button>
   </div>
 </header>
@@ -287,6 +298,7 @@ put('index.html', layout({
 </section>
 
 <section class="ticker" aria-label="Ultime novità">
+  <button class="ticker__pause" type="button" aria-pressed="false" data-ticker-pause>Pausa</button>
   <div class="ticker__track">
     ${[...news.slice(0, 5), ...news.slice(0, 5)].map((n, i) => `<a href="${href('novita/')}" ${i >= 5 ? 'aria-hidden="true" tabindex="-1"' : ''}><time datetime="${n.date}">${fmtDate(n.date)}</time> ${esc(n.title)}</a>`).join('<span class="ticker__sep" aria-hidden="true">✦</span>')}
   </div>
@@ -300,7 +312,7 @@ put('index.html', layout({
 
 <section class="block" data-reveal>
   <div class="block__head">
-    <p class="eyebrow">01 · Cast</p>
+    <p class="eyebrow">Cast</p>
     <h2 class="h2">I personaggi</h2>
     <p class="block__lead">Due protagonisti giocabili e il giro di volti che li circonda. Le schede si completano dopo il lancio.</p>
   </div>
@@ -310,56 +322,52 @@ put('index.html', layout({
 
 <section class="block block--paper" data-reveal>
   <div class="block__head">
-    <p class="eyebrow eyebrow--dark">02 · Mappa</p>
+    <p class="eyebrow eyebrow--dark">Mappa</p>
     <h2 class="h2">I luoghi di Leonida</h2>
   </div>
   <ol class="loc-list">
-    ${locations.map((l, i) => `<li><a href="${href(`luoghi/${l.slug}/`)}"><span class="loc-list__n">${String(i + 1).padStart(2, '0')}</span><span class="loc-list__name">${esc(l.name)}</span><span class="loc-list__kind">${esc(l.kind)}</span><span class="loc-list__tag">${esc(l.tagline)}</span></a></li>`).join('')}
+    ${locations.map((l) => `<li><a href="${href(`luoghi/${l.slug}/`)}"><span class="loc-list__name">${esc(l.name)}</span><span class="loc-list__kind">${esc(l.kind)}</span><span class="loc-list__tag">${esc(l.tagline)}</span></a></li>`).join('')}
   </ol>
 </section>
 
 <section class="block" data-reveal>
   <div class="block__head">
-    <p class="eyebrow">03 · Enciclopedia</p>
+    <p class="eyebrow">Enciclopedia</p>
     <h2 class="h2">Tutto il resto</h2>
     <p class="block__lead">Veicoli, armi, negozi, musica, edizioni. Le voci verificate sono già qui, le altre si aggiungono dal lancio.</p>
   </div>
   <div class="sec-grid">
-    ${SECTIONS.map((s, i) => {
-      const t = topics.filter((x) => x.section === s.slug);
-      const ok = t.filter((x) => x.status !== 'planned').length;
-      return `<a class="sec-card" href="${href(`wiki/${s.slug}/`)}"><span class="sec-card__n">${String(i + 1).padStart(2, '0')}</span><span class="sec-card__name">${esc(s.label)}</span><span class="sec-card__meta">${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}</span></a>`;
-    }).join('')}
+    ${SECTIONS.map((s) => secCard(s)).join('')}
   </div>
 </section>
 
 <section class="block" data-reveal>
   <div class="block__head">
-    <p class="eyebrow">04 · Segreti e tutorial</p>
-    <h2 class="h2">Pronti al lancio</h2>
-    <p class="block__lead">Easter egg e guide vengono pubblicati solo quando sono verificati. Prima del lancio mostriamo cosa sta arrivando.</p>
+    <p class="eyebrow">Segreti e tutorial</p>
+    <h2 class="h2">Si riempie dal lancio</h2>
+    <p class="block__lead">Easter egg e guide escono solo quando sono verificati. Le barre avanzano man mano che l'agente conferma le schede.</p>
   </div>
   <div class="progress-row">
     <a class="progress" href="${href('easter-egg/')}">
       <span class="progress__label">Easter egg</span>
-      <span class="progress__num">${counts.eggs}<small> pubblicati</small></span>
+      <span class="progress__num">${counts.eggs}<small> di ${counts.eggs + counts.eggsPlanned} previsti</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.eggs, counts.eggs + counts.eggsPlanned)}"></i></span>
     </a>
     <a class="progress" href="${href('guide/')}">
       <span class="progress__label">Guide</span>
-      <span class="progress__num">${counts.guides}<small> pubblicate · ${counts.guidesPlanned} in arrivo</small></span>
+      <span class="progress__num">${counts.guides}<small> di ${counts.guides + counts.guidesPlanned} previste</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.guides, counts.guides + counts.guidesPlanned)}"></i></span>
     </a>
     <a class="progress" href="${href('personaggi/')}">
       <span class="progress__label">Schede verificate</span>
-      <span class="progress__num">${counts.verifiedChars}<small> su ${counts.chars} personaggi</small></span>
+      <span class="progress__num">${counts.verifiedChars}<small> di ${counts.chars} personaggi</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.verifiedChars, counts.chars)}"></i></span>
     </a>
   </div>
 </section>
 
 <section class="block" data-reveal>
-  <div class="block__head"><p class="eyebrow">05 · Cronologia</p><h2 class="h2">Ultime novità</h2></div>
+  <div class="block__head"><p class="eyebrow">Cronologia</p><h2 class="h2">Ultime novità</h2></div>
   <div class="news-row">
     ${news.slice(0, 3).map((n) => `<article class="news-card"><time datetime="${n.date}">${fmtDate(n.date)}</time><h3>${esc(n.title)}</h3><p>${esc(trunc(n.body, 130))}</p></article>`).join('')}
   </div>
@@ -368,7 +376,7 @@ put('index.html', layout({
 
 <section class="block block--split" data-reveal>
   <div>
-    <p class="eyebrow">06 · Come funziona</p>
+    <p class="eyebrow">Come funziona</p>
     <h2 class="h2">Una wiki che si scrive da sola</h2>
     <ol class="steps">
       <li><b>Monitora.</b> Ogni ora un agente controlla Rockstar Newswire, la stampa di settore e le scoperte della community.</li>
@@ -384,7 +392,7 @@ put('index.html', layout({
 </section>
 
 <section class="block" data-reveal>
-  <div class="block__head"><p class="eyebrow">07 · Domande frequenti</p><h2 class="h2">Le basi</h2></div>
+  <div class="block__head"><p class="eyebrow">Domande frequenti</p><h2 class="h2">Le basi</h2></div>
   <div class="faq">${faq.slice(0, 4).map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}</div>
   <p class="block__more"><a class="link" href="${href('faq/')}">Tutte le domande →</a></p>
 </section>`
@@ -433,7 +441,7 @@ put('luoghi/index.html', layout({
   desc: 'Vice City, Leonida Keys, Grassrivers, Port Gellhorn, Ambrosia e Mount Kalaga: tutte le regioni e i luoghi di Leonida in GTA VI.',
   crumbs: [['Home', ''], ['Luoghi', 'luoghi/']],
   body: `<header class="page-head"><p class="eyebrow">Mappa</p><h1 class="h1">Luoghi di Leonida</h1><p class="page-head__lead">Dalle spiagge di Vice City alle paludi di Grassrivers.</p></header>
-  <div class="loc-cards">${locations.map((l, i) => `<a class="loc-card" href="${href(`luoghi/${l.slug}/`)}"><span class="loc-card__n">${String(i + 1).padStart(2, '0')}</span><span class="loc-card__kind">${esc(l.kind)}</span><span class="loc-card__name">${esc(l.name)}</span><span class="loc-card__tag">${esc(l.tagline)}</span></a>`).join('')}</div>`
+  <div class="loc-cards">${locations.map((l) => `<a class="loc-card" href="${href(`luoghi/${l.slug}/`)}"><span class="loc-card__kind">${esc(l.kind)}</span><span class="loc-card__name">${esc(l.name)}</span><span class="loc-card__tag">${esc(l.tagline)}</span></a>`).join('')}</div>`
 }), { prio: 0.9 });
 locations.forEach((l, i) => {
   const who = characters.filter((c) => c.locations.includes(l.slug));
@@ -461,7 +469,7 @@ put('wiki/index.html', layout({
   desc: 'L\'enciclopedia di GTA VI: storia e missioni, veicoli, armi, negozi e attività, radio e musica, edizioni e bonus.',
   crumbs: [['Home', ''], ['Wiki', 'wiki/']],
   body: `<header class="page-head"><p class="eyebrow">Enciclopedia</p><h1 class="h1">Wiki</h1><p class="page-head__lead">Tutto ciò che non è un personaggio o un luogo, in sei sezioni. Le voci «in arrivo» vengono scritte dopo il lancio.</p></header>
-  <div class="sec-grid sec-grid--page">${SECTIONS.map((s, i) => { const t = topics.filter((x) => x.section === s.slug); const ok = t.filter((x) => x.status !== 'planned').length; return `<a class="sec-card" href="${href(`wiki/${s.slug}/`)}"><span class="sec-card__n">${String(i + 1).padStart(2, '0')}</span><span class="sec-card__name">${esc(s.label)}</span><span class="sec-card__desc">${esc(s.desc)}</span><span class="sec-card__meta">${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}</span></a>`; }).join('')}</div>`
+  <div class="sec-grid sec-grid--page">${SECTIONS.map((s) => secCard(s, true)).join('')}</div>`
 }), { prio: 0.8 });
 for (const s of SECTIONS) {
   const list = topics.filter((t) => t.section === s.slug);
@@ -620,7 +628,8 @@ const searchIndex = [
   ...news.map((n) => ({ t: n.title, k: 'Novità', u: 'novita/', s: n.body, sp: false }))
 ];
 
-const theme = characters.map((c) => `.ch-${c.slug}{--c:${c.color};--a:${c.accent}}`).join('\n');
+// --ar = colore d'accento garantito leggibile (contrasto ≥ 4.5) sul fondo scuro delle card
+const theme = characters.map((c) => `.ch-${c.slug}{--c:${c.color};--a:${c.accent};--ar:${readableOn(c.accent, '#170a33')}}`).join('\n');
 const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const feedHref = (rel) => (SITE ? abs(rel) : href(rel));
 const feed = `<?xml version="1.0" encoding="utf-8"?>

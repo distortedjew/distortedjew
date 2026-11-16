@@ -67,8 +67,21 @@
 
   /* ---------- Spoiler e filtri (delegati: il contenuto cambia a ogni pagina) ---------- */
   const tog = $('#spoiler-toggle');
-  const syncTog = () => tog && tog.setAttribute('aria-pressed', String(root.dataset.spoilers === 'on'));
+  const syncTog = () => {
+    if (!tog) return;
+    const on = root.dataset.spoilers === 'on';
+    tog.setAttribute('aria-pressed', String(on));
+    const lb = $('#spoiler-label');
+    if (lb) lb.textContent = on ? 'Spoiler: visibili' : 'Spoiler: nascosti';
+  };
   syncTog();
+  document.addEventListener('click', (ev) => {
+    const tp = ev.target.closest('[data-ticker-pause]');
+    if (!tp) return;
+    const paused = tp.closest('.ticker').classList.toggle('is-paused');
+    tp.setAttribute('aria-pressed', String(paused));
+    tp.textContent = paused ? 'Riprendi' : 'Pausa';
+  });
   tog && tog.addEventListener('click', () => {
     const on = root.dataset.spoilers !== 'on';
     root.dataset.spoilers = on ? 'on' : 'off';
