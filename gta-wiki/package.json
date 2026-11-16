@@ -1,0 +1,13 @@
+{
+  "name": "gta-vi-wiki",
+  "private": true,
+  "type": "module",
+  "description": "Wiki non ufficiale di GTA VI, statica e aggiornata in automatico",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/validate.mjs && node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && node scripts/serve.mjs"
+  }
+}

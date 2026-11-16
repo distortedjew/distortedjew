@@ -1,0 +1,11 @@
+{
+  "siteName": "Leonida Files",
+  "tagline": "La wiki non ufficiale di Grand Theft Auto VI",
+  "phase": "prelaunch",
+  "release": { "iso": "2026-11-19T00:00:00", "note": "Mezzanotte ora locale, in ogni regione. PS5 e Xbox Series X|S. Nessuna versione PC al lancio." },
+  "siteUrl": "",
+  "lastUpdate": "2026-11-16",
+  "changelog": [
+    { "date": "2026-11-16", "text": "Prima versione della wiki: personaggi, luoghi, cronologia e struttura per easter egg e guide." }
+  ]
+}

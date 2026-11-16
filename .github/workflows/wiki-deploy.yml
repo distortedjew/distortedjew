@@ -1,0 +1,45 @@
+name: Wiki · deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ['gta-wiki/**']
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: wiki-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: gta-wiki
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Valida i contenuti
+        run: npm run validate
+      - name: Costruisci il sito
+        env:
+          WIKI_BASE: ${{ steps.pages.outputs.base_path }}
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: gta-wiki/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,41 @@
+[
+  {
+    "slug": "tom-petty-nel-trailer-1",
+    "title": "Tom Petty nel Trailer 1",
+    "category": "Musica",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Il Trailer 1 è accompagnato da «Love Is a Long Road» di Tom Petty. Non è un easter egg nascosto, ma dà il tono della storia di Lucia e Jason.",
+    "where": "Trailer 1",
+    "how": "Guarda il trailer.",
+    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "leonida-man-florida-man",
+    "title": "Leonida come parodia della «Florida Man»",
+    "category": "Teoria",
+    "status": "rumor",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Molte scene dei trailer richiamano i titoli di cronaca assurdi della Florida. Fan e stampa si aspettano riferimenti diretti nel gioco: da confermare dopo il lancio.",
+    "where": "Trailer 1 e 2",
+    "how": "Da verificare in gioco.",
+    "sources": [{ "label": "GamesRadar – Trailer 2", "url": "https://www.gamesradar.com/news/live/gta-6-trailer-2-live-coverage-all-the-analysis-and-reactions" }],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "primi-easter-egg-del-lancio",
+    "title": "Primi easter egg del lancio",
+    "category": "In arrivo",
+    "status": "planned",
+    "needs_review": false,
+    "spoiler": false,
+    "summary": "Appena il gioco sarà fuori, qui compariranno gli easter egg verificati con luogo, procedura e fonti.",
+    "where": "",
+    "how": "",
+    "sources": [],
+    "updated": "2026-11-16"
+  }
+]

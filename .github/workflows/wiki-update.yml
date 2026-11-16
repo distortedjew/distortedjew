@@ -1,0 +1,92 @@
+name: Wiki · aggiornamento automatico
+
+on:
+  schedule:
+    - cron: '17 * * * *'      # ogni ora; nella settimana di lancio puoi scendere a */15
+  workflow_dispatch:
+    inputs:
+      focus:
+        description: 'Argomento su cui concentrarsi (facoltativo, es. "easter egg" o "mappa")'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: wiki-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - id: today
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Agente editoriale (Claude)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Leggi gta-wiki/AGENT.md e segui alla lettera le istruzioni.
+            Data odierna (UTC): ${{ steps.today.outputs.date }}
+            Argomento richiesto: ${{ github.event.inputs.focus || 'nessuno: cerca tutte le novità recenti' }}
+            Modifica solo gta-wiki/content/. Alla fine esegui: cd gta-wiki && npm run check
+          claude_args: >-
+            --max-turns 60
+            --allowedTools "WebSearch,WebFetch,Read,Glob,Grep,Edit,Write,Bash(npm run check:*),Bash(npm run validate:*),Bash(node scripts/*:*),Bash(git diff:*),Bash(git status:*),Bash(date:*)"
+
+      - name: Valida e fai commit
+        id: commit
+        working-directory: gta-wiki
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODE: ${{ vars.WIKI_MODE || 'direct' }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Nessuna novità."; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Guardia: l'agente può toccare solo contenuti e asset della wiki.
+          BAD=$(git status --porcelain | awk '{print $2}' | grep -vE '^gta-wiki/(content|assets)/' || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Modifiche fuori perimetro: $BAD"; exit 1
+          fi
+          (cd gta-wiki && npm run check)
+          git config user.name  "leonida-files-bot"
+          git config user.email "leonida-files-bot@users.noreply.github.com"
+          git add gta-wiki/content gta-wiki/assets 2>/dev/null || git add gta-wiki/content
+          git commit -m "wiki: aggiornamento automatico $(date -u +%Y-%m-%d\ %H:%M) UTC"
+          if [ "$MODE" = "pr" ]; then
+            BR="wiki-auto/$(date -u +%Y%m%d-%H%M)"
+            git push origin "HEAD:refs/heads/$BR"
+            gh pr create --base main --head "$BR" --title "Wiki: aggiornamento automatico" --body "Aggiornamento generato dall'agente editoriale. Validato da npm run check."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: update
+    if: needs.update.outputs.changed == 'true'
+    uses: ./.github/workflows/wiki-deploy.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

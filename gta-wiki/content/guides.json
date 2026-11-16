@@ -1,0 +1,8 @@
+[
+  { "slug": "primi-passi", "title": "Primi passi: le prime due ore", "category": "Inizio", "status": "planned", "needs_review": false, "spoiler": false, "summary": "Cosa fare e cosa evitare appena si inizia.", "body": "", "sources": [], "updated": "2026-11-16" },
+  { "slug": "comandi-e-controlli", "title": "Comandi e controlli", "category": "Base", "status": "planned", "needs_review": false, "spoiler": false, "summary": "Tutti i comandi su PS5 e Xbox Series X|S.", "body": "", "sources": [], "updated": "2026-11-16" },
+  { "slug": "soldi-veloci", "title": "Soldi veloci", "category": "Economia", "status": "planned", "needs_review": false, "spoiler": false, "summary": "I metodi più efficienti per guadagnare presto.", "body": "", "sources": [], "updated": "2026-11-16" },
+  { "slug": "rapine", "title": "Rapine: preparazione e consigli", "category": "Missioni", "status": "planned", "needs_review": false, "spoiler": true, "summary": "Come affrontare le rapine principali.", "body": "", "sources": [], "updated": "2026-11-16" },
+  { "slug": "mappa-e-collezionabili", "title": "Mappa e collezionabili", "category": "Esplorazione", "status": "planned", "needs_review": false, "spoiler": false, "summary": "Dove trovare tutto, regione per regione.", "body": "", "sources": [], "updated": "2026-11-16" },
+  { "slug": "trofei-e-obiettivi", "title": "Trofei e obiettivi", "category": "Completamento", "status": "planned", "needs_review": false, "spoiler": true, "summary": "Lista completa e come sbloccarli.", "body": "", "sources": [], "updated": "2026-11-16" }
+]
