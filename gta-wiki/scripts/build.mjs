@@ -2,12 +2,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { SECTIONS } from './lib/sections.mjs';
+import { loadConfig } from './lib/config.mjs';
+import { loadExtensions } from './lib/extensions.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(ROOT, 'dist');
 const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'content', f), 'utf8'));
 
 const meta = read('meta.json');
+const config = loadConfig();
 const characters = read('characters.json');
 const locations = read('locations.json');
 const eggs = read('easter-eggs.json');
@@ -145,7 +148,19 @@ function secCard(s, withDesc = false) {
 
 /* ---------- Layout con SEO, CSP e dati strutturati ---------- */
 const NAV = [['personaggi', 'Personaggi'], ['luoghi', 'Luoghi'], ['wiki', 'Wiki'], ['easter-egg', 'Easter egg'], ['guide', 'Guide'], ['novita', 'Novità']];
-const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'";
+// CSP restrittiva di base; le estensioni possono aggiungere host con ctx.csp.add(direttiva, ...valori) solo se la funzione è attiva
+const cspMap = { 'default-src': ["'none'"], 'script-src': ["'self'"], 'style-src': ["'self'"], 'img-src': ["'self'", 'data:'], 'font-src': ["'self'"], 'connect-src': ["'self'"], 'manifest-src': ["'self'"], 'base-uri': ["'self'"], 'form-action': ["'self'"], 'object-src': ["'none'"] };
+const cspAdd = (dir, ...vals) => { cspMap[dir] ||= []; for (const v of vals) if (!cspMap[dir].includes(v)) cspMap[dir].push(v); };
+const cspString = () => Object.entries(cspMap).map(([k, v]) => `${k} ${v.join(' ')}`).join('; ');
+
+// Punti di estensione per i moduli in scripts/lib/ext/*.mjs (vedi scripts/lib/ext/README.md)
+const hooks = { head: [], headerTools: [], bodyEnd: [], mainEnd: [], footerLinks: [], slots: {} };
+const extStyles = [];   // percorsi relativi a dist/ di CSS aggiuntivi
+const extScripts = [];  // percorsi relativi a dist/ di JS aggiuntivi (solo same-origin, caricati con defer)
+const extFiles = new Map(); // file extra da scrivere in dist/: percorso relativo -> stringa o Buffer
+const extSearch = [];   // voci aggiuntive per l'indice di ricerca
+const slot = (name, info) => (hooks.slots[name] || []).map((f) => f(info) || '').join('');
+const runHooks = (name, info) => (hooks[name] || []).map((f) => f(info) || '').join('\n');
 const HOME_TITLE = 'Wiki italiana di GTA VI: personaggi, luoghi, easter egg e guide';
 
 function layout({ title, desc, path: p = '', body, section = '', crumbs = [], schema = [], type = 'website', image, noindex = false }) {
@@ -162,7 +177,7 @@ function layout({ title, desc, path: p = '', body, section = '', crumbs = [], sc
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="${CSP}">
+<meta http-equiv="Content-Security-Policy" content="${cspString()}">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>${esc(full)}</title>
 <meta name="description" content="${esc(d)}">
@@ -191,8 +206,11 @@ ${ogImg ? `<meta name="twitter:image" content="${esc(ogImg)}">` : ''}
 <link rel="preload" href="${href('fonts/instrument-sans-latin-400-normal.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${href('style.css')}">
 <link rel="stylesheet" href="${href('theme.css')}">
+${extStyles.map((s) => `<link rel="stylesheet" href="${href(s)}">`).join('\n')}
 <script src="${href('app.js')}" defer></script>
+${extScripts.map((s) => `<script src="${href(s)}" defer></script>`).join('\n')}
 ${[...schema, ...ldCrumbs].map(ldJson).join('\n')}
+${runHooks('head', { path: p, section, type, noindex })}
 </head>
 <body class="${section ? 'sec-' + section : ''}">
 <a class="skip" href="#main">Vai al contenuto</a>
@@ -204,6 +222,7 @@ ${[...schema, ...ldCrumbs].map(ldJson).join('\n')}
     ${NAV.map(([s, l]) => `<a href="${href(s + '/')}"${section === s ? ' aria-current="page"' : ''}>${l}</a>`).join('')}
   </nav>
   <div class="top__tools">
+    ${runHooks('headerTools', { path: p, section })}
     <button class="tool" id="spoiler-toggle" type="button" aria-pressed="false" title="Mostra o nascondi gli spoiler"><span class="tool__dot"></span><span id="spoiler-label">Spoiler: nascosti</span></button>
     <button class="tool tool--search" id="search-open" type="button" aria-label="Cerca nella wiki"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Cerca</span><kbd>/</kbd></button>
   </div>
@@ -214,6 +233,7 @@ ${[...schema, ...ldCrumbs].map(ldJson).join('\n')}
 </dialog>
 <main id="main">
 ${body}
+${runHooks('mainEnd', { path: p, section, type, noindex })}
 </main>
 <footer class="foot">
   <div class="foot__grid">
@@ -227,11 +247,12 @@ ${body}
     </nav>
     <nav aria-label="Informazioni">
       <p class="eyebrow">Il progetto</p>
-      <ul class="foot__links"><li><a href="${href('informazioni/')}">Informazioni e metodo</a></li><li><a href="${href('informazioni/#privacy')}">Privacy</a></li><li><a href="${href('feed.xml')}">Feed Atom</a></li><li><a href="${href('cerca/')}">Cerca</a></li></ul>
+      <ul class="foot__links"><li><a href="${href('informazioni/')}">Informazioni e metodo</a></li><li><a href="${href('informazioni/#privacy')}">Privacy</a></li><li><a href="${href('feed.xml')}">Feed Atom</a></li><li><a href="${href('cerca/')}">Cerca</a></li>${hooks.footerLinks.map(([label, rel]) => `<li><a href="${href(rel)}">${esc(label)}</a></li>`).join('')}</ul>
       <p class="foot__small">Aggiornato il <time datetime="${meta.lastUpdate}">${fmtDate(meta.lastUpdate)}</time></p>
     </nav>
   </div>
 </footer>
+${runHooks('bodyEnd', { path: p, section, type, noindex })}
 </body>
 </html>`;
 }
@@ -243,6 +264,18 @@ const put = (rel, html, opts = {}) => {
   pages.set(rel, html);
   if (!opts.skipSitemap) urls.push({ rel: rel.replace(/index\.html$/, ''), lastmod: opts.lastmod || meta.lastUpdate, prio: opts.prio });
 };
+
+/* ---------- Estensioni (scripts/lib/ext/*.mjs) ---------- */
+const ctx = {
+  ROOT, meta, config, SITE, BASE, CREDIT, SECTIONS, STATUS, sectionBy,
+  data: { characters, locations, eggs, guides, topics, faq, news },
+  nav: NAV, hooks, csp: { add: cspAdd }, styles: extStyles, scripts: extScripts, files: extFiles, searchIndex: extSearch,
+  put, layout, esc, href, abs, trunc, fmtDate, badge, shot, thumb, ldJson, markdown, sources, updated, crumbsHtml,
+  addSlot: (name, fn) => { (hooks.slots[name] ||= []).push(fn); },
+  /** Copia un file da gta-wiki/<rel> a dist/<dest> */
+  copyFile: (rel, dest = rel.replace(/^src\//, '')) => { extFiles.set(dest, fs.readFileSync(path.join(ROOT, rel))); }
+};
+await loadExtensions(ctx);
 
 const counts = {
   eggs: eggs.filter((e) => e.status !== 'planned').length,
@@ -320,6 +353,7 @@ put('index.html', layout({
   </div>
 </section>
 
+${slot('home:after-ticker')}
 <section class="block quote-block" data-reveal>
   <p class="eyebrow">La storia in breve</p>
   <blockquote class="pull">«Jason e Lucia sanno da sempre che il banco è truccato. Quando un colpo facile va male, finiscono nel lato <em>più oscuro</em> del posto <em>più soleggiato</em> d'America.»</blockquote>
@@ -335,6 +369,7 @@ put('index.html', layout({
   <div class="char-grid">${characters.map(charCard).join('')}</div>
   <p class="block__more"><a class="link" href="${href('personaggi/')}">Tutti i personaggi →</a></p>
 </section>
+${slot('home:after-cast')}
 
 <section class="block block--paper" data-reveal>
   <div class="block__head">
@@ -356,6 +391,7 @@ ${gallery.length ? `<section class="block" data-reveal>
   <p class="credit">${esc(CREDIT)}</p>
 </section>` : ''}
 
+${slot('home:after-gallery')}
 <section class="block" data-reveal>
   <div class="block__head">
     <p class="eyebrow">Enciclopedia</p>
@@ -421,7 +457,8 @@ ${gallery.length ? `<section class="block" data-reveal>
   <div class="block__head"><p class="eyebrow">Domande frequenti</p><h2 class="h2">Le basi</h2></div>
   <div class="faq">${faq.slice(0, 4).map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}</div>
   <p class="block__more"><a class="link" href="${href('faq/')}">Tutte le domande →</a></p>
-</section>`
+</section>
+${slot('home:end')}`
 }), { prio: 1 });
 
 // PERSONAGGI
@@ -653,7 +690,8 @@ const searchIndex = [
   ...eggs.filter((e) => e.status !== 'planned').map((e) => ({ t: e.title, k: 'Easter egg', u: `easter-egg/${e.slug}/`, s: e.summary, sp: e.spoiler })),
   ...guides.filter((g) => g.status !== 'planned').map((g) => ({ t: g.title, k: 'Guida', u: `guide/${g.slug}/`, s: g.summary, sp: g.spoiler })),
   ...faq.map((f) => ({ t: f.q, k: 'FAQ', u: 'faq/', s: f.a, sp: false })),
-  ...news.map((n) => ({ t: n.title, k: 'Novità', u: 'novita/', s: n.body, sp: false }))
+  ...news.map((n) => ({ t: n.title, k: 'Novità', u: 'novita/', s: n.body, sp: false })),
+  ...extSearch
 ];
 
 // --ar = colore d'accento garantito leggibile (contrasto ≥ 4.5) sul fondo scuro delle card
@@ -676,7 +714,7 @@ ${news.slice(0, 30).map((n, i) => `<entry><title>${xml(n.title)}</title><id>tag:
 const manifest = { name: meta.siteName, short_name: 'Leonida', description: meta.tagline, lang: 'it', start_url: BASE, scope: BASE, display: 'standalone', background_color: '#0e0620', theme_color: '#0e0620', icons: [{ src: `${BASE}icon-192.png`, sizes: '192x192', type: 'image/png' }, { src: `${BASE}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }] };
 
 const headers = `/*
-  Content-Security-Policy: ${CSP}; frame-ancestors 'none'
+  Content-Security-Policy: ${cspString()}; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
@@ -707,6 +745,7 @@ fs.cpSync(path.join(ROOT, 'src', 'fonts'), path.join(OUT, 'fonts'), { recursive:
 if (fs.existsSync(path.join(ROOT, 'assets'))) fs.cpSync(path.join(ROOT, 'assets'), path.join(OUT, 'assets'), { recursive: true });
 const w = (rel, s) => { fs.mkdirSync(path.dirname(path.join(OUT, rel)), { recursive: true }); fs.writeFileSync(path.join(OUT, rel), s); };
 w('theme.css', theme + '\n');
+for (const [rel, content] of extFiles) w(rel, content);
 w('search-index.json', JSON.stringify(searchIndex));
 w('feed.xml', feed);
 w('manifest.webmanifest', JSON.stringify(manifest));
