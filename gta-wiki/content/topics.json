@@ -1,88 +1,240 @@
 [
   {
-    "slug": "premessa-della-storia", "section": "storia", "title": "La premessa: Jason e Lucia a Leonida",
+    "slug": "premessa-della-storia",
+    "section": "storia",
+    "title": "La premessa: Jason e Lucia a Leonida",
     "tagline": "Un colpo facile che va storto e una cospirazione che attraversa lo stato.",
-    "status": "confirmed", "needs_review": true, "spoiler": false,
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
     "summary": "Secondo la descrizione ufficiale, Jason e Lucia sanno da sempre di avere il banco contro. Quando un colpo facile va male, si ritrovano nel lato più oscuro del posto più soleggiato d'America, dentro una cospirazione criminale che attraversa tutto lo stato di Leonida, costretti a fidarsi l'uno dell'altra più che mai.",
-    "facts": ["Ambientazione: Vice City e lo stato di Leonida.", "Due protagonisti giocabili: Jason e Lucia.", "La trama completa, i capitoli e le missioni verranno documentati dopo il lancio."],
-    "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Ambientazione: Vice City e lo stato di Leonida.",
+      "Due protagonisti giocabili: Jason e Lucia.",
+      "La trama completa, i capitoli e le missioni verranno documentati dopo il lancio."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
-    "slug": "capitoli-e-missioni", "section": "storia", "title": "Capitoli e missioni principali",
+    "slug": "capitoli-e-missioni",
+    "section": "storia",
+    "title": "Capitoli e missioni principali",
     "tagline": "L'elenco completo, in ordine, appena possibile.",
-    "status": "planned", "needs_review": false, "spoiler": true,
+    "status": "planned",
+    "needs_review": false,
+    "spoiler": true,
     "summary": "L'elenco dei capitoli con obiettivi, ricompense e trucchi per ogni missione verrà pubblicato dopo il lancio.",
-    "facts": [], "sources": [], "updated": "2026-11-16"
+    "facts": [],
+    "sources": [],
+    "updated": "2026-11-16"
   },
   {
-    "slug": "vapid-stanier-55", "section": "veicoli", "title": "'55 Vapid Stanier",
+    "slug": "vapid-stanier-55",
+    "section": "veicoli",
+    "title": "'55 Vapid Stanier",
     "tagline": "Una berlina d'epoca legata ai bonus Ultimate.",
-    "status": "confirmed", "needs_review": true, "spoiler": false,
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
     "summary": "Berlina presentata dal materiale ufficiale dell'Ultimate Edition, insieme a un garage vicino a Ocean Beach.",
-    "facts": ["Compare nelle immagini ufficiali dei bonus Ultimate Edition.", "Il garage collegato si trova accanto a Ocean Beach."],
-    "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Compare nelle immagini ufficiali dei bonus Ultimate Edition.",
+      "Il garage collegato si trova accanto a Ocean Beach."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
-    "slug": "crest-kayak", "section": "veicoli", "title": "Crest Kayak",
+    "slug": "grotti-cheetah",
+    "section": "veicoli",
+    "title": "Grotti Cheetah",
+    "tagline": "Un’auto sportiva bianca con fascia rossa.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Auto sportiva mostrata nelle immagini ufficiali dell’Ultimate Edition: carrozzeria bianca con una fascia rossa, ripresa davanti a un edificio a spirale in stile Vice City. Prestazioni, prezzo e dove trovarla verranno documentati dopo il lancio.",
+    "facts": [
+      "Compare nel materiale ufficiale dell’Ultimate Edition.",
+      "Statistiche e posizione: da confermare in gioco."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Media ufficiali di GTA VI",
+        "url": "https://www.rockstargames.com/VI/media"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "crest-kayak",
+    "section": "veicoli",
+    "title": "Crest Kayak",
     "tagline": "Il kayak arancione dei veicoli del rifugio di Jason.",
-    "status": "confirmed", "needs_review": true, "spoiler": false,
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
     "summary": "Kayak arancione mostrato nel materiale ufficiale tra i veicoli associati al rifugio di Jason.",
-    "facts": ["Compare nelle immagini ufficiali dei bonus Ultimate Edition."],
-    "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Compare nelle immagini ufficiali dei bonus Ultimate Edition."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
-    "slug": "squalo", "section": "veicoli", "title": "Squalo",
+    "slug": "squalo",
+    "section": "veicoli",
+    "title": "Squalo",
     "tagline": "Un'imbarcazione con delfini intorno.",
-    "status": "confirmed", "needs_review": true, "spoiler": false,
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
     "summary": "Imbarcazione visibile nelle immagini ufficiali, con Jason e Lucia sul ponte e dei delfini vicino.",
-    "facts": ["Compare nel materiale ufficiale dei bonus Ultimate Edition."],
-    "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Compare nel materiale ufficiale dei bonus Ultimate Edition."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
-    "slug": "elenco-armi", "section": "armi", "title": "Elenco completo delle armi",
+    "slug": "hawk-little-morgan-revolver",
+    "section": "armi",
+    "title": "Hawk & Little Morgan Revolver",
+    "tagline": "Un revolver con ottica, dall’Ultimate Edition.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Revolver con cannocchiale mostrato nelle immagini ufficiali dell’Ultimate Edition. Danni, munizioni, modifiche e dove ottenerlo verranno documentati dopo il lancio.",
+    "facts": [
+      "Compare nel materiale ufficiale dell’Ultimate Edition.",
+      "Il nome Hawk & Little Morgan deriva dai file ufficiali delle immagini."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Media ufficiali di GTA VI",
+        "url": "https://www.rockstargames.com/VI/media"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "elenco-armi",
+    "section": "armi",
+    "title": "Elenco completo delle armi",
     "tagline": "Statistiche, dove trovarle e come usarle.",
-    "status": "planned", "needs_review": false, "spoiler": false,
+    "status": "planned",
+    "needs_review": false,
+    "spoiler": false,
     "summary": "Il catalogo delle armi con statistiche e consigli verrà pubblicato dopo il lancio. Un motivo di fantasia a tema arma è già noto tra i bonus Ultimate Edition.",
-    "facts": [], "sources": [], "updated": "2026-11-16"
+    "facts": [],
+    "sources": [],
+    "updated": "2026-11-16"
   },
   {
-    "slug": "saras-unisex-salon", "section": "attivita", "title": "Sara's Unisex Salon",
+    "slug": "saras-unisex-salon",
+    "section": "attivita",
+    "title": "Sara's Unisex Salon",
     "tagline": "Acconciature, barba, trucco e unghie.",
-    "status": "confirmed", "needs_review": true, "spoiler": false,
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
     "summary": "Salone dove personalizzare il look: barba e acconciature per Jason, trucco e unghie per Lucia. Secondo il materiale ufficiale, gli stili esclusivi richiedono l'Ultimate Edition.",
-    "facts": ["Jason può ottenere un taglio mullet (immagini ufficiali).", "Gli stili esclusivi del salone sono legati all'Ultimate Edition."],
-    "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Jason può ottenere un taglio mullet (immagini ufficiali).",
+      "Gli stili esclusivi del salone sono legati all'Ultimate Edition."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
-    "slug": "stockyard", "section": "attivita", "title": "Stockyard",
+    "slug": "stockyard",
+    "section": "attivita",
+    "title": "Stockyard",
     "tagline": "Streetwear di fascia alta.",
-    "status": "confirmed", "needs_review": true, "spoiler": false,
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
     "summary": "Negozio di streetwear dove creare look unici ed esclusivi per Jason e Lucia. Gli articoli esclusivi richiedono l'Ultimate Edition.",
-    "facts": ["Descritto dal materiale ufficiale come la destinazione per lo streetwear elevato."],
-    "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Descritto dal materiale ufficiale come la destinazione per lo streetwear elevato."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
-    "slug": "radio-e-colonna-sonora", "section": "radio", "title": "Radio, colonna sonora e score",
+    "slug": "radio-e-colonna-sonora",
+    "section": "radio",
+    "title": "Radio, colonna sonora e score",
     "tagline": "Musica ufficiale ascoltabile fuori dal gioco.",
-    "status": "confirmed", "needs_review": true, "spoiler": false,
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
     "summary": "Rockstar offre l'ascolto della colonna sonora e dello score ufficiali, oltre ad alcune stazioni radio del gioco. L'elenco completo delle stazioni verrà documentato dopo il lancio.",
-    "facts": ["Il Trailer 1 usa «Love Is a Long Road» di Tom Petty."],
-    "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Il Trailer 1 usa «Love Is a Long Road» di Tom Petty."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
-    "slug": "standard-e-ultimate", "section": "edizioni", "title": "Edizione Standard e Ultimate",
+    "slug": "standard-e-ultimate",
+    "section": "edizioni",
+    "title": "Edizione Standard e Ultimate",
     "tagline": "Cosa cambia con i bonus di preordine.",
-    "status": "confirmed", "needs_review": true, "spoiler": false,
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
     "summary": "Esistono un'edizione Standard e una Ultimate. Per Rockstar, i bonus Ultimate sono distribuiti lungo la storia di Jason e Lucia, con nuovi oggetti da scoprire dopo ogni capitolo: veicoli, un garage, abiti, tatuaggi, acconciature, un motivo per le armi e negozi esclusivi.",
-    "facts": ["Il preordine dà bonus che richiamano «quando il neon bruciava più forte».", "Il precaricamento è iniziato il 10 novembre 2026.", "Prezzi e contenuti esatti: controlla gli store ufficiali."],
-    "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }, { "label": "PlayStation – funzionalità GTA VI", "url": "https://www.playstation.com/GTAVIfeatures/" }],
+    "facts": [
+      "Il preordine dà bonus che richiamano «quando il neon bruciava più forte».",
+      "Il precaricamento è iniziato il 10 novembre 2026.",
+      "Prezzi e contenuti esatti: controlla gli store ufficiali."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      },
+      {
+        "label": "PlayStation – funzionalità GTA VI",
+        "url": "https://www.playstation.com/GTAVIfeatures/"
+      }
+    ],
     "updated": "2026-11-16"
   }
 ]

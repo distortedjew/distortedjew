@@ -17,10 +17,21 @@
       "Nel Trailer 1 compare in carcere e poi durante una rapina con Jason.",
       "Il suo legame con Jason è il cuore della storia mostrata finora."
     ],
-    "locations": ["leonida-keys", "vice-city"],
-    "related": ["jason-duval"],
-    "sources": [{ "label": "Rockstar Games – Trailer 1 e 2", "url": "https://www.rockstargames.com/VI" }],
-    "updated": "2026-11-16"
+    "locations": [
+      "leonida-keys",
+      "vice-city"
+    ],
+    "related": [
+      "jason-duval"
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Trailer 1 e 2",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16",
+    "photoFocus": "19%"
   },
   {
     "slug": "jason-duval",
@@ -40,10 +51,22 @@
       "Secondo il materiale ufficiale ha un passato nell'esercito.",
       "Nel Trailer 1 lavora con Lucia a colpi sempre più grossi."
     ],
-    "locations": ["leonida-keys", "vice-city"],
-    "related": ["lucia-caminos", "cal-hampton"],
-    "sources": [{ "label": "Rockstar Games – Trailer 1 e 2", "url": "https://www.rockstargames.com/VI" }],
-    "updated": "2026-11-16"
+    "locations": [
+      "leonida-keys",
+      "vice-city"
+    ],
+    "related": [
+      "lucia-caminos",
+      "cal-hampton"
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Trailer 1 e 2",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16",
+    "photoFocus": "72%"
   },
   {
     "slug": "cal-hampton",
@@ -58,10 +81,21 @@
     "accent": "#fff4e3",
     "hair": "cap",
     "summary": "Personaggio presentato nelle schede ufficiali legate al Trailer 2. Il suo ruolo preciso nella trama verrà descritto qui dopo il lancio.",
-    "facts": ["Presentato nel materiale ufficiale del Trailer 2."],
-    "locations": ["leonida-keys"],
-    "related": ["jason-duval"],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "leonida-keys"
+    ],
+    "related": [
+      "jason-duval"
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
@@ -77,10 +111,19 @@
     "accent": "#6d28d9",
     "hair": "bald",
     "summary": "Figura del Trailer 2 legata a Vice City. Scheda in attesa di conferma sul ruolo reale nel gioco.",
-    "facts": ["Presentato nel materiale ufficiale del Trailer 2."],
-    "locations": ["vice-city"],
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "vice-city"
+    ],
     "related": [],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
@@ -96,10 +139,19 @@
     "accent": "#5ee7df",
     "hair": "curly",
     "summary": "Figura del Trailer 2. Il ruolo esatto è ancora da documentare.",
-    "facts": ["Presentato nel materiale ufficiale del Trailer 2."],
-    "locations": ["vice-city"],
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "vice-city"
+    ],
     "related": [],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
@@ -115,10 +167,21 @@
     "accent": "#ffc93c",
     "hair": "short",
     "summary": "Personaggio del Trailer 2. Scheda in attesa di dettagli verificati sul gioco finale.",
-    "facts": ["Presentato nel materiale ufficiale del Trailer 2."],
-    "locations": ["leonida-keys"],
-    "related": ["lucia-caminos"],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "leonida-keys"
+    ],
+    "related": [
+      "lucia-caminos"
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
@@ -134,10 +197,19 @@
     "accent": "#ff7a30",
     "hair": "cap",
     "summary": "Il personaggio che apre il Trailer 2. Il suo peso nella storia sarà chiarito dopo il lancio.",
-    "facts": ["Presentato nel materiale ufficiale del Trailer 2."],
-    "locations": ["leonida-keys"],
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "leonida-keys"
+    ],
     "related": [],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
@@ -153,10 +225,19 @@
     "accent": "#5ee7df",
     "hair": "curly",
     "summary": "Presente nei materiali del Trailer 2. Aggiorneremo la scheda con ruolo e missioni collegate.",
-    "facts": ["Presentato nel materiale ufficiale del Trailer 2."],
-    "locations": ["vice-city"],
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "vice-city"
+    ],
     "related": [],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
@@ -172,10 +253,19 @@
     "accent": "#6d28d9",
     "hair": "long",
     "summary": "Coppia di personaggi mostrata nei materiali del Trailer 2. Scheda da completare con informazioni verificate nel gioco.",
-    "facts": ["Presentate nel materiale ufficiale del Trailer 2."],
-    "locations": ["vice-city"],
+    "facts": [
+      "Presentate nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "vice-city"
+    ],
     "related": [],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   }
 ]

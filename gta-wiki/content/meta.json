@@ -11,11 +11,16 @@
   "changelog": [
     {
       "date": "2026-11-16",
+      "text": "Aggiunte le immagini ufficiali Rockstar: Lucia, Jason, Vice City, veicoli, revolver, copertina dell’album e opere dell’Ultimate Edition."
+    },
+    {
+      "date": "2026-11-16",
       "text": "Nuove sezioni (storia, veicoli, armi, attività, radio, edizioni), FAQ, ricerca e correzione della data del precaricamento (10 novembre)."
     },
     {
       "date": "2026-11-16",
       "text": "Prima versione della wiki: personaggi, luoghi, cronologia e struttura per easter egg e guide."
     }
-  ]
+  ],
+  "imageCredit": "© Rockstar Games"
 }

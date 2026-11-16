@@ -46,6 +46,8 @@ const findImg = (dirRel, slug) => {
 };
 const CREDIT = meta.imageCredit || '© Rockstar Games';
 for (const c of characters) c.photo = findImg('characters', c.slug);
+for (const l of locations) l.photo = findImg('locations', l.slug);
+for (const t of topics) t.photo = findImg('topics', t.slug);
 const heroImg = ['avif', 'webp', 'jpg', 'jpeg', 'png'].map((e) => `assets/img/hero.${e}`).find((p) => fs.existsSync(path.join(ROOT, p)));
 
 /* ---------- Markdown minimale (per le guide) ---------- */
@@ -128,6 +130,12 @@ function charCard(c) {
   </a>`;
 }
 
+// Immagine ufficiale 16:9 di una scheda (luogo o voce di wiki), con credito
+const shot = (photo, alt, eager = false) => (photo
+  ? `<figure class="shot"><img src="${href(photo)}" alt="${esc(alt)}" width="1280" height="720" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><figcaption>${esc(CREDIT)}</figcaption></figure>`
+  : '');
+const thumb = (photo, alt) => (photo ? `<span class="thumb"><img src="${href(photo)}" alt="${esc(alt)}" width="640" height="360" loading="lazy" decoding="async"></span>` : '');
+
 // Card di una sezione della wiki. Senza voci pubblicate resta cliccabile ma appare chiaramente «in arrivo».
 function secCard(s, withDesc = false) {
   const t = topics.filter((x) => x.section === s.slug);
@@ -169,7 +177,7 @@ ${url && !noindex ? `<link rel="canonical" href="${esc(url)}">` : ''}
 <meta property="og:title" content="${esc(full)}">
 <meta property="og:description" content="${esc(d)}">
 ${url ? `<meta property="og:url" content="${esc(url)}">` : ''}
-${ogImg ? `<meta property="og:image" content="${esc(ogImg)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(meta.siteName)} – ${esc(meta.tagline)}">` : ''}
+${ogImg ? `<meta property="og:image" content="${esc(ogImg)}"><meta property="og:image:width" content="${image ? 1280 : 1200}"><meta property="og:image:height" content="${image ? 720 : 630}"><meta property="og:image:alt" content="${esc(meta.siteName)} – ${esc(meta.tagline)}">` : ''}
 <meta name="twitter:card" content="${ogImg ? 'summary_large_image' : 'summary'}">
 <meta name="twitter:title" content="${esc(full)}">
 <meta name="twitter:description" content="${esc(d)}">
@@ -247,6 +255,14 @@ const counts = {
   topicsPlanned: topics.filter((t) => t.status === 'planned').length
 };
 const heroLaunched = meta.phase === 'launched';
+
+// Galleria in home: immagini ufficiali già presenti, ciascuna collegata alla sua scheda
+const asGallery = (t) => ({ photo: t.photo, title: t.title, kind: sectionBy[t.section].short, u: `wiki/${t.section}/${t.slug}/` });
+const withPhoto = (sec) => topics.filter((t) => t.photo && t.status !== 'planned' && sec.includes(t.section)).map(asGallery);
+const gallery = [
+  ...locations.filter((l) => l.photo).map((l) => ({ photo: l.photo, title: l.name, kind: 'Luogo', u: `luoghi/${l.slug}/` })),
+  ...withPhoto(['veicoli']), ...withPhoto(['armi']), ...withPhoto(['edizioni']), ...withPhoto(['storia']), ...withPhoto(['radio'])
+].slice(0, 6);
 
 const videoGameLd = {
   '@context': 'https://schema.org', '@type': 'VideoGame', name: 'Grand Theft Auto VI',
@@ -329,6 +345,16 @@ put('index.html', layout({
     ${locations.map((l) => `<li><a href="${href(`luoghi/${l.slug}/`)}"><span class="loc-list__name">${esc(l.name)}</span><span class="loc-list__kind">${esc(l.kind)}</span><span class="loc-list__tag">${esc(l.tagline)}</span></a></li>`).join('')}
   </ol>
 </section>
+
+${gallery.length ? `<section class="block" data-reveal>
+  <div class="block__head">
+    <p class="eyebrow">Galleria</p>
+    <h2 class="h2">Dal materiale ufficiale</h2>
+    <p class="block__lead">Immagini ufficiali Rockstar, ognuna collegata alla sua scheda.</p>
+  </div>
+  <div class="gallery">${gallery.map((g) => `<a class="gallery__item" href="${href(g.u)}"><img src="${href(g.photo)}" alt="${esc(g.title)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="gallery__cap"><small>${esc(g.kind)}</small>${esc(g.title)}</span></a>`).join('')}</div>
+  <p class="credit">${esc(CREDIT)}</p>
+</section>` : ''}
 
 <section class="block" data-reveal>
   <div class="block__head">
@@ -440,14 +466,14 @@ put('luoghi/index.html', layout({
   title: 'Luoghi e mappa di Leonida in GTA VI', section: 'luoghi', path: 'luoghi/',
   desc: 'Vice City, Leonida Keys, Grassrivers, Port Gellhorn, Ambrosia e Mount Kalaga: tutte le regioni e i luoghi di Leonida in GTA VI.',
   crumbs: [['Home', ''], ['Luoghi', 'luoghi/']],
-  body: `<header class="page-head"><p class="eyebrow">Mappa</p><h1 class="h1">Luoghi di Leonida</h1><p class="page-head__lead">Dalle spiagge di Vice City alle paludi di Grassrivers.</p></header>
-  <div class="loc-cards">${locations.map((l) => `<a class="loc-card" href="${href(`luoghi/${l.slug}/`)}"><span class="loc-card__kind">${esc(l.kind)}</span><span class="loc-card__name">${esc(l.name)}</span><span class="loc-card__tag">${esc(l.tagline)}</span></a>`).join('')}</div>`
+  body: `<header class="page-head"><p class="eyebrow">Mappa</p><h1 class="h1">Luoghi di Leonida</h1><p class="page-head__lead">Dalle spiagge di Vice City alle paludi di Grassrivers. Non abbiamo ancora una mappa ufficiale da mostrare: la aggiungeremo dopo il lancio, con posizioni verificate in gioco.</p></header>
+  <div class="loc-cards">${locations.map((l) => `<a class="loc-card${l.photo ? ' loc-card--photo' : ''}" href="${href(`luoghi/${l.slug}/`)}">${thumb(l.photo, `${l.name}, immagine ufficiale`)}<span class="loc-card__kind">${esc(l.kind)}</span><span class="loc-card__name">${esc(l.name)}</span><span class="loc-card__tag">${esc(l.tagline)}</span></a>`).join('')}</div>`
 }), { prio: 0.9 });
 locations.forEach((l, i) => {
   const who = characters.filter((c) => c.locations.includes(l.slug));
   const p = `luoghi/${l.slug}/`;
   put(`${p}index.html`, layout({
-    title: `${l.name} in GTA VI: ${l.kind.toLowerCase()} di Leonida`, section: 'luoghi', path: p, type: 'article',
+    title: `${l.name} in GTA VI: ${l.kind.toLowerCase()} di Leonida`, section: 'luoghi', path: p, type: 'article', image: l.photo && SITE ? abs(l.photo) : undefined,
     desc: `${l.name} (${l.kind.toLowerCase()}) in GTA VI: ${l.tagline} ${l.summary}`,
     crumbs: [['Home', ''], ['Luoghi', 'luoghi/'], [l.name, p]],
     schema: [{ '@context': 'https://schema.org', '@type': 'Article', headline: `${l.name} in GTA VI`, description: trunc(l.summary), inLanguage: 'it', dateModified: l.updated, datePublished: l.updated, author: { '@type': 'Organization', name: meta.siteName }, publisher: { '@type': 'Organization', name: meta.siteName }, ...(SITE ? { mainEntityOfPage: abs(p) } : {}) }],
@@ -456,6 +482,7 @@ locations.forEach((l, i) => {
     <p class="eyebrow">${esc(l.kind)} ${badge(l.status)}</p>
     <h1 class="h1">${esc(l.name)}</h1>
     <p class="profile__tag">${esc(l.tagline)}</p>
+    ${shot(l.photo, `${l.name}, immagine ufficiale`, true)}
     ${spoilerWrap(l, `<p class="prose-lead">${esc(l.summary)}</p><h2 class="h3">Cosa sappiamo</h2><ul class="facts">${l.facts.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>`)}
     ${reviewNote(l)}
     ${who.length ? `<h2 class="h3">Personaggi legati a questo luogo</h2><p class="chips">${who.map((c) => `<a class="chip" href="${href(`personaggi/${c.slug}/`)}">${esc(c.name)}</a>`).join('')}</p>` : ''}
@@ -480,12 +507,12 @@ for (const s of SECTIONS) {
     body: `<header class="page-head">${crumbsHtml([['Wiki', 'wiki/'], [s.label, p]])}<p class="eyebrow">Wiki</p><h1 class="h1">${esc(s.label)}</h1><p class="page-head__lead">${esc(s.desc)}</p></header>
     <div class="entry-list entry-list--grid">${list.length ? list.map((t) => t.status === 'planned'
       ? `<article class="entry entry--planned"><p class="eyebrow">${badge('planned')}</p><h2 class="entry__title">${esc(t.title)}</h2><p>${esc(t.summary)}</p></article>`
-      : `<article class="entry"><a class="entry__link" href="${href(`${p}${t.slug}/`)}"><p class="eyebrow">${badge(t.status)}${t.spoiler ? ' <span class="badge badge--spoiler">Spoiler</span>' : ''}</p><h2 class="entry__title">${esc(t.title)}</h2>${spoilerWrap(t, `<p>${esc(t.tagline)}</p>`)}</a></article>`).join('') : '<p class="empty">Nessuna voce ancora: la sezione si popola dopo il lancio.</p>'}</div>`
+      : `<article class="entry${t.photo ? ' entry--photo' : ''}"><a class="entry__link" href="${href(`${p}${t.slug}/`)}">${thumb(t.photo, `${t.title}, immagine ufficiale`)}<p class="eyebrow">${badge(t.status)}${t.spoiler ? ' <span class="badge badge--spoiler">Spoiler</span>' : ''}</p><h2 class="entry__title">${esc(t.title)}</h2>${spoilerWrap(t, `<p>${esc(t.tagline)}</p>`)}</a></article>`).join('') : '<p class="empty">Nessuna voce ancora: la sezione si popola dopo il lancio.</p>'}</div>`
   }), { prio: 0.7 });
   list.filter((t) => t.status !== 'planned').forEach((t, i, arr) => {
     const tp = `${p}${t.slug}/`;
     put(`${tp}index.html`, layout({
-      title: `${t.title}: ${s.label.toLowerCase()} di GTA VI`, section: 'wiki', path: tp, type: 'article',
+      title: `${t.title}: ${s.label.toLowerCase()} di GTA VI`, section: 'wiki', path: tp, type: 'article', image: t.photo && SITE ? abs(t.photo) : undefined,
       desc: `${t.title}: ${t.tagline} ${t.summary}`,
       crumbs: [['Home', ''], ['Wiki', 'wiki/'], [s.label, p], [t.title, tp]],
       schema: [{ '@context': 'https://schema.org', '@type': 'Article', headline: `${t.title} in GTA VI`, description: trunc(t.summary), inLanguage: 'it', dateModified: t.updated, datePublished: t.updated, author: { '@type': 'Organization', name: meta.siteName }, publisher: { '@type': 'Organization', name: meta.siteName }, ...(SITE ? { mainEntityOfPage: abs(tp) } : {}) }],
@@ -494,6 +521,7 @@ for (const s of SECTIONS) {
       <p class="eyebrow">${esc(s.label)} ${badge(t.status)}${t.spoiler ? ' <span class="badge badge--spoiler">Spoiler</span>' : ''}</p>
       <h1 class="h1">${esc(t.title)}</h1>
       <p class="profile__tag">${esc(t.tagline)}</p>
+      ${shot(t.photo, `${t.title}, immagine ufficiale`, true)}
       ${spoilerWrap(t, `<p class="prose-lead">${esc(t.summary)}</p>${t.facts.length ? `<h2 class="h3">Cosa sappiamo</h2><ul class="facts">${t.facts.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}`)}
       ${reviewNote(t)}${sources(t.sources)}${updated(t.updated)}${pager(arr.map((x) => ({ ...x, name: x.title })), i, p, `Altre voci: ${s.label}`)}</article>`
     }), { lastmod: t.updated });
@@ -629,7 +657,8 @@ const searchIndex = [
 ];
 
 // --ar = colore d'accento garantito leggibile (contrasto ≥ 4.5) sul fondo scuro delle card
-const theme = characters.map((c) => `.ch-${c.slug}{--c:${c.color};--a:${c.accent};--ar:${readableOn(c.accent, '#170a33')}}`).join('\n');
+// --ar = colore d'accento garantito leggibile (contrasto ≥ 4.5) sul fondo scuro delle card; photoFocus = punto di messa a fuoco della foto
+const theme = characters.map((c) => `.ch-${c.slug}{--c:${c.color};--a:${c.accent};--ar:${readableOn(c.accent, '#170a33')}}${c.photoFocus ? `\n.ch-${c.slug} .photo{object-position:${c.photoFocus} 30%}` : ''}`).join('\n');
 const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const feedHref = (rel) => (SITE ? abs(rel) : href(rel));
 const feed = `<?xml version="1.0" encoding="utf-8"?>

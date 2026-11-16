@@ -1,23 +1,38 @@
-# Foto ufficiali dei personaggi
+# Immagini ufficiali
 
-Il sito mostra una **locandina tipografica** finché non c'è una foto. Per usare una foto vera basta copiare il file, senza modificare altro:
+Tutte le immagini attuali provengono dalla pagina media ufficiale di Rockstar (https://www.rockstargames.com/VI/media), che mette a disposizione artwork e screenshot da scaricare e condividere. Il credito «© Rockstar Games» è mostrato sotto ogni immagine e nel footer (`meta.json` → `imageCredit`). Usale nel rispetto delle condizioni indicate da Rockstar; se un titolare dei diritti chiede la rimozione, basta cancellare il file e ricostruire.
 
-```
-gta-wiki/assets/img/characters/<slug>.jpg      (anche .webp, .png, .avif)
-```
+## Come funziona
+Basta copiare un file nella cartella giusta, **senza modificare altro**: la build lo rileva da sola. Formati: jpg, png, webp, avif (niente SVG). Max 1,8 MB per file.
 
-Gli slug sono quelli di `content/characters.json`: `lucia-caminos`, `jason-duval`, `cal-hampton`, `boobie-ike`, `dre-quan-priest`, `raul-bautista`, `brian-heder`, `real-dimez`, `bae-luxe-e-roxy`.
+| Cartella | Nome file | Dove compare |
+|---|---|---|
+| `assets/img/characters/` | `<slug>.jpg` | card del cast, scheda personaggio, dati strutturati, og:image |
+| `assets/img/locations/` | `<slug>.jpg` | miniatura in «Luoghi», immagine nella scheda, galleria in home |
+| `assets/img/topics/` | `<slug>.jpg` | miniatura nelle sezioni Wiki, immagine nella scheda, galleria in home |
+| `assets/img/` | `hero.jpg` | sfondo della home (1920×1080) |
 
-La build rileva il file da sola e lo usa nelle card, nella scheda del personaggio e nei dati strutturati. La didascalia usa `meta.json` → `imageCredit` (predefinito «© Rockstar Games»).
+Gli slug sono quelli dei file in `content/`. Per un'immagine di una voce di wiki lo slug è quello della voce (es. `grotti-cheetah.jpg`).
 
-Opzionale: `gta-wiki/assets/img/hero.jpg` diventa lo sfondo della home.
+Le foto 16:9 usate nel ritratto dei personaggi vengono ritagliate in verticale. Per centrare il volto aggiungi `"photoFocus": "40%"` (posizione orizzontale del soggetto) al personaggio in `content/characters.json`.
 
-## Specifiche
-- Ritratto verticale 4:5 (consigliato 800×1000), soggetto al centro-alto.
-- Max 1,8 MB per file. Il validatore blocca file più grandi, formati diversi (niente SVG) e symlink.
-- Per `hero.jpg`: 1920×1080, la parte sinistra viene scurita per far leggere il testo.
+## Immagini già presenti
+| File | Soggetto |
+|---|---|
+| `characters/lucia-caminos.jpg` | Lucia Caminos (`photoFocus` 19%) |
+| `characters/jason-duval.jpg` | Jason Duval (`photoFocus` 72%) |
+| `hero.jpg` | Jason e Lucia, sfondo della home |
+| `locations/vice-city.jpg` | Skyline di Vice City |
+| `topics/vapid-stanier-55.jpg` | '55 Vapid Stanier |
+| `topics/grotti-cheetah.jpg` | Grotti Cheetah |
+| `topics/hawk-little-morgan-revolver.jpg` | Revolver Hawk & Little Morgan |
+| `topics/standard-e-ultimate.jpg` | Opere dell'Ultimate Edition |
+| `topics/premessa-della-storia.jpg` | Jason e Lucia sul tetto |
+| `topics/radio-e-colonna-sonora.jpg` | Copertina dell'album |
 
-## Dove trovare immagini ufficiali
-Rockstar mette a disposizione video e screenshot ufficiali da scaricare e condividere nella sezione media di https://www.rockstargames.com/VI. Usale nel rispetto delle condizioni indicate lì e della policy di Rockstar sui contenuti dei fan, e indica sempre il credito.
+## Ancora senza immagine (non pubblicata da Rockstar nella pagina media)
+Cal Hampton, Boobie Ike, Dre'Quan Priest, Raul Bautista, Brian Heder, Real Dimez, Bae-Luxe & Roxy, gli altri luoghi, Crest Kayak, Squalo, Sara's Unisex Salon, Stockyard. Restano le locandine tipografiche e le schede senza foto.
+
+**Mappa:** non c'è una mappa ufficiale da mostrare. Verrà aggiunta dopo il lancio, con posizioni verificate in gioco (non inventiamo geografie).
 
 L'agente automatico **non** scarica né aggiunge immagini: va fatto a mano, così il controllo sui diritti resta tuo.

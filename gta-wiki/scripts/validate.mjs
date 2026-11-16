@@ -80,6 +80,7 @@ for (const [file, spec] of Object.entries(sets)) {
     if (file === 'characters.json') {
       if (!COLOR.test(e.color) || !COLOR.test(e.accent)) err(file, id, 'color/accent devono essere #rrggbb');
       if (!['long', 'short', 'cap', 'bald', 'curly'].includes(e.hair)) err(file, id, 'hair non valido');
+      if (e.photoFocus !== undefined && !/^(100|[1-9]?\d)%$/.test(e.photoFocus)) err(file, id, 'photoFocus deve essere una percentuale, es. "40%"');
     }
     if (file === 'topics.json' && !SECTIONS.some((s) => s.slug === e.section)) err(file, id, `section sconosciuta: ${e.section}`);
   }
