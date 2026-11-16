@@ -18,6 +18,9 @@ export function loadConfig(env = process.env) {
   set(c.analytics, 'ga4Id', 'WIKI_GA4_ID');
   set(c.ads, 'provider', 'WIKI_ADS_PROVIDER');
   set(c.ads, 'adsenseClient', 'WIKI_ADSENSE_CLIENT');
+  set(c.ads, 'cmp', 'WIKI_ADS_CMP');
+  set(c.ads, 'rockstarPermissionRef', 'WIKI_ADS_ROCKSTAR_PERMISSION_REF');
+  if (e('WIKI_ADS_ALLOW_OFFICIAL_IMAGES')) c.ads.allowOnPagesWithOfficialImages = e('WIKI_ADS_ALLOW_OFFICIAL_IMAGES').toLowerCase() === 'true';
   set(c.ads.slots, 'article', 'WIKI_ADSENSE_SLOT_ARTICLE');
   set(c.ads.slots, 'home', 'WIKI_ADSENSE_SLOT_HOME');
   set(c.ads.slots, 'sidebar', 'WIKI_ADSENSE_SLOT_SIDEBAR');
@@ -48,6 +51,8 @@ export function validateConfig(c) {
   if (c.analytics.provider === 'ga4' && c.analytics.ga4Id && !GA4.test(c.analytics.ga4Id)) errs.push('analytics.ga4Id non valido (formato G-XXXXXXXXXX)');
   if (c.analytics.provider === 'plausible' && c.analytics.plausibleDomain && !DOMAIN.test(c.analytics.plausibleDomain)) errs.push('analytics.plausibleDomain non valido');
   if (c.ads.provider === 'adsense' && c.ads.adsenseClient && !PUB.test(c.ads.adsenseClient.replace(/^ca-/, ''))) errs.push('ads.adsenseClient non valido (formato ca-pub-0000000000000000)');
+  if (!['none', 'google'].includes(c.ads.cmp || 'none')) errs.push('ads.cmp non valido (ammessi: none, google)');
+  if (c.ads.allowOnPagesWithOfficialImages && c.ads.provider === 'adsense' && !(c.ads.rockstarPermissionRef || '').trim()) errs.push('ads.allowOnPagesWithOfficialImages richiede ads.rockstarPermissionRef (riferimento al permesso scritto di Rockstar/Take-Two): vedi docs/MONETIZATION.md');
   for (const [k, v] of Object.entries(c.ads.slots || {})) if (v && !/^\d{6,20}$/.test(v)) errs.push(`ads.slots.${k} non valido (solo cifre)`);
   if (c.accounts.supabaseUrl && !https(c.accounts.supabaseUrl)) errs.push('accounts.supabaseUrl deve essere https');
   if (c.accounts.supabaseAnonKey && !/^[\w-]+\.[\w-]+\.[\w-]+$|^sb_publishable_[\w-]+$/.test(c.accounts.supabaseAnonKey)) errs.push('accounts.supabaseAnonKey non sembra una chiave pubblica valida');

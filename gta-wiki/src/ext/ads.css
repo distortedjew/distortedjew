@@ -1,0 +1,8 @@
+/* Contenitori pubblicitari: etichetta, spazio riservato (niente CLS), distanza dai controlli */
+.ad { width: min(820px, 100% - 2rem); margin: 3.5rem auto 4rem; }
+.ad[hidden] { display: none; }
+.ad__label { margin: 0 0 .4rem; font: 500 .75rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.ad__box { min-height: 280px; background: rgba(255, 244, 227, .04); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.ad .adsbygoogle { display: block; min-height: 250px; }
+@media (max-width: 720px) { .ad__box { min-height: 250px; } }
+@media print { .ad { display: none !important; } }
