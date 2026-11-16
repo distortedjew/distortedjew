@@ -1,8 +1,10 @@
 name: Wiki · aggiornamento automatico
 
 on:
-  schedule:
-    - cron: '17 * * * *'      # ogni ora; nella settimana di lancio puoi scendere a */15
+  # L'aggiornamento orario è ora affidato a un'attività pianificata di Claude (nessuna chiave API necessaria).
+  # Per usare invece questo workflow: aggiungi il secret ANTHROPIC_API_KEY e riattiva le due righe qui sotto.
+  # schedule:
+  #   - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       focus:
