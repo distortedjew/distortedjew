@@ -44,6 +44,13 @@ const ldJson = (o) => `<script type="application/ld+json">${JSON.stringify(o).re
 
 /* ---------- Foto ufficiali: auto-rilevate in assets/img/characters/<slug>.<ext> ---------- */
 const IMG_EXT = ['avif', 'webp', 'jpg', 'jpeg', 'png'];
+// Miniatura WebP (assets/img/<dir>/thumbs/<slug>.webp) per card e anteprime; se manca si usa l'originale
+const small = (photo) => {
+  const m = photo && photo.match(/^(assets\/img\/(?:characters|locations|topics))\/([^/]+)\.\w+$/);
+  if (!m) return photo;
+  const t = `${m[1]}/thumbs/${m[2]}.webp`;
+  return fs.existsSync(path.join(ROOT, t)) ? t : photo;
+};
 const findImg = (dirRel, slug) => {
   for (const e of IMG_EXT) if (fs.existsSync(path.join(ROOT, 'assets', 'img', dirRel, `${slug}.${e}`))) return `assets/img/${dirRel}/${slug}.${e}`;
   return null;
@@ -103,7 +110,7 @@ function poster(c, tag = true) {
 }
 const charArt = (c, eager = false, tag = true) =>
   c.photo
-    ? `<img class="photo" src="${href(c.photo)}" alt="${esc(c.name)}, ritratto ufficiale" width="800" height="1000" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`
+    ? `<img class="photo" src="${href(eager ? c.photo : small(c.photo))}" alt="${esc(c.name)}, ritratto ufficiale" width="800" height="1000" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`
     : poster(c, tag);
 
 /* ---------- Componenti ---------- */
@@ -138,14 +145,14 @@ function charCard(c) {
 const shot = (photo, alt, eager = false) => (photo
   ? `<figure class="shot"><img src="${href(photo)}" alt="${esc(alt)}" width="1280" height="720" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><figcaption>${esc(CREDIT)}</figcaption></figure>`
   : '');
-const thumb = (photo, alt) => (photo ? `<span class="thumb"><img src="${href(photo)}" alt="${esc(alt)}" width="640" height="360" loading="lazy" decoding="async"></span>` : '');
+const thumb = (photo, alt, eager = false) => (photo ? `<span class="thumb"><img src="${href(small(photo))}" alt="${esc(alt)}" width="640" height="360" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></span>` : '');
 
 // Card di una sezione della wiki. Senza voci pubblicate resta cliccabile ma appare chiaramente «in arrivo».
 function secCard(s, withDesc = false) {
   const t = topics.filter((x) => x.section === s.slug);
   const ok = t.filter((x) => x.status !== 'planned').length;
   const ph = t.find((x) => x.photo && x.status !== 'planned');
-  return `<a class="sec-card${ok ? '' : ' sec-card--soon'}${ph ? ' sec-card--photo' : ''}" href="${href(`wiki/${s.slug}/`)}">${ph ? `<span class="sec-card__bg"><img src="${href(ph.photo)}" alt="" width="640" height="360" loading="lazy" decoding="async"></span>` : ''}<span class="sec-card__name">${esc(s.label)}</span>${withDesc ? `<span class="sec-card__desc">${esc(s.desc)}</span>` : ''}<span class="sec-card__meta">${ok ? `${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}` : 'In arrivo dal lancio'}</span></a>`;
+  return `<a class="sec-card${ok ? '' : ' sec-card--soon'}${ph ? ' sec-card--photo' : ''}" href="${href(`wiki/${s.slug}/`)}">${ph ? `<span class="sec-card__bg"><img src="${href(small(ph.photo))}" alt="" width="640" height="360" loading="lazy" decoding="async"></span>` : ''}<span class="sec-card__name">${esc(s.label)}</span>${withDesc ? `<span class="sec-card__desc">${esc(s.desc)}</span>` : ''}<span class="sec-card__meta">${ok ? `${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}` : 'In arrivo dal lancio'}</span></a>`;
 }
 
 /* ---------- Layout con SEO, CSP e dati strutturati ---------- */
@@ -385,7 +392,7 @@ ${slot('home:after-cast')}
   <ol class="loc-list">
     ${locations.map((l) => `<li><a href="${href(`luoghi/${l.slug}/`)}"><span class="loc-list__name">${esc(l.name)}</span><span class="loc-list__kind">${esc(l.kind)}</span><span class="loc-list__tag">${esc(l.tagline)}</span></a></li>`).join('')}
   </ol>
-  ${(() => { const f = locations.find((l) => l.photo); return f ? `<a class="loc-feature" href="${href(`luoghi/${f.slug}/`)}"><img src="${href(f.photo)}" alt="${esc(f.name)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="loc-feature__cap"><b>${esc(f.name)}</b><small>${esc(CREDIT)}</small></span></a>` : ''; })()}
+  ${(() => { const f = locations.find((l) => l.photo); return f ? `<a class="loc-feature" href="${href(`luoghi/${f.slug}/`)}"><img src="${href(small(f.photo))}" alt="${esc(f.name)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="loc-feature__cap"><b>${esc(f.name)}</b><small>${esc(CREDIT)}</small></span></a>` : ''; })()}
   </div>
 </section>
 
@@ -395,7 +402,7 @@ ${gallery.length ? `<section class="block" data-reveal>
     <h2 class="h2">Dal materiale ufficiale</h2>
     <p class="block__lead">Immagini ufficiali Rockstar, ognuna collegata alla sua scheda.</p>
   </div>
-  <div class="gallery">${gallery.map((g) => `<a class="gallery__item" href="${href(g.u)}"><img src="${href(g.photo)}" alt="${esc(g.title)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="gallery__cap"><small>${esc(g.kind)}</small>${esc(g.title)}</span></a>`).join('')}</div>
+  <div class="gallery">${gallery.map((g) => `<a class="gallery__item" href="${href(g.u)}"><img src="${href(small(g.photo))}" alt="${esc(g.title)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="gallery__cap"><small>${esc(g.kind)}</small>${esc(g.title)}</span></a>`).join('')}</div>
   <p class="credit">${esc(CREDIT)}</p>
 </section>` : ''}
 
@@ -550,9 +557,9 @@ for (const s of SECTIONS) {
     title: `${s.label} in GTA VI`, section: 'wiki', path: p, desc: `${s.desc} Voci con fonti e stato di verifica, aggiornate dopo il lancio di GTA VI.`,
     crumbs: [['Home', ''], ['Wiki', 'wiki/'], [s.label, p]],
     body: `<header class="page-head">${crumbsHtml([['Wiki', 'wiki/'], [s.label, p]])}<p class="eyebrow">Wiki</p><h1 class="h1">${esc(s.label)}</h1><p class="page-head__lead">${esc(s.desc)}</p></header>
-    <div class="entry-list entry-list--grid">${list.length ? list.map((t) => t.status === 'planned'
+    <div class="entry-list entry-list--grid">${list.length ? list.map((t, i) => t.status === 'planned'
       ? `<article class="entry entry--planned"><p class="eyebrow">${badge('planned')}</p><h2 class="entry__title">${esc(t.title)}</h2><p>${esc(t.summary)}</p></article>`
-      : `<article class="entry${t.photo ? ' entry--photo' : ''}"><a class="entry__link" href="${href(`${p}${t.slug}/`)}">${thumb(t.photo, `${t.title}, immagine ufficiale`)}<p class="eyebrow">${badge(t.status)}${t.spoiler ? ' <span class="badge badge--spoiler">Spoiler</span>' : ''}</p><h2 class="entry__title">${esc(t.title)}</h2>${spoilerWrap(t, `<p>${esc(t.tagline)}</p>`)}</a></article>`).join('') : '<p class="empty">Nessuna voce ancora: la sezione si popola dopo il lancio.</p>'}</div>`
+      : `<article class="entry${t.photo ? ' entry--photo' : ''}"><a class="entry__link" href="${href(`${p}${t.slug}/`)}">${thumb(t.photo, `${t.title}, immagine ufficiale`, i < 3)}<p class="eyebrow">${badge(t.status)}${t.spoiler ? ' <span class="badge badge--spoiler">Spoiler</span>' : ''}</p><h2 class="entry__title">${esc(t.title)}</h2>${spoilerWrap(t, `<p>${esc(t.tagline)}</p>`)}</a></article>`).join('') : '<p class="empty">Nessuna voce ancora: la sezione si popola dopo il lancio.</p>'}</div>`
   }), { prio: 0.7 });
   list.filter((t) => t.status !== 'planned').forEach((t, i, arr) => {
     const tp = `${p}${t.slug}/`;

@@ -19,13 +19,17 @@ const dataUri = (rel) => {
   return `data:${mime[path.extname(f)] || 'application/octet-stream'};base64,${fs.readFileSync(f).toString('base64')}`;
 };
 
+// Ogni immagine viene incorporata UNA sola volta (dizionario) e assegnata via JS: così il file resta sotto il limite di 16 MB.
+const assets = {};
+const registerAsset = (rel) => { if (!(rel in assets)) assets[rel] = dataUri(rel); return rel; };
+
 // Riscrive i link interni in link hash e toglie ciò che non ha senso in un singolo file.
 const rewrite = (html) => html
   .replace(/<li><a href="\/feed\.xml">[^<]*<\/a><\/li>/g, '')
   .replace(/<a\b[^>]*href="\/(?:feed\.xml|\.well-known\/security\.txt)"[^>]*>([\s\S]*?)<\/a>/g, '$1')
   .replace(/href="\/([^"#]*)(?:#[^"]*)?"/g, (m, p) => `href="#${routeId(p)}"`)
   .replace(/action="\/cerca\/"/g, 'action="#cerca"')
-  .replace(/src="\/(assets\/[^"]+)"/g, (m, p) => `src="${dataUri(p)}"`);
+  .replace(/src="\/(assets\/[^"]+)"/g, (m, p) => `data-asset="${registerAsset(p)}"`);
 
 // Pagine
 const pages = {};
@@ -35,6 +39,11 @@ for (const f of walk(DIST).filter((x) => x.endsWith('.html'))) {
   const h = fs.readFileSync(f, 'utf8');
   const m = h.match(/<main id="main">\n?([\s\S]*?)\n?<\/main>/);
   if (!m) throw new Error(`main non trovato in ${rel}`);
+  // La galleria completa (100+ immagini grandi) non entra nel limite dell'Artifact: resta solo nel sito pubblicato
+  if (id === 'galleria') {
+    pages[id] = { html: `<header class="page-head"><p class="eyebrow">Galleria</p><h1 class="h1">Galleria ufficiale</h1><p class="page-head__lead">In questa anteprima la galleria completa (oltre 100 immagini ufficiali con lightbox) non è inclusa per questioni di peso. La trovi nel sito pubblicato su GitHub Pages. Qui sotto, le immagini ufficiali sono comunque nelle schede di personaggi, luoghi, veicoli e armi.</p></header>` };
+    continue;
+  }
   pages[id] = { html: rewrite(m[1]) };
 }
 
@@ -63,6 +72,7 @@ const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c').split(String.from
 const js = fs.readFileSync(path.join(import.meta.dirname, 'lib', 'artifact-app.js'), 'utf8')
   .replace('__PAGES__', () => json(pages))
   .replace('__INDEX__', () => json(index))
+  .replace('__ASSETS__', () => json(assets))
   .replace('__RELEASE__', meta.release.iso);
 
 const body = `${shellTop}

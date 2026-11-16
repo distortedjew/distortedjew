@@ -47,10 +47,15 @@ export default async function register(ctx) {
   /* ---------- /galleria/ ---------- */
   const counts = Object.fromEntries(TAGS.map(([k]) => [k, items.filter((i) => i.tags.includes(k)).length]));
   const lead = items.find((i) => i.w === 1280 && i.h === 720) || items[0];
+  // Miniature WebP (560 px) per la griglia: il lightbox continua a caricare l'originale dal link. Se manca, si usa l'originale.
+  const hasThumb = (g) => fs.existsSync(path.join(ctx.ROOT, 'assets', 'img', 'gallery', 'thumbs', `${g.id}.webp`));
+  const thumbSrc = (g) => (hasThumb(g) ? href(`assets/img/gallery/thumbs/${g.id}.webp`) : href('assets/' + g.file));
+  const thumbW = (g) => (hasThumb(g) ? Math.min(560, g.w) : g.w);
+  const thumbH = (g) => (hasThumb(g) ? Math.round(Math.min(560, g.w) * g.h / g.w) : g.h);
   const figure = (g, n) => {
     const tags = g.tags.map((t) => tagLabel[t]).filter(Boolean).join(', ');
     return `<li class="g-cell"><a class="g-item" href="${href('assets/' + g.file)}" id="img-${esc(g.id)}" data-id="${esc(g.id)}" data-tags="${esc(g.tags.join(' '))}" data-title="${esc(g.title)}" data-caption="${esc(g.caption || '')}" data-source="${esc(g.source)}"${g.link ? ` data-link="${esc(href(g.link))}"` : ''} aria-label="${esc(g.title)}: apri a schermo intero">
-<img src="${href('assets/' + g.file)}" alt="${esc(g.alt)}" width="${g.w}" height="${g.h}" ${n < 4 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+<img src="${thumbSrc(g)}" alt="${esc(g.alt)}" width="${thumbW(g)}" height="${thumbH(g)}" ${n < 4 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
 <span class="g-item__cap"><b>${esc(g.title)}</b><small>${esc(tags)}</small></span></a></li>`;
   };
   const filters = `<div class="g-filters" role="group" aria-label="Filtra per categoria" data-gfilters>

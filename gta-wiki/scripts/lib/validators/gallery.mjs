@@ -50,6 +50,8 @@ export default async function validate({ ROOT, err }) {
   }
   // Immagini delle cartelle auto-rilevate: se non sono né associate a una scheda né in elenco, avvisa via errore
   const tdir = path.join(gdir, 'thumbs');
-  if (fs.existsSync(tdir)) for (const n of fs.readdirSync(tdir)) if (!listed.has(path.normalize(path.join(gdir, n)))) err('gallery.json', `img/gallery/thumbs/${n}`, 'miniatura senza immagine corrispondente in elenco');
+  // Una miniatura <id>.jpg|webp è valida se esiste in elenco un'immagine con lo stesso nome base
+  const listedIds = new Set([...listed].map((f) => path.basename(f, path.extname(f))));
+  if (fs.existsSync(tdir)) for (const n of fs.readdirSync(tdir)) if (!listedIds.has(path.basename(n, path.extname(n)))) err('gallery.json', `img/gallery/thumbs/${n}`, 'miniatura senza immagine corrispondente in elenco');
   void AUTO;
 }

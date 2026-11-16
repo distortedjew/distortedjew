@@ -2,6 +2,7 @@
 (() => {
   const PAGES = __PAGES__;
   const INDEX = __INDEX__;
+  const ASSETS = __ASSETS__; // immagini incorporate una sola volta: chiave = percorso, valore = data URI
   const RELEASE = '__RELEASE__';
   const SECTIONS = ['personaggi', 'luoghi', 'wiki', 'easter-egg', 'guide', 'novita'];
 
@@ -25,6 +26,7 @@
     if (!id) id = 'home';
     const page = PAGES[id] || PAGES['404'];
     main.innerHTML = page.html;
+    $$('img[data-asset]', main).forEach((img) => { const u = ASSETS[img.dataset.asset]; if (u) img.src = u; });
     if (dlg && dlg.open) dlg.close();
     window.scrollTo(0, 0);
     const sec = SECTIONS.find((s) => id === s || id.startsWith(s + '-')) || '';

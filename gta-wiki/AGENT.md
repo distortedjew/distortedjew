@@ -50,6 +50,12 @@ Modifichi SOLO i file `gta-wiki/content/*.json`. Il workflow rifiuta qualsiasi a
 - `slug`: minuscolo, solo a-z 0-9 e trattini, unico.
 - Le voci «in arrivo» (`status: planned`) vanno riempite e portate a `confirmed`/`unverified` quando hai informazioni verificate; le guide pubblicate richiedono almeno 80 caratteri di `body`.
 
+## Mappa, galleria e configurazione
+- **`content/map.json`** (mappa schematica): puoi correggere `x`/`y`/`note` di un pin e promuoverlo da `confidence: "indicative"` a `"verified"` SOLO con una fonte ufficiale o con la verifica nel gioco finale (campo `source` https obbligatorio per `verified`). Aggiungi un pin solo se il luogo esiste in `locations.json` e la posizione è nota. Non inventare coordinate.
+- **`content/gallery.json`**: non aggiungere né togliere immagini (i file si caricano a mano per ragioni di diritti). Puoi correggere solo `title`, `alt`, `caption`, `tags` di voci esistenti, senza inventare.
+- **`config/site.json`** e tutto il resto fuori da `gta-wiki/content/*.json`: NON toccare (il workflow lo blocca). Contiene analytics, pubblicità, account e newsletter.
+- Le schede dei personaggi e dei luoghi si riscrivono dalle presentazioni ufficiali Rockstar (`rockstargames.com/VI/only-in-leonida/*`) con parole tue; dopo il lancio verifica nel gioco e porta `needs_review` a `false`.
+
 ## Passaggio alla modalità lancio
 Quando il gioco è disponibile (dopo il 19 novembre 2026, mezzanotte locale) e le fonti lo confermano, imposta `meta.json` → `"phase": "launched"`, riscrivi la voce «Uscita di GTA VI» in `news.json` con `status: confirmed` e una fonte reale.
 
