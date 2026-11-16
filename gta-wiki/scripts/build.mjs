@@ -143,7 +143,8 @@ const thumb = (photo, alt) => (photo ? `<span class="thumb"><img src="${href(pho
 function secCard(s, withDesc = false) {
   const t = topics.filter((x) => x.section === s.slug);
   const ok = t.filter((x) => x.status !== 'planned').length;
-  return `<a class="sec-card${ok ? '' : ' sec-card--soon'}" href="${href(`wiki/${s.slug}/`)}"><span class="sec-card__name">${esc(s.label)}</span>${withDesc ? `<span class="sec-card__desc">${esc(s.desc)}</span>` : ''}<span class="sec-card__meta">${ok ? `${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}` : 'In arrivo dal lancio'}</span></a>`;
+  const ph = t.find((x) => x.photo && x.status !== 'planned');
+  return `<a class="sec-card${ok ? '' : ' sec-card--soon'}${ph ? ' sec-card--photo' : ''}" href="${href(`wiki/${s.slug}/`)}">${ph ? `<span class="sec-card__bg"><img src="${href(ph.photo)}" alt="" width="640" height="360" loading="lazy" decoding="async"></span>` : ''}<span class="sec-card__name">${esc(s.label)}</span>${withDesc ? `<span class="sec-card__desc">${esc(s.desc)}</span>` : ''}<span class="sec-card__meta">${ok ? `${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}` : 'In arrivo dal lancio'}</span></a>`;
 }
 
 /* ---------- Layout con SEO, CSP e dati strutturati ---------- */
@@ -214,6 +215,7 @@ ${runHooks('head', { path: p, section, type, noindex, body })}
 </head>
 <body class="${section ? 'sec-' + section : ''}">
 <a class="skip" href="#main">Vai al contenuto</a>
+<div class="scrollbar" aria-hidden="true"><i></i></div>
 <header class="top">
   <a class="brand" href="${href()}" aria-label="${esc(meta.siteName)} – home">
     <span class="brand__vi">VI</span><span class="brand__name">${esc(meta.siteName)}</span>
@@ -276,6 +278,7 @@ const ctx = {
   /** Copia un file da gta-wiki/<rel> a dist/<dest> */
   copyFile: (rel, dest = rel.replace(/^src\//, '')) => { extFiles.set(dest, fs.readFileSync(path.join(ROOT, rel))); }
 };
+extStyles.push('motion.css'); extScripts.push('motion.js'); // movimento del sito (src/motion.*)
 await loadExtensions(ctx);
 
 const counts = {
@@ -377,9 +380,12 @@ ${slot('home:after-cast')}
     <p class="eyebrow eyebrow--dark">Mappa</p>
     <h2 class="h2">I luoghi di Leonida</h2>
   </div>
+  <div class="loc-split">
   <ol class="loc-list">
     ${locations.map((l) => `<li><a href="${href(`luoghi/${l.slug}/`)}"><span class="loc-list__name">${esc(l.name)}</span><span class="loc-list__kind">${esc(l.kind)}</span><span class="loc-list__tag">${esc(l.tagline)}</span></a></li>`).join('')}
   </ol>
+  ${(() => { const f = locations.find((l) => l.photo); return f ? `<a class="loc-feature" href="${href(`luoghi/${f.slug}/`)}"><img src="${href(f.photo)}" alt="${esc(f.name)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="loc-feature__cap"><b>${esc(f.name)}</b><small>${esc(CREDIT)}</small></span></a>` : ''; })()}
+  </div>
 </section>
 
 ${gallery.length ? `<section class="block" data-reveal>
@@ -413,17 +419,17 @@ ${slot('home:after-gallery')}
   <div class="progress-row">
     <a class="progress" href="${href('easter-egg/')}">
       <span class="progress__label">Easter egg</span>
-      <span class="progress__num">${counts.eggs}<small> di ${counts.eggs + counts.eggsPlanned} previsti</small></span>
+      <span class="progress__num"><span data-count="${counts.eggs}">${counts.eggs}</span><small> di ${counts.eggs + counts.eggsPlanned} previsti</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.eggs, counts.eggs + counts.eggsPlanned)}"></i></span>
     </a>
     <a class="progress" href="${href('guide/')}">
       <span class="progress__label">Guide</span>
-      <span class="progress__num">${counts.guides}<small> di ${counts.guides + counts.guidesPlanned} previste</small></span>
+      <span class="progress__num"><span data-count="${counts.guides}">${counts.guides}</span><small> di ${counts.guides + counts.guidesPlanned} previste</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.guides, counts.guides + counts.guidesPlanned)}"></i></span>
     </a>
     <a class="progress" href="${href('personaggi/')}">
       <span class="progress__label">Schede verificate</span>
-      <span class="progress__num">${counts.verifiedChars}<small> di ${counts.chars} personaggi</small></span>
+      <span class="progress__num"><span data-count="${counts.verifiedChars}">${counts.verifiedChars}</span><small> di ${counts.chars} personaggi</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.verifiedChars, counts.chars)}"></i></span>
     </a>
   </div>
@@ -741,7 +747,7 @@ for (const [rel, html] of pages) {
   fs.writeFileSync(f, html);
 }
 const copy = (rel, to = rel) => { fs.mkdirSync(path.dirname(path.join(OUT, to)), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'src', rel), path.join(OUT, to)); };
-for (const f of ['style.css', 'app.js', 'favicon.svg', 'og.png', 'icon-180.png', 'icon-192.png', 'icon-512.png']) copy(f);
+for (const f of ['style.css', 'motion.css', 'app.js', 'motion.js', 'favicon.svg', 'og.png', 'icon-180.png', 'icon-192.png', 'icon-512.png']) copy(f);
 fs.cpSync(path.join(ROOT, 'src', 'fonts'), path.join(OUT, 'fonts'), { recursive: true });
 if (fs.existsSync(path.join(ROOT, 'assets'))) fs.cpSync(path.join(ROOT, 'assets'), path.join(OUT, 'assets'), { recursive: true });
 const w = (rel, s) => { fs.mkdirSync(path.dirname(path.join(OUT, rel)), { recursive: true }); fs.writeFileSync(path.join(OUT, rel), s); };
