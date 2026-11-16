@@ -1,0 +1,25 @@
+name: Wiki · controlli
+
+on:
+  pull_request:
+    paths: ['gta-wiki/**', '.github/workflows/wiki-*.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gta-wiki
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run validate
+      - run: WIKI_SITE_URL=https://example.invalid WIKI_BASE=/wiki node scripts/build.mjs
+      - run: node scripts/audit.mjs

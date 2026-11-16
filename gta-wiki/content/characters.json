@@ -1,0 +1,271 @@
+[
+  {
+    "slug": "lucia-caminos",
+    "name": "Lucia Caminos",
+    "role": "Protagonista",
+    "tagline": "Cresciuta a colpi di pugni e di astuzia.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": true,
+    "color": "#ff2e93",
+    "accent": "#ffc93c",
+    "hair": "long",
+    "summary": "Una delle due protagoniste giocabili. Il primo trailer la mostra dietro le sbarre in Leonida e poi libera, in fuga con Jason. È la prima protagonista femminile della serie in un capitolo principale.",
+    "facts": [
+      "Giocabile insieme a Jason Duval: Rockstar ha confermato due protagonisti.",
+      "Nel Trailer 1 compare in carcere e poi durante una rapina con Jason.",
+      "Il suo legame con Jason è il cuore della storia mostrata finora."
+    ],
+    "locations": [
+      "leonida-keys",
+      "vice-city"
+    ],
+    "related": [
+      "jason-duval"
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Trailer 1 e 2",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16",
+    "photoFocus": "19%"
+  },
+  {
+    "slug": "jason-duval",
+    "name": "Jason Duval",
+    "role": "Protagonista",
+    "tagline": "Voleva una vita facile. Le cose sono andate diversamente.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": true,
+    "color": "#00d1c1",
+    "accent": "#ff7a30",
+    "hair": "short",
+    "summary": "Il secondo protagonista giocabile. Ex militare, si è ritrovato nel giro dei piccoli traffici delle Leonida Keys prima di incontrare Lucia.",
+    "facts": [
+      "Giocabile insieme a Lucia Caminos.",
+      "Secondo il materiale ufficiale ha un passato nell'esercito.",
+      "Nel Trailer 1 lavora con Lucia a colpi sempre più grossi."
+    ],
+    "locations": [
+      "leonida-keys",
+      "vice-city"
+    ],
+    "related": [
+      "lucia-caminos",
+      "cal-hampton"
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Trailer 1 e 2",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16",
+    "photoFocus": "72%"
+  },
+  {
+    "slug": "cal-hampton",
+    "name": "Cal Hampton",
+    "role": "Da confermare",
+    "tagline": "Compare accanto a Jason nei materiali ufficiali.",
+    "status": "unverified",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": false,
+    "color": "#ff7a30",
+    "accent": "#fff4e3",
+    "hair": "cap",
+    "summary": "Personaggio presentato nelle schede ufficiali legate al Trailer 2. Il suo ruolo preciso nella trama verrà descritto qui dopo il lancio.",
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "leonida-keys"
+    ],
+    "related": [
+      "jason-duval"
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "boobie-ike",
+    "name": "Boobie Ike",
+    "role": "Da confermare",
+    "tagline": "Un nome che si fa notare a Vice City.",
+    "status": "unverified",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": false,
+    "color": "#ffc93c",
+    "accent": "#6d28d9",
+    "hair": "bald",
+    "summary": "Figura del Trailer 2 legata a Vice City. Scheda in attesa di conferma sul ruolo reale nel gioco.",
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "vice-city"
+    ],
+    "related": [],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "dre-quan-priest",
+    "name": "Dre'Quan Priest",
+    "role": "Da confermare",
+    "tagline": "Stile e potere, a quanto pare.",
+    "status": "unverified",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": false,
+    "color": "#6d28d9",
+    "accent": "#5ee7df",
+    "hair": "curly",
+    "summary": "Figura del Trailer 2. Il ruolo esatto è ancora da documentare.",
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "vice-city"
+    ],
+    "related": [],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "raul-bautista",
+    "name": "Raul Bautista",
+    "role": "Da confermare",
+    "tagline": "Un volto che torna più volte nei materiali.",
+    "status": "unverified",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": false,
+    "color": "#e5007d",
+    "accent": "#ffc93c",
+    "hair": "short",
+    "summary": "Personaggio del Trailer 2. Scheda in attesa di dettagli verificati sul gioco finale.",
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "leonida-keys"
+    ],
+    "related": [
+      "lucia-caminos"
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "brian-heder",
+    "name": "Brian Heder",
+    "role": "Da confermare",
+    "tagline": "Il primo volto che si vede nel Trailer 2.",
+    "status": "unverified",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": false,
+    "color": "#14a8c8",
+    "accent": "#ff7a30",
+    "hair": "cap",
+    "summary": "Il personaggio che apre il Trailer 2. Il suo peso nella storia sarà chiarito dopo il lancio.",
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "leonida-keys"
+    ],
+    "related": [],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "real-dimez",
+    "name": "Real Dimez",
+    "role": "Da confermare",
+    "tagline": "Nome da copertina, ruolo da scoprire.",
+    "status": "unverified",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": false,
+    "color": "#ff2e93",
+    "accent": "#5ee7df",
+    "hair": "curly",
+    "summary": "Presente nei materiali del Trailer 2. Aggiorneremo la scheda con ruolo e missioni collegate.",
+    "facts": [
+      "Presentato nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "vice-city"
+    ],
+    "related": [],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "bae-luxe-e-roxy",
+    "name": "Bae-Luxe & Roxy",
+    "role": "Da confermare",
+    "tagline": "Un duo che si presenta sempre insieme.",
+    "status": "unverified",
+    "needs_review": true,
+    "spoiler": false,
+    "playable": false,
+    "color": "#ff7a30",
+    "accent": "#6d28d9",
+    "hair": "long",
+    "summary": "Coppia di personaggi mostrata nei materiali del Trailer 2. Scheda da completare con informazioni verificate nel gioco.",
+    "facts": [
+      "Presentate nel materiale ufficiale del Trailer 2."
+    ],
+    "locations": [
+      "vice-city"
+    ],
+    "related": [],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  }
+]

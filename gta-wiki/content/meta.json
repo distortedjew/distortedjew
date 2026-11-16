@@ -1,0 +1,26 @@
+{
+  "siteName": "Leonida Files",
+  "tagline": "La wiki non ufficiale di Grand Theft Auto VI",
+  "phase": "prelaunch",
+  "release": {
+    "iso": "2026-11-19T00:00:00",
+    "note": "Mezzanotte ora locale, in ogni regione. PS5 e Xbox Series X|S. Nessuna versione PC al lancio."
+  },
+  "siteUrl": "",
+  "lastUpdate": "2026-11-16",
+  "changelog": [
+    {
+      "date": "2026-11-16",
+      "text": "Aggiunte le immagini ufficiali Rockstar: Lucia, Jason, Vice City, veicoli, revolver, copertina dell’album e opere dell’Ultimate Edition."
+    },
+    {
+      "date": "2026-11-16",
+      "text": "Nuove sezioni (storia, veicoli, armi, attività, radio, edizioni), FAQ, ricerca e correzione della data del precaricamento (10 novembre)."
+    },
+    {
+      "date": "2026-11-16",
+      "text": "Prima versione della wiki: personaggi, luoghi, cronologia e struttura per easter egg e guide."
+    }
+  ],
+  "imageCredit": "© Rockstar Games"
+}

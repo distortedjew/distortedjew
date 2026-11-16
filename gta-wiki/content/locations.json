@@ -1,0 +1,93 @@
+[
+  {
+    "slug": "leonida",
+    "name": "Leonida",
+    "kind": "Stato",
+    "tagline": "La versione di Rockstar della Florida.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Lo stato in cui è ambientato GTA VI. Comprende Vice City, le Leonida Keys, paludi, cittadine industriali e un parco nazionale a nord. Il tono è quello di una Florida satirica, tra social network, caldo e cronaca nera.",
+    "facts": ["Compare già nel Trailer 1 (dicembre 2023).", "Contiene diverse regioni mostrate nel Trailer 2."],
+    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "vice-city",
+    "name": "Vice City",
+    "kind": "Città",
+    "tagline": "Neon, spiagge e traffico: il ritorno più atteso.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "La metropoli principale del gioco, ispirata a Miami e già vista in GTA: Vice City (2002). Qui si concentrano locali, spiagge, quartieri ricchi e zone degradate.",
+    "facts": ["Ritorno della città dopo GTA: Vice City (2002).", "Cuore urbano della mappa di Leonida."],
+    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "leonida-keys",
+    "name": "Leonida Keys",
+    "kind": "Arcipelago",
+    "tagline": "Isole, barche e affari poco puliti.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Arcipelago ispirato alle Florida Keys. È la zona legata al passato di Jason e a diverse scene del Trailer 1.",
+    "facts": ["Citata nel materiale ufficiale dedicato a Jason."],
+    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "grassrivers",
+    "name": "Grassrivers",
+    "kind": "Regione",
+    "tagline": "Paludi, alligatori e strade che spariscono.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Regione paludosa che richiama le Everglades. Presentata nei materiali del Trailer 2.",
+    "facts": ["Citata nel materiale del Trailer 2."],
+    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "port-gellhorn",
+    "name": "Port Gellhorn",
+    "kind": "Cittadina",
+    "tagline": "Porto, ruggine e vita di provincia.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Cittadina portuale presentata nel Trailer 2. I dettagli sulle missioni e sui negozi arriveranno dopo il lancio.",
+    "facts": ["Citata nel materiale del Trailer 2."],
+    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "ambrosia",
+    "name": "Ambrosia",
+    "kind": "Regione",
+    "tagline": "Campi, fabbriche e motociclisti.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Area industriale e rurale con presenza di bande di motociclisti, secondo il materiale del Trailer 2.",
+    "facts": ["Citata nel materiale del Trailer 2."],
+    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "mount-kalaga",
+    "name": "Mount Kalaga National Park",
+    "kind": "Parco nazionale",
+    "tagline": "Il nord selvaggio di Leonida.",
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "summary": "Parco nazionale all'estremo nord della mappa. Ideale per esplorazione, caccia e fughe dalla polizia.",
+    "facts": ["Citato nel materiale del Trailer 2."],
+    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "updated": "2026-11-16"
+  }
+]

@@ -1,0 +1,7 @@
+version: 2
+updates:
+  # Tiene aggiornate le versioni delle GitHub Actions usate dai workflow della wiki.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
