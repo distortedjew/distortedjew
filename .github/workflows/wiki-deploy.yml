@@ -43,7 +43,7 @@ jobs:
         run: npm run build
       - name: Audit SEO, sicurezza e link
         run: node scripts/audit.mjs
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: gta-wiki/dist
       - id: deployment
