@@ -7,7 +7,8 @@
   "scripts": {
     "validate": "node scripts/validate.mjs",
     "build": "node scripts/build.mjs",
-    "check": "node scripts/validate.mjs && node scripts/build.mjs",
+    "audit": "node scripts/audit.mjs",
+    "check": "node scripts/validate.mjs && node scripts/build.mjs && node scripts/audit.mjs",
     "dev": "node scripts/build.mjs && node scripts/serve.mjs"
   }
 }

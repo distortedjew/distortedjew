@@ -1,9 +1,15 @@
-// Interazioni: countdown, spoiler, filtri, ricerca. Nessuna dipendenza.
+// Interazioni: countdown, spoiler, filtri, ricerca, reveal. Nessuna dipendenza e nessuno script inline (CSP).
 (() => {
-  const W = window.WIKI || { base: '/', release: '', phase: 'prelaunch' };
+  const root = document.documentElement;
+  root.classList.add('js');
+  const W = { base: root.dataset.base || '/', release: root.dataset.release || '', phase: root.dataset.phase || 'prelaunch' };
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Preferenza spoiler (solo sul dispositivo) */
+  try { if (localStorage.getItem('spoilers') === 'on') root.dataset.spoilers = 'on'; } catch (e) { /* storage non disponibile */ }
 
   /* Countdown verso mezzanotte locale del giorno di uscita; a zero passa alla modalità lancio. */
   const cd = $('#countdown');
@@ -12,7 +18,7 @@
     const pad = (n) => String(n).padStart(2, '0');
     const tick = () => {
       const d = target - Date.now();
-      if (d <= 0) {
+      if (!(d > 0)) {
         cd.hidden = true;
         const k = $('#hero-kicker');
         if (k) k.textContent = 'È uscito. Benvenuti a Leonida.';
@@ -28,15 +34,26 @@
     if (tick()) { const t = setInterval(() => { if (!tick()) clearInterval(t); }, 1000); }
   }
 
+  /* Reveal allo scroll: nasconde solo ciò che sta sotto la piega; il resto (e i crawler con viewport alto) resta visibile */
+  const rev = $$('[data-reveal]');
+  if (rev.length) {
+    const below = rev.filter((el) => el.getBoundingClientRect().top > innerHeight * 0.95);
+    rev.forEach((el) => { if (!below.includes(el)) el.classList.add('in'); });
+    if ('IntersectionObserver' in window && !reduce) {
+      const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px', threshold: 0.04 });
+      below.forEach((el) => io.observe(el));
+      setTimeout(() => below.forEach((el) => el.classList.add('in')), 6000); // rete di sicurezza
+    } else below.forEach((el) => el.classList.add('in'));
+  }
+
   /* Spoiler: interruttore globale + click sul singolo blocco */
-  const root = document.documentElement;
   const tog = $('#spoiler-toggle');
   const syncTog = () => tog && tog.setAttribute('aria-pressed', String(root.dataset.spoilers === 'on'));
   syncTog();
   tog && tog.addEventListener('click', () => {
     const on = root.dataset.spoilers !== 'on';
     root.dataset.spoilers = on ? 'on' : 'off';
-    try { localStorage.setItem('spoilers', on ? 'on' : 'off'); } catch (e) {}
+    try { localStorage.setItem('spoilers', on ? 'on' : 'off'); } catch (e) { /* ignora */ }
     syncTog();
   });
   $$('[data-spoiler]').forEach((el) => {
@@ -60,32 +77,34 @@
     });
   }
 
-  /* Ricerca (Cmd/Ctrl+K oppure "/") */
-  const dlg = $('#search');
-  const input = $('#search-input');
-  const list = $('#search-results');
+  /* Ricerca: dialog (Cmd/Ctrl+K o "/") e pagina /cerca/ */
   let index = null;
-  const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const load = async () => {
     if (index) return index;
     try { index = await (await fetch(W.base + 'search-index.json')).json(); } catch (e) { index = []; }
     return index;
   };
-  const render = async () => {
-    const q = norm(input.value.trim());
-    const data = await load();
-    if (!q) { list.innerHTML = '<li class="search__empty">Scrivi per cercare. Esempi: «Lucia», «Vice City», «trailer».</li>'; return; }
+  const search = async (raw, max) => {
+    const q = norm(raw.trim());
+    if (!q) return [];
     const terms = q.split(/\s+/);
-    const hits = data.map((d) => {
+    const data = await load();
+    return data.map((d) => {
       const t = norm(d.t), s = norm(d.s);
       if (!terms.every((x) => t.includes(x) || s.includes(x))) return null;
       return { d, score: terms.reduce((n, x) => n + (t.startsWith(x) ? 5 : t.includes(x) ? 3 : 1), 0) };
-    }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 8);
-    list.innerHTML = hits.length
-      ? hits.map(({ d }, i) => `<li class="${i === 0 ? 'is-active' : ''}"><a href="${W.base}${d.u}"><small>${d.k}${d.sp ? ' · spoiler' : ''}</small><strong>${esc(d.t)}</strong>${d.sp ? '' : `<em>${esc(d.s)}</em>`}</a></li>`).join('')
-      : '<li class="search__empty">Nessun risultato. La wiki si arricchisce dopo il lancio: riprova presto.</li>';
+    }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, max).map((h) => h.d);
   };
-  const open = () => { if (!dlg) return; if (!dlg.open) dlg.showModal(); input.value = ''; render(); input.focus(); };
+  const item = (d, i) => `<li${i === 0 ? ' class="is-active"' : ''}><a href="${esc(W.base + d.u)}"><small>${esc(d.k)}${d.sp ? ' · spoiler' : ''}</small><strong>${esc(d.t)}</strong>${d.sp ? '' : `<em>${esc(d.s.slice(0, 150))}</em>`}</a></li>`;
+
+  const dlg = $('#search'), input = $('#search-input'), list = $('#search-results');
+  const render = async () => {
+    const hits = await search(input.value, 8);
+    if (!input.value.trim()) { list.innerHTML = '<li class="search__empty">Scrivi per cercare. Esempi: «Lucia», «Vice City», «trailer».</li>'; return; }
+    list.innerHTML = hits.length ? hits.map(item).join('') : '<li class="search__empty">Nessun risultato. La wiki si arricchisce dopo il lancio: riprova presto.</li>';
+  };
+  const open = () => { if (!dlg || typeof dlg.showModal !== 'function') { location.href = W.base + 'cerca/'; return; } if (!dlg.open) dlg.showModal(); input.value = ''; render(); input.focus(); };
   const openBtn = $('#search-open');
   openBtn && openBtn.addEventListener('click', open);
   $$('[data-open-search]').forEach((b) => b.addEventListener('click', open));
@@ -106,4 +125,12 @@
     const typing = /input|textarea|select/i.test(document.activeElement.tagName);
     if (((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === 'k') || (ev.key === '/' && !typing)) { ev.preventDefault(); open(); }
   });
+
+  const results = $('#results');
+  if (results) {
+    const q = new URLSearchParams(location.search).get('q') || '';
+    const box = $('#q');
+    if (box) box.value = q;
+    if (q) search(q, 40).then((hits) => { results.innerHTML = hits.length ? hits.map(item).join('') : '<li class="empty">Nessun risultato per questa ricerca.</li>'; });
+  }
 })();

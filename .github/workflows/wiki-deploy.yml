@@ -27,6 +27,8 @@ jobs:
         working-directory: gta-wiki
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -37,7 +39,10 @@ jobs:
       - name: Costruisci il sito
         env:
           WIKI_BASE: ${{ steps.pages.outputs.base_path }}
+          WIKI_SITE_URL: ${{ steps.pages.outputs.origin }}
         run: npm run build
+      - name: Audit SEO, sicurezza e link
+        run: node scripts/audit.mjs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: gta-wiki/dist

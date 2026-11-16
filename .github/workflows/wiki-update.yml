@@ -9,10 +9,10 @@ on:
         description: 'Argomento su cui concentrarsi (facoltativo, es. "easter egg" o "mappa")'
         required: false
 
+# Permessi minimi: il job scrive solo sul repository. Nessun id-token.
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
 
 concurrency:
   group: wiki-update
@@ -41,41 +41,43 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
-            Leggi gta-wiki/AGENT.md e segui alla lettera le istruzioni.
+            Leggi gta-wiki/AGENT.md e segui alla lettera le istruzioni, comprese le regole di sicurezza.
             Data odierna (UTC): ${{ steps.today.outputs.date }}
             Argomento richiesto: ${{ github.event.inputs.focus || 'nessuno: cerca tutte le novità recenti' }}
-            Modifica solo gta-wiki/content/. Alla fine esegui: cd gta-wiki && npm run check
+            Modifica solo i file gta-wiki/content/*.json. Alla fine esegui: cd gta-wiki && npm run check
+          # Allowlist stretta: ricerca web in lettura, modifica file, e solo i comandi di verifica.
           claude_args: >-
             --max-turns 60
-            --allowedTools "WebSearch,WebFetch,Read,Glob,Grep,Edit,Write,Bash(npm run check:*),Bash(npm run validate:*),Bash(node scripts/*:*),Bash(git diff:*),Bash(git status:*),Bash(date:*)"
+            --allowedTools "WebSearch,WebFetch,Read,Glob,Grep,Edit,Write,Bash(npm run check:*),Bash(npm run validate:*),Bash(git diff:*),Bash(git status:*)"
 
-      - name: Valida e fai commit
+      - name: Guardia, validazione e commit
         id: commit
-        working-directory: gta-wiki
         env:
           GH_TOKEN: ${{ github.token }}
           MODE: ${{ vars.WIKI_MODE || 'direct' }}
         run: |
           set -euo pipefail
-          cd "$GITHUB_WORKSPACE"
-          if [ -z "$(git status --porcelain)" ]; then
+          CHANGED="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
+          if [ -z "$CHANGED" ]; then
             echo "Nessuna novità."; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # Guardia: l'agente può toccare solo contenuti e asset della wiki.
-          BAD=$(git status --porcelain | awk '{print $2}' | grep -vE '^gta-wiki/(content|assets)/' || true)
+          # Guardia 1: l'agente può toccare solo i file JSON dei contenuti.
+          BAD="$(printf '%s\n' "$CHANGED" | grep -vE '^gta-wiki/content/[a-z-]+\.json$' || true)"
           if [ -n "$BAD" ]; then
-            echo "::error::Modifiche fuori perimetro: $BAD"; exit 1
+            echo "::error::Modifiche fuori perimetro:"; printf '%s\n' "$BAD"; exit 1
           fi
-          (cd gta-wiki && npm run check)
+          # Guardia 2: validazione, build e audit (SEO, CSP, link) devono passare.
+          (cd gta-wiki && npm run check && WIKI_SITE_URL=https://example.invalid node scripts/build.mjs >/dev/null && node scripts/audit.mjs)
           git config user.name  "leonida-files-bot"
           git config user.email "leonida-files-bot@users.noreply.github.com"
-          git add gta-wiki/content gta-wiki/assets 2>/dev/null || git add gta-wiki/content
-          git commit -m "wiki: aggiornamento automatico $(date -u +%Y-%m-%d\ %H:%M) UTC"
+          git add gta-wiki/content
+          git commit -m "wiki: aggiornamento automatico $(date -u '+%Y-%m-%d %H:%M') UTC"
           if [ "$MODE" = "pr" ]; then
             BR="wiki-auto/$(date -u +%Y%m%d-%H%M)"
             git push origin "HEAD:refs/heads/$BR"
-            gh pr create --base main --head "$BR" --title "Wiki: aggiornamento automatico" --body "Aggiornamento generato dall'agente editoriale. Validato da npm run check."
+            gh pr create --base main --head "$BR" --title "Wiki: aggiornamento automatico" --body "Aggiornamento generato dall'agente editoriale. Validazione e audit superati."
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git push origin HEAD:main

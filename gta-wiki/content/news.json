@@ -1,10 +1,98 @@
 [
-  { "date": "2026-11-19", "title": "Uscita di GTA VI", "body": "Il gioco esce su PS5 e Xbox Series X|S a mezzanotte ora locale in ogni regione. Questa wiki passa in modalità lancio e inizia a popolarsi con guide ed easter egg verificati.", "status": "planned", "sources": [{ "label": "Cronologia ufficiale", "url": "https://www.rockstargames.com/VI" }] },
-  { "date": "2026-11-12", "title": "Precaricamento attivo", "body": "Il precaricamento dei file di gioco parte a mezzanotte locale del 12 novembre, secondo il supporto Rockstar.", "status": "confirmed", "sources": [{ "label": "CNBC – lancio e impatto", "url": "https://www.cnbc.com/2026/11/14/gta-6-grand-theft-auto-launch.html" }] },
-  { "date": "2026-11-12", "title": "Orari di lancio per fuso orario", "body": "L'uscita è a mezzanotte locale: alcune aree degli Stati Uniti possono iniziare la sera prima rispetto ad altre zone.", "status": "confirmed", "sources": [{ "label": "Forbes – orari di lancio", "url": "https://www.forbes.com/sites/brianmazique/2026/11/12/gta-6-unlocks-at-midnight-on-november-19-but-millions-of-americans-can-start-playing-the-night-before/" }] },
-  { "date": "2026-08-07", "title": "Take-Two conferma ancora il 19 novembre", "body": "Nei risultati trimestrali Take-Two ribadisce la data del 19 novembre 2026.", "status": "confirmed", "sources": [{ "label": "Riepilogo data di uscita", "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news" }] },
-  { "date": "2025-11-06", "title": "Secondo rinvio: nuova data 19 novembre 2026", "body": "Rockstar sposta l'uscita dal 26 maggio 2026 al 19 novembre 2026.", "status": "confirmed", "sources": [{ "label": "Riepilogo data di uscita", "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news" }] },
-  { "date": "2025-05-06", "title": "Trailer 2", "body": "Secondo trailer ufficiale: nuovi personaggi, regioni di Leonida e tono più narrativo.", "status": "confirmed", "sources": [{ "label": "GamesRadar – Trailer 2", "url": "https://www.gamesradar.com/news/live/gta-6-trailer-2-live-coverage-all-the-analysis-and-reactions" }] },
-  { "date": "2025-05-02", "title": "Primo rinvio al 26 maggio 2026", "body": "Dopo l'annuncio per l'autunno 2025, Rockstar sposta l'uscita al 26 maggio 2026.", "status": "confirmed", "sources": [{ "label": "Riepilogo data di uscita", "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news" }] },
-  { "date": "2023-12-05", "title": "Trailer 1", "body": "Primo trailer ufficiale, pubblicato in anticipo dopo una fuga di notizie. Presenta Lucia e Jason e rivela Vice City e Leonida.", "status": "confirmed", "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }] }
+  {
+    "date": "2026-11-19",
+    "title": "Uscita di GTA VI",
+    "body": "Il gioco esce su PS5 e Xbox Series X|S a mezzanotte ora locale in ogni regione. Questa wiki passa in modalità lancio e inizia a popolarsi con guide ed easter egg verificati.",
+    "status": "planned",
+    "sources": [
+      {
+        "label": "Cronologia ufficiale",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ]
+  },
+  {
+    "date": "2026-11-12",
+    "title": "Orari di lancio per fuso orario",
+    "body": "L'uscita è a mezzanotte locale: alcune aree degli Stati Uniti possono iniziare la sera prima rispetto ad altre zone.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "Forbes – orari di lancio",
+        "url": "https://www.forbes.com/sites/brianmazique/2026/11/12/gta-6-unlocks-at-midnight-on-november-19-but-millions-of-americans-can-start-playing-the-night-before/"
+      }
+    ]
+  },
+  {
+    "date": "2026-11-10",
+    "title": "Inizia il precaricamento",
+    "body": "Il precaricamento dei file di gioco è iniziato il 10 novembre, come indicato sul sito ufficiale Rockstar.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "title": "Take-Two conferma ancora il 19 novembre",
+    "body": "Nei risultati trimestrali Take-Two ribadisce la data del 19 novembre 2026.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "Riepilogo data di uscita",
+        "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news"
+      }
+    ]
+  },
+  {
+    "date": "2025-11-06",
+    "title": "Secondo rinvio: nuova data 19 novembre 2026",
+    "body": "Rockstar sposta l'uscita dal 26 maggio 2026 al 19 novembre 2026.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "Riepilogo data di uscita",
+        "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news"
+      }
+    ]
+  },
+  {
+    "date": "2025-05-06",
+    "title": "Trailer 2",
+    "body": "Secondo trailer ufficiale: nuovi personaggi, regioni di Leonida e tono più narrativo.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "GamesRadar – Trailer 2",
+        "url": "https://www.gamesradar.com/news/live/gta-6-trailer-2-live-coverage-all-the-analysis-and-reactions"
+      }
+    ]
+  },
+  {
+    "date": "2025-05-02",
+    "title": "Primo rinvio al 26 maggio 2026",
+    "body": "Dopo l'annuncio per l'autunno 2025, Rockstar sposta l'uscita al 26 maggio 2026.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "Riepilogo data di uscita",
+        "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news"
+      }
+    ]
+  },
+  {
+    "date": "2023-12-05",
+    "title": "Trailer 1",
+    "body": "Primo trailer ufficiale, pubblicato in anticipo dopo una fuga di notizie. Presenta Lucia e Jason e rivela Vice City e Leonida.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ]
+  }
 ]
