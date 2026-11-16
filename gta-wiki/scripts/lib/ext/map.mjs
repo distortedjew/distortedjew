@@ -18,6 +18,37 @@ const escFallback = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '
 const gridRef = (x, y) => `${'ABCDEFGHIJ'[Math.min(9, Math.floor(x / 10))]}${Math.min(9, Math.floor(y / 10)) + 1}`;
 const num = (n) => Math.round(n * 100) / 100;
 
+/** Dimensioni di un'immagine leggendo solo l'intestazione (png, jpg, webp, avif). Nessuna dipendenza. Restituisce {w,h} o null. */
+function imgSize(file) {
+  let b;
+  try { b = fs.readFileSync(file); } catch { return null; }
+  const ext = path.extname(file).toLowerCase();
+  try {
+    if (b.length > 24 && b.readUInt32BE(0) === 0x89504e47) return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+    if (b[0] === 0xff && b[1] === 0xd8) {
+      let i = 2;
+      while (i + 9 < b.length) {
+        if (b[i] !== 0xff) { i++; continue; }
+        const m = b[i + 1];
+        if (m >= 0xc0 && m <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(m)) return { h: b.readUInt16BE(i + 5), w: b.readUInt16BE(i + 7) };
+        i += 2 + b.readUInt16BE(i + 2);
+      }
+      return null;
+    }
+    if (b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') {
+      const t = b.toString('ascii', 12, 16);
+      if (t === 'VP8 ') return { w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff };
+      if (t === 'VP8L') { const v = b.readUInt32LE(21); return { w: (v & 0x3fff) + 1, h: ((v >> 14) & 0x3fff) + 1 }; }
+      if (t === 'VP8X') return { w: b.readUIntLE(24, 3) + 1, h: b.readUIntLE(27, 3) + 1 };
+    }
+    if (ext === '.avif') {
+      const i = b.indexOf('ispe');
+      if (i > 0) return { w: b.readUInt32BE(i + 8), h: b.readUInt32BE(i + 12) };
+    }
+  } catch { /* file troncato */ }
+  return null;
+}
+
 export default async function register(ctx) {
   const ROOT = ctx.ROOT || path.resolve(import.meta.dirname, '..', '..', '..');
   const esc = ctx.esc || escFallback;
@@ -46,25 +77,37 @@ export default async function register(ctx) {
   const usedTypes = Object.keys(map.types).filter((t) => pins.some((p) => p.type === t));
   const nIndicative = pins.filter((p) => p.confidence !== 'verified').length;
 
+  /* ---------- Mappa di base ufficiale (opzionale): assets/img/map/leonida.(avif|webp|jpg|png) ---------- */
+  const mapDir = path.join(ROOT, 'assets', 'img', 'map');
+  const findBase = (name, exts) => { for (const e of exts) if (fs.existsSync(path.join(mapDir, `${name}.${e}`))) return `assets/img/map/${name}.${e}`; return null; };
+  const baseOrig = findBase('leonida', ['avif', 'webp', 'jpg', 'jpeg', 'png']);
+  const baseView = baseOrig ? (findBase('leonida-1600', ['webp']) || baseOrig) : null;
+  const baseDim = baseView ? imgSize(path.join(ROOT, baseView)) : null;
+  const useBase = !!(baseView && baseDim);
+  const bm = map.basemap && typeof map.basemap === 'object' ? map.basemap : null;
+  const official = useBase && !!(bm && bm.source); // l'avviso «schema, non in scala» sparisce solo con una fonte ufficiale dichiarata
+  const H = useBase ? num((100 * baseDim.h) / baseDim.w) : 100; // altezza del viewBox: stessa proporzione dell'immagine
+  const yU = (y) => num((y * H) / 100);
+
   /* ---------- SVG ---------- */
   const labelSide = (x) => (x > 50 ? 'left' : 'right');
   const pinSvg = (p, i) => {
     const side = p.labelSide || labelSide(p.x);
     const lx = side === 'left' ? -17 : 17;
     const anchor = side === 'left' ? 'end' : 'start';
-    return `<a class="pin pin--${esc(p.type)} pin--${p.confidence}" href="${href(`luoghi/${p.slug}/`)}" data-slug="${esc(p.slug)}" data-x="${p.x}" data-y="${p.y}" data-type="${esc(p.type)}" transform="translate(${p.x} ${p.y})" aria-label="${esc(p.loc.name)}, ${esc(typeLabel(p.type).toLowerCase())}, ${esc(confLabel(p.confidence).toLowerCase())}">
+    return `<a class="pin pin--${esc(p.type)} pin--${p.confidence}" href="${href(`luoghi/${p.slug}/`)}" data-slug="${esc(p.slug)}" data-x="${p.x}" data-y="${p.y}" data-type="${esc(p.type)}" transform="translate(${p.x} ${yU(p.y)})" aria-label="${esc(p.loc.name)}, ${esc(typeLabel(p.type).toLowerCase())}, ${esc(confLabel(p.confidence).toLowerCase())}">
       <g class="pin__k" transform="scale(.14)"><g class="pin__drop pin__d${i}">
         <circle class="pin__hit" r="24"/><circle class="pin__ring" r="12"/><circle class="pin__focus" r="17"/><circle class="pin__dot" r="9"/>
         <text class="pin__label" x="${lx}" y="5" text-anchor="${anchor}">${esc(p.loc.name)}</text>
       </g></g></a>`;
   };
 
-  const zones = pins.map((p) => `<circle class="zone zone--${esc(p.type)}${p.confidence === 'verified' ? ' zone--v' : ''}" data-zone="${esc(p.slug)}" cx="${p.x}" cy="${p.y}" r="${ZONE_R[p.type] || 9}"/>`).join('');
+  const zones = pins.filter((p) => !useBase || p.confidence !== 'verified').map((p) => `<circle class="zone zone--${esc(p.type)}${p.confidence === 'verified' ? ' zone--v' : ''}" data-zone="${esc(p.slug)}" cx="${p.x}" cy="${yU(p.y)}" r="${ZONE_R[p.type] || 9}"/>`).join('');
 
-  const mapSvg = `<svg class="msvg" id="map-svg" viewBox="0 0 100 100" role="group" aria-labelledby="map-svg-t map-svg-d" preserveAspectRatio="xMidYMid meet">
-    <title id="map-svg-t">Schema indicativo dello stato di Leonida</title>
-    <desc id="map-svg-d">Sagoma stilizzata e non in scala con ${pins.length} luoghi: ${pins.map((p) => p.loc.name).join(', ')}. L'elenco completo è sotto la mappa.</desc>
-    <defs>
+  const svgHead = `<svg class="msvg${useBase ? ' msvg--base' : ''}" id="map-svg" viewBox="0 0 100 ${H}" role="group" aria-labelledby="map-svg-t map-svg-d" preserveAspectRatio="xMidYMid meet">
+    <title id="map-svg-t">${useBase ? 'Mappa di Leonida con i luoghi della wiki' : 'Schema indicativo dello stato di Leonida'}</title>
+    <desc id="map-svg-d">${useBase ? 'Mappa ufficiale' : 'Sagoma stilizzata e non in scala'} con ${pins.length} luoghi: ${pins.map((p) => p.loc.name).join(', ')}. L'elenco completo è sotto la mappa.</desc>`;
+  const schematic = `<defs>
       <pattern id="map-grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" class="grid-line"/></pattern>
       <pattern id="map-waves" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-12)"><path d="M0 2 Q1 1 2 2 T4 2" fill="none" class="wave-line"/></pattern>
       <linearGradient id="map-land" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b1a72"/><stop offset="1" stop-color="#5a1f7d"/></linearGradient>
@@ -76,10 +119,16 @@ export default async function register(ctx) {
     ${ISLANDS.map((d) => `<path class="land land--isle" d="${d}"/>`).join('')}
     <path class="coast" pathLength="1" d="${LAND}"/>
     ${ISLANDS.map((d) => `<path class="coast coast--isle" pathLength="1" d="${d}"/>`).join('')}
-    <text class="state-name" x="50" y="29" text-anchor="middle" aria-hidden="true">LEONIDA</text>
+    <text class="state-name" x="50" y="29" text-anchor="middle" aria-hidden="true">LEONIDA</text>`;
+  const mapSvg = `${svgHead}
+    ${useBase ? '' : schematic}
     <g class="zones" aria-hidden="true">${zones}</g>
     <g class="pins">${pins.map(pinSvg).join('')}</g>
   </svg>`;
+  // Il palco (stage) è l'elemento che si ingrandisce e sposta: con l'immagine ufficiale contiene <img> + SVG sovrapposto
+  const stage = useBase
+    ? `<div class="mstage mstage--base" id="map-stage"><img class="mbase" src="${href(baseView)}" width="${baseDim.w}" height="${baseDim.h}" alt="" decoding="async" fetchpriority="high">${mapSvg}</div>`
+    : `<div class="mstage" id="map-stage">${mapSvg}</div>`;
 
   const compass = `<svg class="mcompass" viewBox="0 0 64 72" aria-hidden="true" focusable="false"><circle cx="32" cy="42" r="23" class="c-ring"/><path d="M32 22 L37 42 L32 62 L27 42 Z" class="c-needle"/><path d="M11 42 L32 37 L53 42 L32 47 Z" class="c-cross"/><text x="32" y="12" text-anchor="middle" class="c-n">N</text></svg>`;
 
@@ -109,7 +158,7 @@ export default async function register(ctx) {
   </ul>`;
 
   const body = `<header class="page-head">
-    <p class="eyebrow">Mappa schematica</p>
+    <p class="eyebrow">${official ? 'Mappa ufficiale' : 'Mappa schematica'}</p>
     <h1 class="h1">Mappa di Leonida</h1>
     <p class="page-head__lead">${esc(map.intro)}</p>
     <p class="map-disclaimer"><span aria-hidden="true">◐</span> ${esc(map.disclaimer)}</p>
@@ -121,11 +170,12 @@ export default async function register(ctx) {
         <div class="map-filters chips" role="group" aria-label="Filtra per tipo">${chips}</div>
       </div>
       <div class="map-frame">
-        <div class="map-viewport" id="map-viewport" data-map-viewport tabindex="0" role="group" aria-roledescription="mappa" aria-label="Mappa di Leonida. Con la mappa attiva: più e meno per lo zoom, frecce per spostarsi, zero per ripristinare. Tra i punti ci si muove con Tab o con le frecce.">
-          ${mapSvg}
+        <div class="map-viewport${useBase ? ' map-viewport--base' : ''}" id="map-viewport" data-map-viewport tabindex="0" role="group" aria-roledescription="mappa" aria-label="Mappa di Leonida. Con la mappa attiva: più e meno per lo zoom, frecce per spostarsi, zero per ripristinare. Tra i punti ci si muove con Tab o con le frecce.">
+          ${stage}
         </div>
-        ${compass}
-        <p class="map-scale" aria-hidden="true">Schema indicativo · non in scala</p>
+        ${useBase ? '' : compass}
+        ${official ? '' : '<p class="map-scale" aria-hidden="true">Schema indicativo · non in scala</p>'}
+        ${useBase ? `<p class="map-credit">${esc(ctx.CREDIT || '© Rockstar Games')}${bm && bm.source ? ` · <a href="${esc(bm.source)}" target="_blank" rel="noopener noreferrer nofollow">${esc(bm.label || 'Fonte ufficiale')}</a>` : ''} · <a href="${href(baseOrig)}" target="_blank" rel="noopener">Apri l'originale</a></p>` : ''}
         <div class="map-zoom" role="group" aria-label="Zoom">
           <button type="button" class="map-btn" data-mzoom="in" aria-label="Ingrandisci">+</button>
           <button type="button" class="map-btn" data-mzoom="out" aria-label="Riduci">−</button>
@@ -165,7 +215,7 @@ export default async function register(ctx) {
 
   const itemList = {
     '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Mappa di Leonida: regioni e luoghi di GTA VI', inLanguage: 'it',
-    description: 'Mappa schematica e non ufficiale dello stato di Leonida con le regioni principali di GTA VI.',
+    description: official ? 'Mappa ufficiale di Leonida con i luoghi principali di GTA VI, cliccabili e con le schede della wiki.' : 'Mappa schematica e non ufficiale dello stato di Leonida con le regioni principali di GTA VI.',
     ...(SITE ? { url: abs('mappa/') } : {}),
     mainEntity: { '@type': 'ItemList', itemListElement: pins.map((p, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'Place', name: p.loc.name, description: trunc(p.loc.summary, 200), ...(SITE ? { url: abs(`luoghi/${p.slug}/`) } : {}) } })) }
   };

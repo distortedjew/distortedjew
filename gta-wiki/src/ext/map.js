@@ -7,6 +7,7 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const vp = $('[data-map-viewport]');
   const svg = $('#map-svg');
+  const stage = $('#map-stage') || svg; // palco che si ingrandisce e sposta (immagine ufficiale + pin, oppure solo lo schema)
   const pins = $$('.pin', svg);
   const zones = $$('.zone', svg);
   const panel = $('[data-map-panel]');
@@ -24,15 +25,16 @@
 
   /* ---------- Vista: zoom e pan ---------- */
   const size = () => vp.clientWidth || 1;
+  const sizeY = () => vp.clientHeight || size(); // con l'immagine ufficiale il riquadro non è quadrato
   const clamp = () => {
     const W = size();
     st.z = Math.min(MAX, Math.max(MIN, st.z));
     st.x = Math.min(0, Math.max(W * (1 - st.z), st.x));
-    st.y = Math.min(0, Math.max(W * (1 - st.z), st.y));
+    st.y = Math.min(0, Math.max(sizeY() * (1 - st.z), st.y));
   };
   const apply = () => {
     clamp();
-    svg.style.transform = `translate(${st.x}px, ${st.y}px) scale(${st.z})`;
+    stage.style.transform = `translate(${st.x}px, ${st.y}px) scale(${st.z})`;
     const k = 100 / (size() * st.z); // 1 unità del pin = 1 px a schermo, a qualsiasi zoom
     pins.forEach((p) => p.firstElementChild.setAttribute('transform', `scale(${k.toFixed(5)})`));
     app.classList.toggle('is-zoomed', st.z > 1.001);
@@ -48,7 +50,7 @@
     st.z = nz;
     apply();
   };
-  const zoomBy = (f) => { const W = size(); zoomAt(st.z * f, W / 2, W / 2); };
+  const zoomBy = (f) => { zoomAt(st.z * f, size() / 2, sizeY() / 2); };
   const reset = () => { st.z = 1; st.x = 0; st.y = 0; apply(); };
   const panBy = (dx, dy) => { st.x += dx; st.y += dy; apply(); };
   const centerOn = (slug) => {
@@ -56,11 +58,11 @@
     if (!p || st.z <= 1.001) return;
     const W = size();
     st.x = W / 2 - (+p.dataset.x / 100) * W * st.z;
-    st.y = W / 2 - (+p.dataset.y / 100) * W * st.z;
+    st.y = sizeY() / 2 - (+p.dataset.y / 100) * sizeY() * st.z;
     apply();
   };
   const settle = () => { // durante il trascinamento niente transizione
-    svg.classList.remove('is-moving');
+    stage.classList.remove('is-moving');
   };
 
   $$('[data-mzoom]').forEach((b) => b.addEventListener('click', () => {
@@ -94,14 +96,14 @@
     if (pinch && ptrs.size === 2) {
       const [a, b] = [...ptrs.values()];
       const r = vp.getBoundingClientRect();
-      svg.classList.add('is-moving');
+      stage.classList.add('is-moving');
       zoomAt(pinch.z * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.d), (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top);
       return;
     }
     if (drag && drag.id === e.pointerId && st.z > 1.001) {
       const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
       if (!drag.moved && Math.hypot(dx, dy) < 5) return;
-      if (!drag.moved) { drag.moved = true; try { vp.setPointerCapture(e.pointerId); } catch (_) { /* ignora */ } svg.classList.add('is-moving'); vp.classList.add('is-dragging'); }
+      if (!drag.moved) { drag.moved = true; try { vp.setPointerCapture(e.pointerId); } catch (_) { /* ignora */ } stage.classList.add('is-moving'); vp.classList.add('is-dragging'); }
       st.x = drag.ox + dx; st.y = drag.oy + dy; apply();
     }
   });
@@ -156,7 +158,7 @@
     pEmpty.hidden = true; pBody.hidden = false;
     fillPanel(slug);
     app.classList.add('has-sel');
-    if (!opts.keepView) { svg.classList.remove('is-moving'); centerOn(slug); }
+    if (!opts.keepView) { stage.classList.remove('is-moving'); centerOn(slug); }
     try { history.replaceState(null, '', '#' + slug); } catch (_) { /* ignora */ }
   };
   const deselect = (focusBack) => {

@@ -1,5 +1,8 @@
 // Validatore di content/map.json: slug esistenti, coordinate 0-100, coerenza tra confidence e source.
 // Hook: default async ({ ROOT, load, err, data, config })
+import fs from 'node:fs';
+import path from 'node:path';
+
 const FILE = 'map.json';
 const DANGEROUS = /<|javascript:|data:text|vbscript:|on[a-z]+\s*=\s*["']/i;
 const CONF = ['verified', 'indicative'];
@@ -21,7 +24,13 @@ export default async function validateMap({ ROOT, load, err, data }) {
     if (typeof map[k] !== 'string' || !map[k].trim()) err(FILE, k, 'testo mancante');
     else if (DANGEROUS.test(map[k])) err(FILE, k, 'testo non consentito (HTML/script)');
   }
-  if (!/non in scala/i.test(map.disclaimer || '')) err(FILE, 'disclaimer', 'deve dichiarare che lo schema non è in scala');
+  // Mappa ufficiale opzionale: assets/img/map/leonida.(avif|webp|jpg|jpeg|png) + "basemap": {"source": "<https>", "label": "..."} in map.json
+  const baseFile = ['avif', 'webp', 'jpg', 'jpeg', 'png'].map((e) => path.join(ROOT, 'assets', 'img', 'map', `leonida.${e}`)).find((f) => fs.existsSync(f));
+  const bm = map.basemap;
+  if (baseFile && !(bm && isHttps(bm.source))) err(FILE, 'basemap', 'con assets/img/map/leonida.* serve "basemap": {"source": "<url https della fonte ufficiale>"}');
+  if (!baseFile && bm) err(FILE, 'basemap', 'basemap dichiarato ma manca il file assets/img/map/leonida.*');
+  if (bm && (typeof bm !== 'object' || (bm.label !== undefined && (typeof bm.label !== 'string' || DANGEROUS.test(bm.label) || bm.label.length > 80)))) err(FILE, 'basemap', 'basemap non valido (label testo semplice max 80 caratteri)');
+  if (!baseFile && !/non in scala/i.test(map.disclaimer || '')) err(FILE, 'disclaimer', 'deve dichiarare che lo schema non è in scala');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(map.updated || '')) err(FILE, 'updated', 'data YYYY-MM-DD richiesta');
 
   const types = map.types && typeof map.types === 'object' ? map.types : {};
