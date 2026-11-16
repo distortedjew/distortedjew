@@ -236,5 +236,130 @@
       }
     ],
     "updated": "2026-11-16"
+  },
+  {
+    "slug": "vapid-buggy",
+    "section": "veicoli",
+    "title": "Vapid Buggy",
+    "tagline": "Un fuoristrada con ruote enormi, dai bonus Ultimate Edition.",
+    "summary": "Fuoristrada con ruote tassellate di grandi dimensioni e fari supplementari, mostrato nelle immagini ufficiali dell’Ultimate Edition mentre avanza sul fango e parcheggiato davanti a un’officina. Prestazioni e modo per ottenerlo saranno documentati dopo il lancio.",
+    "facts": [
+      "Compare nel materiale ufficiale dei bonus Ultimate Edition.",
+      "Statistiche e posizione: da confermare in gioco."
+    ],
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "sources": [
+      {
+        "label": "Rockstar Games – Media ufficiali di GTA VI",
+        "url": "https://www.rockstargames.com/VI/media"
+      },
+      {
+        "label": "Rockstar Games – Pagina ufficiale di GTA VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "vapid-ganado-retro-build",
+    "section": "veicoli",
+    "title": "Vapid Ganado Retro Build",
+    "tagline": "Il pick-up Ganado di Jason con modifiche esclusive.",
+    "summary": "Pick-up giallo Vapid Ganado mostrato nelle immagini ufficiali su una strada costiera. Rockstar lo presenta come il Ganado basso e usurato di Jason, con modifiche esclusive di muscolo e stile classico.",
+    "facts": [
+      "Descritto da Rockstar come il pick-up Vapid Ganado di Jason con modifiche esclusive.",
+      "Fa parte dei contenuti dell’Ultimate Edition."
+    ],
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "sources": [
+      {
+        "label": "Rockstar Games – Media ufficiali di GTA VI",
+        "url": "https://www.rockstargames.com/VI/media"
+      },
+      {
+        "label": "Rockstar Games – Pagina ufficiale di GTA VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "wyman-car-collection",
+    "section": "edizioni",
+    "title": "Wyman Car Collection",
+    "tagline": "Auto classiche abbandonate da riportare in vita.",
+    "summary": "Secondo Rockstar, una commissione speciale di Wyman, collezionista eccentrico e faccendiere locale: ritrovare auto classiche abbandonate o ancora da completare e riportarle al loro splendore. Le immagini ufficiali mostrano Wyman e diverse vetture d’epoca.",
+    "facts": [
+      "Contenuto dell’Ultimate Edition, secondo il materiale ufficiale.",
+      "Dettagli sulle missioni e sulle auto: da confermare in gioco."
+    ],
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "sources": [
+      {
+        "label": "Rockstar Games – Media ufficiali di GTA VI",
+        "url": "https://www.rockstargames.com/VI/media"
+      },
+      {
+        "label": "Rockstar Games – Pagina ufficiale di GTA VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "electric-fang-tattoo",
+    "section": "attivita",
+    "title": "Electric Fang Tattoo",
+    "tagline": "Il tatuatore di Stockyard con oltre 50 tatuaggi esclusivi.",
+    "summary": "Negozio di tatuaggi a Stockyard con un’insegna al neon rossa a forma di testa di tigre. Per Rockstar offre oltre 50 tatuaggi esclusivi per Jason e Lucia, disegnati dal collettivo di artisti FAILE; è aperto solo con l’Ultimate Edition.",
+    "facts": [
+      "Più di 50 tatuaggi firmati dal collettivo FAILE.",
+      "Accesso legato all’Ultimate Edition."
+    ],
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "sources": [
+      {
+        "label": "Rockstar Games – Media ufficiali di GTA VI",
+        "url": "https://www.rockstargames.com/VI/media"
+      },
+      {
+        "label": "Rockstar Games – Pagina ufficiale di GTA VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
+  },
+  {
+    "slug": "vintage-vice-city-pack",
+    "section": "edizioni",
+    "title": "Vintage Vice City Pack",
+    "tagline": "Un tuffo nell’epoca in cui il neon brillava di più.",
+    "summary": "Pacchetto di contenuti presentato da Rockstar con la ’55 Vapid Stanier bicolore e il relativo garage, la celebre Ocean Beach, abiti e acconciature decadenti per Jason e Lucia e un motivo per le armi che richiama gli eccessi del passato.",
+    "facts": [
+      "Include la ’55 Vapid Stanier e il garage.",
+      "Prevede abiti, acconciature e un motivo per le armi."
+    ],
+    "status": "confirmed",
+    "needs_review": true,
+    "spoiler": false,
+    "sources": [
+      {
+        "label": "Rockstar Games – Media ufficiali di GTA VI",
+        "url": "https://www.rockstargames.com/VI/media"
+      },
+      {
+        "label": "Rockstar Games – Pagina ufficiale di GTA VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
+    "updated": "2026-11-16"
   }
 ]
