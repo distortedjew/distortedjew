@@ -1,0 +1,69 @@
+{
+  "updated": "2026-11-16",
+  "disclaimer": "Schema indicativo, non in scala. Rockstar Games non ha pubblicato una mappa ufficiale: la sagoma è disegnata da noi e le posizioni sono ricostruzioni della stampa, che su alcuni punti non concordano.",
+  "intro": "Leonida è la versione di Rockstar della Florida. Del suo territorio conosciamo i nomi delle regioni principali, citati nei materiali ufficiali, ma non la loro esatta posizione. Per questo la mappa è uno schema: mostra solo l'ordine generale (nord, sud, costa est e ovest) riportato da testate e community, e ogni punto è marcato come posizione indicativa finché il gioco non permette di verificarlo.",
+  "types": {
+    "citta": "Città",
+    "arcipelago": "Arcipelago",
+    "regione": "Regioni",
+    "natura": "Parchi e natura"
+  },
+  "containers": ["leonida"],
+  "pins": [
+    {
+      "slug": "mount-kalaga",
+      "x": 50,
+      "y": 15,
+      "type": "natura",
+      "confidence": "indicative",
+      "source": "https://www.pcgamer.com/games/grand-theft-auto/gta6-map",
+      "note": "Indicato dalla stampa nell'estremo nord dello stato. Posizione esatta non confermata."
+    },
+    {
+      "slug": "port-gellhorn",
+      "x": 17,
+      "y": 36,
+      "type": "citta",
+      "confidence": "indicative",
+      "source": "https://www.gfinityesports.com/article/gta-6-map-guide-every-confirmed-location-in-leonida",
+      "note": "Le ricostruzioni la collocano sulla costa ovest o nord-ovest, ma non concordano tra loro."
+    },
+    {
+      "slug": "ambrosia",
+      "x": 52,
+      "y": 42,
+      "type": "regione",
+      "confidence": "indicative",
+      "source": "https://thegamepost.com/gta-6-map-breakdown/",
+      "note": "Descritta come area interna, verso il centro dello stato. Confini sconosciuti."
+    },
+    {
+      "slug": "grassrivers",
+      "x": 44,
+      "y": 69,
+      "labelSide": "left",
+      "type": "regione",
+      "confidence": "indicative",
+      "source": "https://www.gfinityesports.com/article/gta-6-map-guide-every-confirmed-location-in-leonida",
+      "note": "Paludi sul modello delle Everglades, nel sud-ovest secondo la stampa. Estensione sconosciuta."
+    },
+    {
+      "slug": "vice-city",
+      "x": 77,
+      "y": 66,
+      "type": "citta",
+      "confidence": "indicative",
+      "source": "https://www.gfinityesports.com/article/gta-6-map-guide-every-confirmed-location-in-leonida",
+      "note": "Sulla costa sud-orientale, in analogia con Miami. Il punto indica solo la zona generale."
+    },
+    {
+      "slug": "leonida-keys",
+      "x": 58,
+      "y": 93,
+      "type": "arcipelago",
+      "confidence": "indicative",
+      "source": "https://www.gfinityesports.com/article/gta-6-map-guide-every-confirmed-location-in-leonida",
+      "note": "Catena di isole a sud della penisola, sul modello delle Florida Keys."
+    }
+  ]
+}
