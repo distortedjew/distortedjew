@@ -47,7 +47,7 @@ const shellBottom = rewrite(home.slice(home.indexOf('</main>') + 7, home.indexOf
 const index = JSON.parse(fs.readFileSync(path.join(DIST, 'search-index.json'), 'utf8')).map((d) => ({ ...d, u: routeId(d.u) }));
 
 // CSS con font incorporati
-let css = fs.readFileSync(path.join(DIST, 'style.css'), 'utf8') + '\n' + fs.readFileSync(path.join(DIST, 'theme.css'), 'utf8');
+let css = fs.readFileSync(path.join(DIST, 'site.css'), 'utf8');
 css = css.replace(/url\("fonts\/([^"]+)"\)/g, (m, name) => `url("${dataUri('fonts/' + name)}")`);
 css += `
 /* --- adattamenti per l'Artifact --- */

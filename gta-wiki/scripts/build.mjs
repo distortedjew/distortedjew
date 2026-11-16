@@ -4,6 +4,7 @@ import path from 'node:path';
 import { SECTIONS } from './lib/sections.mjs';
 import { loadConfig } from './lib/config.mjs';
 import { loadExtensions } from './lib/extensions.mjs';
+import { minifyCss } from './lib/css.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(ROOT, 'dist');
@@ -164,7 +165,7 @@ const slot = (name, info) => (hooks.slots[name] || []).map((f) => f(info) || '')
 const runHooks = (name, info) => (hooks[name] || []).map((f) => f(info) || '').join('\n');
 const HOME_TITLE = 'Wiki italiana di GTA VI: personaggi, luoghi, easter egg e guide';
 
-function layout({ title, desc, path: p = '', body, section = '', crumbs = [], schema = [], type = 'website', image, noindex = false }) {
+function layout({ title, desc, path: p = '', body, section = '', crumbs = [], schema = [], type = 'website', image, noindex = false, preload }) {
   let full = title ? `${title} · ${meta.siteName}` : HOME_TITLE;
   if (title && full.length > 62) full = title.length <= 62 ? title : trunc(title, 62); // titoli SEO entro ~60 caratteri
   const d = trunc(desc || meta.tagline);
@@ -205,8 +206,8 @@ ${ogImg ? `<meta name="twitter:image" content="${esc(ogImg)}">` : ''}
 <link rel="alternate" type="application/atom+xml" title="${esc(meta.siteName)} – Novità" href="${href('feed.xml')}">
 <link rel="preload" href="${href('fonts/big-shoulders-display-latin-900-normal.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="${href('fonts/instrument-sans-latin-400-normal.woff2')}" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="${href('style.css')}">
-<link rel="stylesheet" href="${href('theme.css')}">
+${preload ? `<link rel="preload" as="image" href="${esc(preload)}" fetchpriority="high">` : ''}
+<link rel="stylesheet" href="${href('site.css')}">
 ${extStyles.map((s) => `<link rel="stylesheet" href="${href(s)}">`).join('\n')}
 <script src="${href('app.js')}" defer></script>
 ${extScripts.map((s) => `<script src="${href(s)}" defer></script>`).join('\n')}
@@ -217,7 +218,7 @@ ${runHooks('head', { path: p, section, type, noindex, body })}
 <a class="skip" href="#main">Vai al contenuto</a>
 <div class="scrollbar" aria-hidden="true"><i></i></div>
 <header class="top">
-  <a class="brand" href="${href()}" aria-label="${esc(meta.siteName)} – home">
+  <a class="brand" href="${href()}" aria-label="VI ${esc(meta.siteName)} – home">
     <span class="brand__vi">VI</span><span class="brand__name">${esc(meta.siteName)}</span>
   </a>
   <nav class="nav" aria-label="Principale">
@@ -278,7 +279,7 @@ const ctx = {
   /** Copia un file da gta-wiki/<rel> a dist/<dest> */
   copyFile: (rel, dest = rel.replace(/^src\//, '')) => { extFiles.set(dest, fs.readFileSync(path.join(ROOT, rel))); }
 };
-extStyles.push('motion.css'); extScripts.push('motion.js'); // movimento del sito (src/motion.*)
+extScripts.push('motion.js'); // movimento del sito (src/motion.js; il CSS è unito in site.css)
 await loadExtensions(ctx);
 
 const counts = {
@@ -318,7 +319,7 @@ put('index.html', layout({
   title: '', path: '', prio: 1,
   desc: 'La wiki italiana di GTA VI: personaggi, luoghi, easter egg, veicoli, armi e guide. Ogni scheda ha le fonti e si aggiorna in automatico dopo il lancio.',
   schema: [websiteLd, videoGameLd],
-  image: SITE ? abs('og.png') : '',
+  image: SITE ? abs('og.png') : '', preload: heroImg ? href(heroImg) : undefined,
   body: `
 <section class="hero${heroImg ? ' hero--photo' : ''}" id="hero" data-phase="${meta.phase}">
   <div class="hero__sky" aria-hidden="true">
@@ -486,7 +487,7 @@ characters.forEach((c, i) => {
     desc: `${c.name} in GTA VI: ${c.tagline} ${c.summary}`,
     crumbs: [['Home', ''], ['Personaggi', 'personaggi/'], [c.name, p]],
     schema: [{ '@context': 'https://schema.org', '@type': 'Article', headline: `${c.name} in GTA VI`, description: trunc(c.summary), inLanguage: 'it', dateModified: c.updated, datePublished: c.updated, author: { '@type': 'Organization', name: meta.siteName }, publisher: { '@type': 'Organization', name: meta.siteName }, about: { '@type': 'Thing', name: c.name, description: 'Personaggio di Grand Theft Auto VI' }, ...(c.photo && SITE ? { image: abs(c.photo) } : {}), ...(SITE ? { mainEntityOfPage: abs(p) } : {}) }],
-    image: c.photo && SITE ? abs(c.photo) : undefined,
+    image: c.photo && SITE ? abs(c.photo) : undefined, preload: c.photo ? href(c.photo) : undefined,
     body: `<article class="profile ch-${c.slug}">
     <div class="profile__art"><figure class="frame">${charArt(c, true)}</figure><p class="art-note">${c.photo ? esc(CREDIT) : 'Locandina tipografica: la foto ufficiale arriverà presto.'}</p></div>
     <div class="profile__main">
@@ -517,7 +518,7 @@ locations.forEach((l, i) => {
   const who = characters.filter((c) => c.locations.includes(l.slug));
   const p = `luoghi/${l.slug}/`;
   put(`${p}index.html`, layout({
-    title: `${l.name} in GTA VI: ${l.kind.toLowerCase()} di Leonida`, section: 'luoghi', path: p, type: 'article', image: l.photo && SITE ? abs(l.photo) : undefined,
+    title: `${l.name} in GTA VI: ${l.kind.toLowerCase()} di Leonida`, section: 'luoghi', path: p, type: 'article', image: l.photo && SITE ? abs(l.photo) : undefined, preload: l.photo ? href(l.photo) : undefined,
     desc: `${l.name} (${l.kind.toLowerCase()}) in GTA VI: ${l.tagline} ${l.summary}`,
     crumbs: [['Home', ''], ['Luoghi', 'luoghi/'], [l.name, p]],
     schema: [{ '@context': 'https://schema.org', '@type': 'Article', headline: `${l.name} in GTA VI`, description: trunc(l.summary), inLanguage: 'it', dateModified: l.updated, datePublished: l.updated, author: { '@type': 'Organization', name: meta.siteName }, publisher: { '@type': 'Organization', name: meta.siteName }, ...(SITE ? { mainEntityOfPage: abs(p) } : {}) }],
@@ -556,7 +557,7 @@ for (const s of SECTIONS) {
   list.filter((t) => t.status !== 'planned').forEach((t, i, arr) => {
     const tp = `${p}${t.slug}/`;
     put(`${tp}index.html`, layout({
-      title: `${t.title}: ${s.label.toLowerCase()} di GTA VI`, section: 'wiki', path: tp, type: 'article', image: t.photo && SITE ? abs(t.photo) : undefined,
+      title: `${t.title}: ${s.label.toLowerCase()} di GTA VI`, section: 'wiki', path: tp, type: 'article', image: t.photo && SITE ? abs(t.photo) : undefined, preload: t.photo ? href(t.photo) : undefined,
       desc: `${t.title}: ${t.tagline} ${t.summary}`,
       crumbs: [['Home', ''], ['Wiki', 'wiki/'], [s.label, p], [t.title, tp]],
       schema: [{ '@context': 'https://schema.org', '@type': 'Article', headline: `${t.title} in GTA VI`, description: trunc(t.summary), inLanguage: 'it', dateModified: t.updated, datePublished: t.updated, author: { '@type': 'Organization', name: meta.siteName }, publisher: { '@type': 'Organization', name: meta.siteName }, ...(SITE ? { mainEntityOfPage: abs(tp) } : {}) }],
@@ -747,11 +748,11 @@ for (const [rel, html] of pages) {
   fs.writeFileSync(f, html);
 }
 const copy = (rel, to = rel) => { fs.mkdirSync(path.dirname(path.join(OUT, to)), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'src', rel), path.join(OUT, to)); };
-for (const f of ['style.css', 'motion.css', 'app.js', 'motion.js', 'favicon.svg', 'og.png', 'icon-180.png', 'icon-192.png', 'icon-512.png']) copy(f);
+for (const f of ['app.js', 'motion.js', 'favicon.svg', 'og.png', 'icon-180.png', 'icon-192.png', 'icon-512.png']) copy(f);
 fs.cpSync(path.join(ROOT, 'src', 'fonts'), path.join(OUT, 'fonts'), { recursive: true });
 if (fs.existsSync(path.join(ROOT, 'assets'))) fs.cpSync(path.join(ROOT, 'assets'), path.join(OUT, 'assets'), { recursive: true });
 const w = (rel, s) => { fs.mkdirSync(path.dirname(path.join(OUT, rel)), { recursive: true }); fs.writeFileSync(path.join(OUT, rel), s); };
-w('theme.css', theme + '\n');
+w('site.css', minifyCss(fs.readFileSync(path.join(ROOT, 'src', 'style.css'), 'utf8') + '\n' + fs.readFileSync(path.join(ROOT, 'src', 'motion.css'), 'utf8') + '\n' + theme)); // un solo CSS minificato (meno richieste, meno byte)
 for (const [rel, content] of extFiles) w(rel, content);
 w('search-index.json', JSON.stringify(searchIndex));
 w('feed.xml', feed);
