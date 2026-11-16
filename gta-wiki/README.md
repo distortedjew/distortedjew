@@ -32,7 +32,7 @@ Copia `assets/img/characters/<slug>.jpg` (o webp/png/avif) e ricostruisci: la fo
 
 ## Sicurezza
 - **CSP rigorosa** via `<meta>` (niente script o stili inline, niente risorse esterne) e `_headers` con CSP completa, HSTS, `frame-ancestors 'none'`, Permissions-Policy, COOP/CORP per host che li supportano (Netlify, Cloudflare Pages). GitHub Pages non applica `_headers`: resta attiva la CSP nel `<meta>`.
-- Font ospitati in locale (niente Google Fonts), nessun cookie né tracker.
+- Font ospitati in locale (niente Google Fonts). Nella configurazione predefinita nessun cookie, nessun tracker, nessuna richiesta a servizi esterni. Analytics, pubblicità, account e newsletter sono **opzionali, spenti di default** e, quando attivati, caricano script esterni solo dopo il consenso (vedi «Funzioni opzionali»).
 - Contenuti validati: nessun tag HTML, schema pericoloso o link non `https`; escape di tutto l'output; link esterni con `noopener noreferrer nofollow`.
 - Asset: solo immagini raster, max 1,8 MB, niente SVG né symlink.
 - `.well-known/security.txt` con contatto per segnalazioni riservate.
@@ -47,3 +47,18 @@ Configurazione una tantum:
 3. (Facoltativo) variabile `WIKI_MODE=pr` per ricevere Pull Request invece di commit diretti (consigliato se `main` è protetto).
 
 Fan site non ufficiale; non affiliato a Rockstar Games o Take-Two Interactive.
+
+## Funzioni opzionali (estensioni)
+Il generatore carica i moduli in `scripts/lib/ext/` (API in `scripts/lib/ext/README.md`). Si configurano con `config/site.json` oppure con variabili GitHub (`vars.WIKI_*`) passate dal workflow di deploy: **solo identificativi pubblici, mai segreti**. L'agente automatico non può modificare questa configurazione.
+
+| Funzione | Cosa fa | Documentazione |
+|---|---|---|
+| Mappa | Pagina `/mappa/` con schema indicativo di Leonida e pin (`content/map.json`) | `docs/MAP.md` |
+| Galleria e trailer | Immagini ufficiali e pagina trailer (`content/gallery.json`) | `docs/PHOTOS.md` |
+| Analytics, consenso, pubblicità | Plausible o GA4 con banner di consenso; AdSense con CMP Google | `docs/MONETIZATION.md` |
+| Account, preferiti, newsletter | Login e registrazione con Supabase, preferiti, newsletter con Buttondown | `docs/ACCOUNTS.md` |
+| Pagine legali | `/privacy/`, `/cookie/`, `/termini/` generate in base alle funzioni attive | `docs/MONETIZATION.md` |
+
+**Importante sulla pubblicità:** la policy di Rockstar consente l'uso del suo materiale solo senza scopo commerciale. Per questo gli annunci sono esclusi di default dalle pagine con immagini Rockstar e, se vuoi mostrarli lì, serve il permesso scritto di Take-Two (vedi `docs/MONETIZATION.md`).
+
+Con tutte le funzioni attive la base resta controllata dallo stesso `npm run check` (validazione di configurazione, build e audit su ogni pagina). `WIKI_ENV=production` (impostato dal deploy) vieta il provider demo degli account.

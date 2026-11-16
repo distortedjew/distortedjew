@@ -58,6 +58,8 @@ for (const f of htmlFiles) {
     const attrs = m[1];
     if (/type="application\/ld\+json"/.test(attrs)) continue;
     if (!/\bsrc="/.test(attrs)) add(rel, 'script inline non consentito dalla CSP');
+    const ssrc = (attrs.match(/\bsrc="([^"]*)"/) || [])[1];
+    if (ssrc && /^(https?:)?\/\//.test(ssrc)) add(rel, `script esterno nel markup (devono caricarsi solo dopo il consenso, da JS): ${ssrc}`);
   }
   if (/<style[\s>]/.test(h)) add(rel, '<style> inline non consentito dalla CSP');
   if (/\sstyle="/.test(h)) add(rel, 'attributo style inline non consentito dalla CSP');

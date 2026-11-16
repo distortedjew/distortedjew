@@ -19,6 +19,29 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Identificativi PUBBLICI da Settings > Secrets and variables > Actions > Variables (mai segreti). Vedi gta-wiki/docs/MONETIZATION.md
+    env:
+      WIKI_LEGAL_OWNER: ${{ vars.WIKI_LEGAL_OWNER }}
+      WIKI_LEGAL_EMAIL: ${{ vars.WIKI_LEGAL_EMAIL }}
+      WIKI_ANALYTICS_PROVIDER: ${{ vars.WIKI_ANALYTICS_PROVIDER }}
+      WIKI_PLAUSIBLE_DOMAIN: ${{ vars.WIKI_PLAUSIBLE_DOMAIN }}
+      WIKI_GA4_ID: ${{ vars.WIKI_GA4_ID }}
+      WIKI_ADS_PROVIDER: ${{ vars.WIKI_ADS_PROVIDER }}
+      WIKI_ADSENSE_CLIENT: ${{ vars.WIKI_ADSENSE_CLIENT }}
+      WIKI_ADSENSE_SLOT_ARTICLE: ${{ vars.WIKI_ADSENSE_SLOT_ARTICLE }}
+      WIKI_ADSENSE_SLOT_HOME: ${{ vars.WIKI_ADSENSE_SLOT_HOME }}
+      WIKI_ADS_CMP: ${{ vars.WIKI_ADS_CMP }}
+      WIKI_ADS_ALLOW_OFFICIAL_IMAGES: ${{ vars.WIKI_ADS_ALLOW_OFFICIAL_IMAGES }}
+      WIKI_ADS_ROCKSTAR_PERMISSION_REF: ${{ vars.WIKI_ADS_ROCKSTAR_PERMISSION_REF }}
+      WIKI_ACCOUNTS_PROVIDER: ${{ vars.WIKI_ACCOUNTS_PROVIDER }}
+      WIKI_SUPABASE_URL: ${{ vars.WIKI_SUPABASE_URL }}
+      WIKI_SUPABASE_ANON_KEY: ${{ vars.WIKI_SUPABASE_ANON_KEY }}
+      WIKI_NEWSLETTER_PROVIDER: ${{ vars.WIKI_NEWSLETTER_PROVIDER }}
+      WIKI_BUTTONDOWN_USER: ${{ vars.WIKI_BUTTONDOWN_USER }}
+      WIKI_NEWSLETTER_FORM_ACTION: ${{ vars.WIKI_NEWSLETTER_FORM_ACTION }}
+      WIKI_NEWSLETTER_EMAIL_FIELD: ${{ vars.WIKI_NEWSLETTER_EMAIL_FIELD }}
+      # In produzione il provider "mock" (demo con utenti nel browser) è vietato da validatore e build
+      WIKI_ENV: production
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

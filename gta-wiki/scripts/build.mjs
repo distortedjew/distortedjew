@@ -2,12 +2,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { SECTIONS } from './lib/sections.mjs';
+import { loadConfig } from './lib/config.mjs';
+import { loadExtensions } from './lib/extensions.mjs';
+import { minifyCss } from './lib/css.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(ROOT, 'dist');
 const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'content', f), 'utf8'));
 
 const meta = read('meta.json');
+const config = loadConfig();
 const characters = read('characters.json');
 const locations = read('locations.json');
 const eggs = read('easter-eggs.json');
@@ -40,6 +44,13 @@ const ldJson = (o) => `<script type="application/ld+json">${JSON.stringify(o).re
 
 /* ---------- Foto ufficiali: auto-rilevate in assets/img/characters/<slug>.<ext> ---------- */
 const IMG_EXT = ['avif', 'webp', 'jpg', 'jpeg', 'png'];
+// Miniatura WebP (assets/img/<dir>/thumbs/<slug>.webp) per card e anteprime; se manca si usa l'originale
+const small = (photo) => {
+  const m = photo && photo.match(/^(assets\/img\/(?:characters|locations|topics))\/([^/]+)\.\w+$/);
+  if (!m) return photo;
+  const t = `${m[1]}/thumbs/${m[2]}.webp`;
+  return fs.existsSync(path.join(ROOT, t)) ? t : photo;
+};
 const findImg = (dirRel, slug) => {
   for (const e of IMG_EXT) if (fs.existsSync(path.join(ROOT, 'assets', 'img', dirRel, `${slug}.${e}`))) return `assets/img/${dirRel}/${slug}.${e}`;
   return null;
@@ -99,7 +110,7 @@ function poster(c, tag = true) {
 }
 const charArt = (c, eager = false, tag = true) =>
   c.photo
-    ? `<img class="photo" src="${href(c.photo)}" alt="${esc(c.name)}, ritratto ufficiale" width="800" height="1000" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`
+    ? `<img class="photo" src="${href(eager ? c.photo : small(c.photo))}" alt="${esc(c.name)}, ritratto ufficiale" width="800" height="1000" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`
     : poster(c, tag);
 
 /* ---------- Componenti ---------- */
@@ -134,21 +145,34 @@ function charCard(c) {
 const shot = (photo, alt, eager = false) => (photo
   ? `<figure class="shot"><img src="${href(photo)}" alt="${esc(alt)}" width="1280" height="720" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"><figcaption>${esc(CREDIT)}</figcaption></figure>`
   : '');
-const thumb = (photo, alt) => (photo ? `<span class="thumb"><img src="${href(photo)}" alt="${esc(alt)}" width="640" height="360" loading="lazy" decoding="async"></span>` : '');
+const thumb = (photo, alt, eager = false) => (photo ? `<span class="thumb"><img src="${href(small(photo))}" alt="${esc(alt)}" width="640" height="360" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></span>` : '');
 
 // Card di una sezione della wiki. Senza voci pubblicate resta cliccabile ma appare chiaramente «in arrivo».
 function secCard(s, withDesc = false) {
   const t = topics.filter((x) => x.section === s.slug);
   const ok = t.filter((x) => x.status !== 'planned').length;
-  return `<a class="sec-card${ok ? '' : ' sec-card--soon'}" href="${href(`wiki/${s.slug}/`)}"><span class="sec-card__name">${esc(s.label)}</span>${withDesc ? `<span class="sec-card__desc">${esc(s.desc)}</span>` : ''}<span class="sec-card__meta">${ok ? `${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}` : 'In arrivo dal lancio'}</span></a>`;
+  const ph = t.find((x) => x.photo && x.status !== 'planned');
+  return `<a class="sec-card${ok ? '' : ' sec-card--soon'}${ph ? ' sec-card--photo' : ''}" href="${href(`wiki/${s.slug}/`)}">${ph ? `<span class="sec-card__bg"><img src="${href(small(ph.photo))}" alt="" width="640" height="360" loading="lazy" decoding="async"></span>` : ''}<span class="sec-card__name">${esc(s.label)}</span>${withDesc ? `<span class="sec-card__desc">${esc(s.desc)}</span>` : ''}<span class="sec-card__meta">${ok ? `${ok} ${ok === 1 ? 'voce' : 'voci'}${t.length - ok ? ` · ${t.length - ok} in arrivo` : ''}` : 'In arrivo dal lancio'}</span></a>`;
 }
 
 /* ---------- Layout con SEO, CSP e dati strutturati ---------- */
 const NAV = [['personaggi', 'Personaggi'], ['luoghi', 'Luoghi'], ['wiki', 'Wiki'], ['easter-egg', 'Easter egg'], ['guide', 'Guide'], ['novita', 'Novità']];
-const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'";
+// CSP restrittiva di base; le estensioni possono aggiungere host con ctx.csp.add(direttiva, ...valori) solo se la funzione è attiva
+const cspMap = { 'default-src': ["'none'"], 'script-src': ["'self'"], 'style-src': ["'self'"], 'img-src': ["'self'", 'data:'], 'font-src': ["'self'"], 'connect-src': ["'self'"], 'manifest-src': ["'self'"], 'base-uri': ["'self'"], 'form-action': ["'self'"], 'object-src': ["'none'"] };
+const cspAdd = (dir, ...vals) => { cspMap[dir] ||= []; for (const v of vals) if (!cspMap[dir].includes(v)) cspMap[dir].push(v); };
+const cspString = () => Object.entries(cspMap).map(([k, v]) => `${k} ${v.join(' ')}`).join('; ');
+
+// Punti di estensione per i moduli in scripts/lib/ext/*.mjs (vedi scripts/lib/ext/README.md)
+const hooks = { head: [], headerTools: [], bodyEnd: [], mainEnd: [], footerLinks: [], slots: {} };
+const extStyles = [];   // percorsi relativi a dist/ di CSS aggiuntivi
+const extScripts = [];  // percorsi relativi a dist/ di JS aggiuntivi (solo same-origin, caricati con defer)
+const extFiles = new Map(); // file extra da scrivere in dist/: percorso relativo -> stringa o Buffer
+const extSearch = [];   // voci aggiuntive per l'indice di ricerca
+const slot = (name, info) => (hooks.slots[name] || []).map((f) => f(info) || '').join('');
+const runHooks = (name, info) => (hooks[name] || []).map((f) => f(info) || '').join('\n');
 const HOME_TITLE = 'Wiki italiana di GTA VI: personaggi, luoghi, easter egg e guide';
 
-function layout({ title, desc, path: p = '', body, section = '', crumbs = [], schema = [], type = 'website', image, noindex = false }) {
+function layout({ title, desc, path: p = '', body, section = '', crumbs = [], schema = [], type = 'website', image, noindex = false, preload }) {
   let full = title ? `${title} · ${meta.siteName}` : HOME_TITLE;
   if (title && full.length > 62) full = title.length <= 62 ? title : trunc(title, 62); // titoli SEO entro ~60 caratteri
   const d = trunc(desc || meta.tagline);
@@ -162,7 +186,7 @@ function layout({ title, desc, path: p = '', body, section = '', crumbs = [], sc
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="${CSP}">
+<meta http-equiv="Content-Security-Policy" content="${cspString()}">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>${esc(full)}</title>
 <meta name="description" content="${esc(d)}">
@@ -189,21 +213,26 @@ ${ogImg ? `<meta name="twitter:image" content="${esc(ogImg)}">` : ''}
 <link rel="alternate" type="application/atom+xml" title="${esc(meta.siteName)} – Novità" href="${href('feed.xml')}">
 <link rel="preload" href="${href('fonts/big-shoulders-display-latin-900-normal.woff2')}" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="${href('fonts/instrument-sans-latin-400-normal.woff2')}" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="${href('style.css')}">
-<link rel="stylesheet" href="${href('theme.css')}">
+${preload ? `<link rel="preload" as="image" href="${esc(preload)}" fetchpriority="high">` : ''}
+<link rel="stylesheet" href="${href('site.css')}">
+${extStyles.map((s) => `<link rel="stylesheet" href="${href(s)}">`).join('\n')}
 <script src="${href('app.js')}" defer></script>
+${extScripts.map((s) => `<script src="${href(s)}" defer></script>`).join('\n')}
 ${[...schema, ...ldCrumbs].map(ldJson).join('\n')}
+${runHooks('head', { path: p, section, type, noindex, body })}
 </head>
 <body class="${section ? 'sec-' + section : ''}">
 <a class="skip" href="#main">Vai al contenuto</a>
+<div class="scrollbar" aria-hidden="true"><i></i></div>
 <header class="top">
-  <a class="brand" href="${href()}" aria-label="${esc(meta.siteName)} – home">
+  <a class="brand" href="${href()}" aria-label="VI ${esc(meta.siteName)} – home">
     <span class="brand__vi">VI</span><span class="brand__name">${esc(meta.siteName)}</span>
   </a>
   <nav class="nav" aria-label="Principale">
     ${NAV.map(([s, l]) => `<a href="${href(s + '/')}"${section === s ? ' aria-current="page"' : ''}>${l}</a>`).join('')}
   </nav>
   <div class="top__tools">
+    ${runHooks('headerTools', { path: p, section, body })}
     <button class="tool" id="spoiler-toggle" type="button" aria-pressed="false" title="Mostra o nascondi gli spoiler"><span class="tool__dot"></span><span id="spoiler-label">Spoiler: nascosti</span></button>
     <button class="tool tool--search" id="search-open" type="button" aria-label="Cerca nella wiki"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Cerca</span><kbd>/</kbd></button>
   </div>
@@ -214,6 +243,7 @@ ${[...schema, ...ldCrumbs].map(ldJson).join('\n')}
 </dialog>
 <main id="main">
 ${body}
+${runHooks('mainEnd', { path: p, section, type, noindex, body })}
 </main>
 <footer class="foot">
   <div class="foot__grid">
@@ -227,11 +257,12 @@ ${body}
     </nav>
     <nav aria-label="Informazioni">
       <p class="eyebrow">Il progetto</p>
-      <ul class="foot__links"><li><a href="${href('informazioni/')}">Informazioni e metodo</a></li><li><a href="${href('informazioni/#privacy')}">Privacy</a></li><li><a href="${href('feed.xml')}">Feed Atom</a></li><li><a href="${href('cerca/')}">Cerca</a></li></ul>
+      <ul class="foot__links"><li><a href="${href('informazioni/')}">Informazioni e metodo</a></li><li><a href="${href('informazioni/#privacy')}">Privacy</a></li><li><a href="${href('feed.xml')}">Feed Atom</a></li><li><a href="${href('cerca/')}">Cerca</a></li>${hooks.footerLinks.map(([label, rel]) => `<li><a href="${href(rel)}">${esc(label)}</a></li>`).join('')}</ul>
       <p class="foot__small">Aggiornato il <time datetime="${meta.lastUpdate}">${fmtDate(meta.lastUpdate)}</time></p>
     </nav>
   </div>
 </footer>
+${runHooks('bodyEnd', { path: p, section, type, noindex, body })}
 </body>
 </html>`;
 }
@@ -243,6 +274,20 @@ const put = (rel, html, opts = {}) => {
   pages.set(rel, html);
   if (!opts.skipSitemap) urls.push({ rel: rel.replace(/index\.html$/, ''), lastmod: opts.lastmod || meta.lastUpdate, prio: opts.prio });
 };
+
+/* ---------- Estensioni (scripts/lib/ext/*.mjs) ---------- */
+const ctx = {
+  ROOT, meta, config, SITE, BASE, CREDIT, SECTIONS, STATUS, sectionBy,
+  data: { characters, locations, eggs, guides, topics, faq, news },
+  legalSections: [], // [{id, title, html: () => string}] mostrate da /privacy/ (le estensioni che trattano dati vi aggiungono la loro sezione)
+  nav: NAV, hooks, csp: { add: cspAdd }, styles: extStyles, scripts: extScripts, files: extFiles, searchIndex: extSearch,
+  put, layout, esc, href, abs, trunc, fmtDate, badge, shot, thumb, ldJson, markdown, sources, updated, crumbsHtml,
+  addSlot: (name, fn) => { (hooks.slots[name] ||= []).push(fn); },
+  /** Copia un file da gta-wiki/<rel> a dist/<dest> */
+  copyFile: (rel, dest = rel.replace(/^src\//, '')) => { extFiles.set(dest, fs.readFileSync(path.join(ROOT, rel))); }
+};
+extScripts.push('motion.js'); // movimento del sito (src/motion.js; il CSS è unito in site.css)
+await loadExtensions(ctx);
 
 const counts = {
   eggs: eggs.filter((e) => e.status !== 'planned').length,
@@ -281,7 +326,7 @@ put('index.html', layout({
   title: '', path: '', prio: 1,
   desc: 'La wiki italiana di GTA VI: personaggi, luoghi, easter egg, veicoli, armi e guide. Ogni scheda ha le fonti e si aggiorna in automatico dopo il lancio.',
   schema: [websiteLd, videoGameLd],
-  image: SITE ? abs('og.png') : '',
+  image: SITE ? abs('og.png') : '', preload: heroImg ? href(heroImg) : undefined,
   body: `
 <section class="hero${heroImg ? ' hero--photo' : ''}" id="hero" data-phase="${meta.phase}">
   <div class="hero__sky" aria-hidden="true">
@@ -320,6 +365,7 @@ put('index.html', layout({
   </div>
 </section>
 
+${slot('home:after-ticker')}
 <section class="block quote-block" data-reveal>
   <p class="eyebrow">La storia in breve</p>
   <blockquote class="pull">«Jason e Lucia sanno da sempre che il banco è truccato. Quando un colpo facile va male, finiscono nel lato <em>più oscuro</em> del posto <em>più soleggiato</em> d'America.»</blockquote>
@@ -335,15 +381,19 @@ put('index.html', layout({
   <div class="char-grid">${characters.map(charCard).join('')}</div>
   <p class="block__more"><a class="link" href="${href('personaggi/')}">Tutti i personaggi →</a></p>
 </section>
+${slot('home:after-cast')}
 
 <section class="block block--paper" data-reveal>
   <div class="block__head">
     <p class="eyebrow eyebrow--dark">Mappa</p>
     <h2 class="h2">I luoghi di Leonida</h2>
   </div>
+  <div class="loc-split">
   <ol class="loc-list">
     ${locations.map((l) => `<li><a href="${href(`luoghi/${l.slug}/`)}"><span class="loc-list__name">${esc(l.name)}</span><span class="loc-list__kind">${esc(l.kind)}</span><span class="loc-list__tag">${esc(l.tagline)}</span></a></li>`).join('')}
   </ol>
+  ${(() => { const f = locations.find((l) => l.photo); return f ? `<a class="loc-feature" href="${href(`luoghi/${f.slug}/`)}"><img src="${href(small(f.photo))}" alt="${esc(f.name)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="loc-feature__cap"><b>${esc(f.name)}</b><small>${esc(CREDIT)}</small></span></a>` : ''; })()}
+  </div>
 </section>
 
 ${gallery.length ? `<section class="block" data-reveal>
@@ -352,10 +402,11 @@ ${gallery.length ? `<section class="block" data-reveal>
     <h2 class="h2">Dal materiale ufficiale</h2>
     <p class="block__lead">Immagini ufficiali Rockstar, ognuna collegata alla sua scheda.</p>
   </div>
-  <div class="gallery">${gallery.map((g) => `<a class="gallery__item" href="${href(g.u)}"><img src="${href(g.photo)}" alt="${esc(g.title)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="gallery__cap"><small>${esc(g.kind)}</small>${esc(g.title)}</span></a>`).join('')}</div>
+  <div class="gallery">${gallery.map((g) => `<a class="gallery__item" href="${href(g.u)}"><img src="${href(small(g.photo))}" alt="${esc(g.title)}, immagine ufficiale" width="1280" height="720" loading="lazy" decoding="async"><span class="gallery__cap"><small>${esc(g.kind)}</small>${esc(g.title)}</span></a>`).join('')}</div>
   <p class="credit">${esc(CREDIT)}</p>
 </section>` : ''}
 
+${slot('home:after-gallery')}
 <section class="block" data-reveal>
   <div class="block__head">
     <p class="eyebrow">Enciclopedia</p>
@@ -376,17 +427,17 @@ ${gallery.length ? `<section class="block" data-reveal>
   <div class="progress-row">
     <a class="progress" href="${href('easter-egg/')}">
       <span class="progress__label">Easter egg</span>
-      <span class="progress__num">${counts.eggs}<small> di ${counts.eggs + counts.eggsPlanned} previsti</small></span>
+      <span class="progress__num"><span data-count="${counts.eggs}">${counts.eggs}</span><small> di ${counts.eggs + counts.eggsPlanned} previsti</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.eggs, counts.eggs + counts.eggsPlanned)}"></i></span>
     </a>
     <a class="progress" href="${href('guide/')}">
       <span class="progress__label">Guide</span>
-      <span class="progress__num">${counts.guides}<small> di ${counts.guides + counts.guidesPlanned} previste</small></span>
+      <span class="progress__num"><span data-count="${counts.guides}">${counts.guides}</span><small> di ${counts.guides + counts.guidesPlanned} previste</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.guides, counts.guides + counts.guidesPlanned)}"></i></span>
     </a>
     <a class="progress" href="${href('personaggi/')}">
       <span class="progress__label">Schede verificate</span>
-      <span class="progress__num">${counts.verifiedChars}<small> di ${counts.chars} personaggi</small></span>
+      <span class="progress__num"><span data-count="${counts.verifiedChars}">${counts.verifiedChars}</span><small> di ${counts.chars} personaggi</small></span>
       <span class="progress__bar" aria-hidden="true"><i class="w${pct5(counts.verifiedChars, counts.chars)}"></i></span>
     </a>
   </div>
@@ -421,7 +472,8 @@ ${gallery.length ? `<section class="block" data-reveal>
   <div class="block__head"><p class="eyebrow">Domande frequenti</p><h2 class="h2">Le basi</h2></div>
   <div class="faq">${faq.slice(0, 4).map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}</div>
   <p class="block__more"><a class="link" href="${href('faq/')}">Tutte le domande →</a></p>
-</section>`
+</section>
+${slot('home:end')}`
 }), { prio: 1 });
 
 // PERSONAGGI
@@ -442,7 +494,7 @@ characters.forEach((c, i) => {
     desc: `${c.name} in GTA VI: ${c.tagline} ${c.summary}`,
     crumbs: [['Home', ''], ['Personaggi', 'personaggi/'], [c.name, p]],
     schema: [{ '@context': 'https://schema.org', '@type': 'Article', headline: `${c.name} in GTA VI`, description: trunc(c.summary), inLanguage: 'it', dateModified: c.updated, datePublished: c.updated, author: { '@type': 'Organization', name: meta.siteName }, publisher: { '@type': 'Organization', name: meta.siteName }, about: { '@type': 'Thing', name: c.name, description: 'Personaggio di Grand Theft Auto VI' }, ...(c.photo && SITE ? { image: abs(c.photo) } : {}), ...(SITE ? { mainEntityOfPage: abs(p) } : {}) }],
-    image: c.photo && SITE ? abs(c.photo) : undefined,
+    image: c.photo && SITE ? abs(c.photo) : undefined, preload: c.photo ? href(c.photo) : undefined,
     body: `<article class="profile ch-${c.slug}">
     <div class="profile__art"><figure class="frame">${charArt(c, true)}</figure><p class="art-note">${c.photo ? esc(CREDIT) : 'Locandina tipografica: la foto ufficiale arriverà presto.'}</p></div>
     <div class="profile__main">
@@ -473,7 +525,7 @@ locations.forEach((l, i) => {
   const who = characters.filter((c) => c.locations.includes(l.slug));
   const p = `luoghi/${l.slug}/`;
   put(`${p}index.html`, layout({
-    title: `${l.name} in GTA VI: ${l.kind.toLowerCase()} di Leonida`, section: 'luoghi', path: p, type: 'article', image: l.photo && SITE ? abs(l.photo) : undefined,
+    title: `${l.name} in GTA VI: ${l.kind.toLowerCase()} di Leonida`, section: 'luoghi', path: p, type: 'article', image: l.photo && SITE ? abs(l.photo) : undefined, preload: l.photo ? href(l.photo) : undefined,
     desc: `${l.name} (${l.kind.toLowerCase()}) in GTA VI: ${l.tagline} ${l.summary}`,
     crumbs: [['Home', ''], ['Luoghi', 'luoghi/'], [l.name, p]],
     schema: [{ '@context': 'https://schema.org', '@type': 'Article', headline: `${l.name} in GTA VI`, description: trunc(l.summary), inLanguage: 'it', dateModified: l.updated, datePublished: l.updated, author: { '@type': 'Organization', name: meta.siteName }, publisher: { '@type': 'Organization', name: meta.siteName }, ...(SITE ? { mainEntityOfPage: abs(p) } : {}) }],
@@ -505,14 +557,14 @@ for (const s of SECTIONS) {
     title: `${s.label} in GTA VI`, section: 'wiki', path: p, desc: `${s.desc} Voci con fonti e stato di verifica, aggiornate dopo il lancio di GTA VI.`,
     crumbs: [['Home', ''], ['Wiki', 'wiki/'], [s.label, p]],
     body: `<header class="page-head">${crumbsHtml([['Wiki', 'wiki/'], [s.label, p]])}<p class="eyebrow">Wiki</p><h1 class="h1">${esc(s.label)}</h1><p class="page-head__lead">${esc(s.desc)}</p></header>
-    <div class="entry-list entry-list--grid">${list.length ? list.map((t) => t.status === 'planned'
+    <div class="entry-list entry-list--grid">${list.length ? list.map((t, i) => t.status === 'planned'
       ? `<article class="entry entry--planned"><p class="eyebrow">${badge('planned')}</p><h2 class="entry__title">${esc(t.title)}</h2><p>${esc(t.summary)}</p></article>`
-      : `<article class="entry${t.photo ? ' entry--photo' : ''}"><a class="entry__link" href="${href(`${p}${t.slug}/`)}">${thumb(t.photo, `${t.title}, immagine ufficiale`)}<p class="eyebrow">${badge(t.status)}${t.spoiler ? ' <span class="badge badge--spoiler">Spoiler</span>' : ''}</p><h2 class="entry__title">${esc(t.title)}</h2>${spoilerWrap(t, `<p>${esc(t.tagline)}</p>`)}</a></article>`).join('') : '<p class="empty">Nessuna voce ancora: la sezione si popola dopo il lancio.</p>'}</div>`
+      : `<article class="entry${t.photo ? ' entry--photo' : ''}"><a class="entry__link" href="${href(`${p}${t.slug}/`)}">${thumb(t.photo, `${t.title}, immagine ufficiale`, i < 3)}<p class="eyebrow">${badge(t.status)}${t.spoiler ? ' <span class="badge badge--spoiler">Spoiler</span>' : ''}</p><h2 class="entry__title">${esc(t.title)}</h2>${spoilerWrap(t, `<p>${esc(t.tagline)}</p>`)}</a></article>`).join('') : '<p class="empty">Nessuna voce ancora: la sezione si popola dopo il lancio.</p>'}</div>`
   }), { prio: 0.7 });
   list.filter((t) => t.status !== 'planned').forEach((t, i, arr) => {
     const tp = `${p}${t.slug}/`;
     put(`${tp}index.html`, layout({
-      title: `${t.title}: ${s.label.toLowerCase()} di GTA VI`, section: 'wiki', path: tp, type: 'article', image: t.photo && SITE ? abs(t.photo) : undefined,
+      title: `${t.title}: ${s.label.toLowerCase()} di GTA VI`, section: 'wiki', path: tp, type: 'article', image: t.photo && SITE ? abs(t.photo) : undefined, preload: t.photo ? href(t.photo) : undefined,
       desc: `${t.title}: ${t.tagline} ${t.summary}`,
       crumbs: [['Home', ''], ['Wiki', 'wiki/'], [s.label, p], [t.title, tp]],
       schema: [{ '@context': 'https://schema.org', '@type': 'Article', headline: `${t.title} in GTA VI`, description: trunc(t.summary), inLanguage: 'it', dateModified: t.updated, datePublished: t.updated, author: { '@type': 'Organization', name: meta.siteName }, publisher: { '@type': 'Organization', name: meta.siteName }, ...(SITE ? { mainEntityOfPage: abs(tp) } : {}) }],
@@ -607,14 +659,25 @@ put('faq/index.html', layout({
 }), { prio: 0.7 });
 
 // INFORMAZIONI
+// Testi di privacy e sicurezza: veri in ogni configurazione (dipendono da config.enabled)
+const optIn = [
+  config.enabled.analytics && `statistiche di visita (${config.analytics.provider === 'ga4' ? 'Google Analytics 4' : 'Plausible Analytics'})`,
+  config.enabled.ads && config.ads.cmp === 'google' && 'pubblicità (Google AdSense)'
+].filter(Boolean);
+const privacyText = (optIn.length
+  ? `<p>Il sito funziona senza cookie di tracciamento. Con il tuo consenso, e solo quello, può attivare: ${optIn.join(' e ')}. Finché non scegli dal banner non parte nessuna richiesta verso servizi esterni. Puoi cambiare idea in ogni momento da «Preferenze cookie» nel footer.</p>`
+  : '<p>Il sito non usa cookie, non usa strumenti di tracciamento né pubblicità e non carica risorse da servizi esterni (anche i font sono ospitati qui).</p>')
+  + (config.enabled.accounts || config.enabled.newsletter ? `<p>Se lo vuoi puoi anche ${[config.enabled.accounts && 'creare un account', config.enabled.newsletter && 'iscriverti alla newsletter'].filter(Boolean).join(' e ')}: in quel caso trattiamo i dati che inserisci.</p>` : '')
+  + `<p>Nel tuo browser viene salvata la preferenza sugli spoiler${optIn.length ? ' e la scelta sui consensi' : ''}, solo sul tuo dispositivo. Come ogni sito, l'hosting può registrare l'indirizzo IP nei propri log tecnici. Tutti i dettagli sono nell'<a href="${href('privacy/')}">informativa privacy</a>, nella pagina <a href="${href('cookie/')}">cookie</a> e nei <a href="${href('termini/')}">termini d'uso</a>.</p>`;
+const securityText = config.enabled.accounts || config.enabled.newsletter ? 'Il sito è statico; le funzioni di account e newsletter usano servizi esterni dichiarati nell\'informativa privacy.' : 'Il sito è statico, senza account né moduli.';
 put('informazioni/index.html', layout({
   title: 'Informazioni, metodo editoriale, privacy e sicurezza', section: 'info', path: 'informazioni/',
-  desc: 'Come funziona Leonida Files: wiki non ufficiale di GTA VI, metodo editoriale, stati di verifica, fonti, privacy senza cookie e segnalazione di errori o vulnerabilità.',
+  desc: 'Come funziona Leonida Files: wiki non ufficiale di GTA VI, metodo editoriale, stati di verifica, fonti, privacy e cookie, segnalazione di errori o vulnerabilità.',
   crumbs: [['Home', ''], ['Informazioni', 'informazioni/']],
   body: `<article class="article prose">
   <p class="eyebrow">Il progetto</p><h1 class="h1">Informazioni</h1>
   <h2>Cos'è Leonida Files</h2>
-  <p>Una wiki italiana, non ufficiale e senza scopo di lucro, dedicata a Grand Theft Auto VI. Non è affiliata a Rockstar Games o Take-Two Interactive. Marchi e opere appartengono ai rispettivi proprietari.</p>
+  <p>Una wiki italiana, non ufficiale${config.enabled.ads && config.ads.cmp === 'google' ? ' e indipendente' : ' e senza scopo di lucro'}, dedicata a Grand Theft Auto VI. Non è affiliata a Rockstar Games o Take-Two Interactive. Marchi e opere appartengono ai rispettivi proprietari.</p>
   <h2>Metodo editoriale</h2>
   <p>Un agente automatico controlla periodicamente fonti ufficiali e stampa di settore, riscrive le informazioni con parole proprie e le pubblica solo se superano un controllo automatico. Ogni scheda mostra uno stato:</p>
   <ul><li><strong>Confermato</strong>: fonte ufficiale o più fonti affidabili indipendenti.</li><li><strong>Non verificato</strong>: plausibile, ma con una sola fonte non ufficiale.</li><li><strong>Teoria</strong>: ipotesi o voce non verificata.</li><li><strong>Smentito</strong>: era una voce, ora è stata smentita.</li><li><strong>In arrivo</strong>: voce pianificata, non ancora scritta.</li></ul>
@@ -622,9 +685,9 @@ put('informazioni/index.html', layout({
   <h2>Segnala un errore</h2>
   <p>Hai trovato un'informazione sbagliata o una fonte migliore? <a href="https://github.com/distortedjew/distortedjew/issues/new" target="_blank" rel="noopener noreferrer">Apri una segnalazione su GitHub</a>.</p>
   <h2 id="privacy">Privacy</h2>
-  <p>Il sito non usa cookie, non usa strumenti di tracciamento né pubblicità e non carica risorse da servizi esterni (anche i font sono ospitati qui). Nel tuo browser viene salvata solo la preferenza sugli spoiler, e solo sul tuo dispositivo.</p>
+  ${privacyText}
   <h2>Sicurezza</h2>
-  <p>Il sito è statico, senza account né moduli. Se pensi di aver trovato una vulnerabilità, segnalala in modo riservato dalla <a href="https://github.com/distortedjew/distortedjew/security/advisories/new" target="_blank" rel="noopener noreferrer">pagina di sicurezza del repository</a>; trovi i riferimenti anche in <a href="${href('.well-known/security.txt')}">security.txt</a>.</p>
+  <p>${securityText} Se pensi di aver trovato una vulnerabilità, segnalala in modo riservato dalla <a href="https://github.com/distortedjew/distortedjew/security/advisories/new" target="_blank" rel="noopener noreferrer">pagina di sicurezza del repository</a>; trovi i riferimenti anche in <a href="${href('.well-known/security.txt')}">security.txt</a>.</p>
   <h2>Immagini</h2>
   <p>Le immagini ufficiali dei personaggi, quando presenti, sono materiale ${esc(CREDIT)}, usato a scopo informativo da fan. Se sei titolare dei diritti e vuoi una modifica, scrivici tramite la segnalazione GitHub.</p>
   </article>`
@@ -653,7 +716,8 @@ const searchIndex = [
   ...eggs.filter((e) => e.status !== 'planned').map((e) => ({ t: e.title, k: 'Easter egg', u: `easter-egg/${e.slug}/`, s: e.summary, sp: e.spoiler })),
   ...guides.filter((g) => g.status !== 'planned').map((g) => ({ t: g.title, k: 'Guida', u: `guide/${g.slug}/`, s: g.summary, sp: g.spoiler })),
   ...faq.map((f) => ({ t: f.q, k: 'FAQ', u: 'faq/', s: f.a, sp: false })),
-  ...news.map((n) => ({ t: n.title, k: 'Novità', u: 'novita/', s: n.body, sp: false }))
+  ...news.map((n) => ({ t: n.title, k: 'Novità', u: 'novita/', s: n.body, sp: false })),
+  ...extSearch
 ];
 
 // --ar = colore d'accento garantito leggibile (contrasto ≥ 4.5) sul fondo scuro delle card
@@ -676,7 +740,7 @@ ${news.slice(0, 30).map((n, i) => `<entry><title>${xml(n.title)}</title><id>tag:
 const manifest = { name: meta.siteName, short_name: 'Leonida', description: meta.tagline, lang: 'it', start_url: BASE, scope: BASE, display: 'standalone', background_color: '#0e0620', theme_color: '#0e0620', icons: [{ src: `${BASE}icon-192.png`, sizes: '192x192', type: 'image/png' }, { src: `${BASE}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }] };
 
 const headers = `/*
-  Content-Security-Policy: ${CSP}; frame-ancestors 'none'
+  Content-Security-Policy: ${cspString()}; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
@@ -702,11 +766,12 @@ for (const [rel, html] of pages) {
   fs.writeFileSync(f, html);
 }
 const copy = (rel, to = rel) => { fs.mkdirSync(path.dirname(path.join(OUT, to)), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'src', rel), path.join(OUT, to)); };
-for (const f of ['style.css', 'app.js', 'favicon.svg', 'og.png', 'icon-180.png', 'icon-192.png', 'icon-512.png']) copy(f);
+for (const f of ['app.js', 'motion.js', 'favicon.svg', 'og.png', 'icon-180.png', 'icon-192.png', 'icon-512.png']) copy(f);
 fs.cpSync(path.join(ROOT, 'src', 'fonts'), path.join(OUT, 'fonts'), { recursive: true });
 if (fs.existsSync(path.join(ROOT, 'assets'))) fs.cpSync(path.join(ROOT, 'assets'), path.join(OUT, 'assets'), { recursive: true });
 const w = (rel, s) => { fs.mkdirSync(path.dirname(path.join(OUT, rel)), { recursive: true }); fs.writeFileSync(path.join(OUT, rel), s); };
-w('theme.css', theme + '\n');
+w('site.css', minifyCss(fs.readFileSync(path.join(ROOT, 'src', 'style.css'), 'utf8') + '\n' + fs.readFileSync(path.join(ROOT, 'src', 'motion.css'), 'utf8') + '\n' + theme)); // un solo CSS minificato (meno richieste, meno byte)
+for (const [rel, content] of extFiles) w(rel, content);
 w('search-index.json', JSON.stringify(searchIndex));
 w('feed.xml', feed);
 w('manifest.webmanifest', JSON.stringify(manifest));

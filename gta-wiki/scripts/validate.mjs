@@ -1,7 +1,9 @@
 // Validazione dei contenuti e degli asset. È il "cancello" dell'automazione: se fallisce, nulla viene pubblicato.
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { SECTIONS } from './lib/sections.mjs';
+import { loadConfig, validateConfig } from './lib/config.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const dir = path.join(ROOT, 'content');
@@ -134,6 +136,17 @@ let assetCount = 0;
     if (!/^[a-z0-9._-]+$/i.test(name)) err('assets', rel, 'nome file non valido');
   }
 })(assetsDir);
+
+for (const m of validateConfig(loadConfig())) err('config/site.json', '-', m);
+
+// Validatori delle estensioni: scripts/lib/validators/*.mjs, ognuno con `export default async ({ ROOT, load, err, data, config }) => {}`
+const vdir = path.join(import.meta.dirname, 'lib', 'validators');
+if (fs.existsSync(vdir)) {
+  for (const n of fs.readdirSync(vdir).filter((f) => f.endsWith('.mjs')).sort()) {
+    const mod = await import(pathToFileURL(path.join(vdir, n)).href);
+    await mod.default({ ROOT, load, err, data, config: loadConfig() });
+  }
+}
 
 if (errors.length) {
   console.error(`✗ ${errors.length} problemi:\n` + errors.map((e) => '  - ' + e).join('\n'));
