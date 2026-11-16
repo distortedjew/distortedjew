@@ -1,0 +1,51 @@
+/* Pagine account: accedi, registrati, account. Token Vice City di style.css. */
+.lf-wrap { width: min(560px, 100% - 2rem); margin: 0 auto 4rem; display: grid; gap: 1.4rem; }
+.lf-wrap--wide { width: min(820px, 100% - 2rem); }
+.lf-card { border: 1px solid var(--line); border-radius: 8px; padding: clamp(1.1rem, 3vw, 1.8rem); background: linear-gradient(160deg, var(--night), var(--dusk)); }
+.lf-card--danger { border-color: #ff6b6b; }
+.lf-card__title { font: 900 clamp(1.7rem, 4vw, 2.2rem)/1 var(--display); text-transform: uppercase; margin: 0 0 1rem; }
+.lf-card a { color: var(--aqua); }
+.lf-form { display: grid; gap: 1rem; }
+.lf-field { display: grid; gap: .35rem; }
+.lf-field label { font: 500 .8rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--aqua); }
+.lf-field input { min-height: 48px; width: 100%; background: var(--ink); color: var(--cream); border: 1px solid var(--muted); border-radius: 8px; padding: .65rem .9rem; font: 500 1rem var(--body); }
+.lf-field input:focus-visible { outline: 3px solid var(--aqua); outline-offset: 2px; }
+.lf-field input[aria-invalid="true"] { border-color: #ff8a8a; border-width: 2px; }
+.lf-hint { margin: 0; font-size: .85rem; color: var(--muted); }
+.lf-check { display: flex; gap: .7rem; align-items: flex-start; margin: 0; }
+.lf-check input { flex: none; width: 24px; height: 24px; margin: .1rem 0 0; accent-color: var(--yellow); }
+.lf-check label { padding-block: .1rem; }
+.lf-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: .7rem 1.5rem; border-radius: 99px; border: 2px solid var(--yellow); background: var(--yellow); color: var(--ink) !important; font: 700 .85rem var(--mono); text-transform: uppercase; letter-spacing: .1em; cursor: pointer; text-decoration: none; justify-self: start; }
+.lf-btn:hover { background: var(--orange); border-color: var(--orange); }
+.lf-btn:focus-visible, .lf-linkbtn:focus-visible { outline: 3px solid var(--aqua); outline-offset: 3px; }
+.lf-btn[disabled] { opacity: .6; cursor: progress; }
+.lf-btn--ghost { background: transparent; color: var(--cream) !important; border-color: var(--cream); }
+.lf-btn--ghost:hover { background: rgba(255, 244, 227, .12); border-color: var(--yellow); }
+.lf-btn--danger { background: #ff6b6b; border-color: #ff6b6b; }
+.lf-btn--danger:hover { background: #ff8a8a; border-color: #ff8a8a; }
+.lf-btn--small { min-height: 44px; padding: .5rem 1rem; }
+.lf-linkbtn { background: none; border: 0; padding: .6rem .2rem; min-height: 44px; font: inherit; color: var(--aqua); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.lf-links { margin: 1rem 0 0; }
+.lf-links a { display: inline-block; padding-block: .6rem; }
+.lf-msg { margin: .8rem 0 0; font-weight: 600; }
+.lf-msg:empty { display: none; }
+.lf-msg--err { color: #ffb3b3; border-left: 4px solid #ff6b6b; padding-left: .8rem; }
+.lf-msg--ok { color: var(--aqua); border-left: 4px solid var(--teal); padding-left: .8rem; }
+.lf-demo-only { border: 1px dashed #ff8a8a; padding: .8rem; border-radius: 6px; }
+.lf-dl { display: grid; grid-template-columns: max-content 1fr; gap: .4rem 1.2rem; margin: 0 0 1rem; }
+.lf-dl dt { font: 500 .8rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--aqua); }
+.lf-dl dd { margin: 0; overflow-wrap: anywhere; }
+.lf-sync { margin: 0 0 1rem; font-size: .9rem; color: var(--muted); }
+.lf-empty { color: var(--muted); margin: 0; }
+.lf-favlist { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.lf-favlist li { display: flex; gap: .8rem; align-items: center; justify-content: space-between; border: 1px solid var(--line); border-radius: 6px; padding: .4rem .4rem .4rem 1rem; }
+.lf-favlist a { font-weight: 600; overflow-wrap: anywhere; padding-block: .6rem; }
+.lf-favlist button { flex: none; min-height: 44px; min-width: 44px; padding: .4rem .9rem; border-radius: 99px; border: 1px solid var(--muted); background: transparent; color: var(--cream); font: 500 .8rem var(--mono); cursor: pointer; }
+.lf-favlist button:hover { border-color: #ff8a8a; color: #ffb3b3; }
+.lf-favlist button:focus-visible { outline: 3px solid var(--aqua); outline-offset: 3px; }
+.nl-wrap--account .nl__consent, .nl-wrap--account .nl__note { max-width: none; }
+@media (max-width: 560px) {
+  .lf-dl { grid-template-columns: 1fr; }
+  .lf-btn { width: 100%; justify-self: stretch; }
+  .lf-favlist li { flex-wrap: wrap; }
+}

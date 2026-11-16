@@ -1,0 +1,27 @@
+/* Newsletter: box in home, a fine articolo e pagina dedicata. Usa i token Vice City di style.css. */
+.nl-wrap--article { width: min(var(--wrap), 100% - 2rem); margin: 2.5rem auto 3rem; }
+.nl-wrap--page { margin: 2rem 0; }
+.nl { border: 1px solid var(--line); border-radius: 8px; padding: clamp(1.2rem, 3vw, 2rem); background: linear-gradient(160deg, var(--night), var(--dusk)); box-shadow: 6px 6px 0 var(--pink); max-width: 760px; }
+.nl--compact { padding: 1.1rem 1.3rem; box-shadow: 4px 4px 0 var(--pink); }
+.nl__title { font: 900 clamp(1.8rem, 4vw, 2.6rem)/1 var(--display); text-transform: uppercase; margin: 0 0 .6rem; }
+.nl--compact .nl__title { font-size: 1.6rem; }
+.nl__lead { margin: 0 0 1rem; color: var(--cream); max-width: 56ch; }
+.nl__row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: stretch; }
+.nl__label { flex: 1 0 100%; font: 500 .8rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--aqua); }
+.nl__input { flex: 1 1 240px; min-width: 0; min-height: 48px; background: var(--ink); color: var(--cream); border: 1px solid var(--muted); border-radius: 99px; padding: .7rem 1.2rem; font: 500 1rem var(--body); }
+.nl__input:focus-visible { outline: 3px solid var(--aqua); outline-offset: 2px; }
+.nl__btn { min-height: 48px; padding: .7rem 1.5rem; border-radius: 99px; border: 2px solid var(--yellow); background: var(--yellow); color: var(--ink); font: 700 .85rem var(--mono); text-transform: uppercase; letter-spacing: .1em; cursor: pointer; }
+.nl__btn:hover { background: var(--orange); border-color: var(--orange); }
+.nl__btn:focus-visible { outline: 3px solid var(--aqua); outline-offset: 3px; }
+.nl__btn[disabled] { opacity: .6; cursor: progress; }
+.nl__consent { display: flex; gap: .7rem; align-items: flex-start; margin: 1rem 0 .4rem; font-size: .95rem; }
+.nl__consent input { flex: none; width: 24px; height: 24px; margin: .1rem 0 0; accent-color: var(--yellow); }
+.nl__consent a, .nl__note a { color: var(--aqua); }
+.nl__note { margin: .4rem 0 0; font-size: .85rem; color: var(--muted); max-width: 62ch; }
+.nl__status { margin: .6rem 0 0; min-height: 1.2em; font-weight: 600; color: var(--aqua); }
+/* Honeypot: invisibile a chi usa il sito, ma presente nel DOM per i bot */
+.nl__hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+@media (max-width: 560px) {
+  .nl__btn { flex: 1 0 100%; }
+  .nl__consent label { padding-block: .3rem; }
+}

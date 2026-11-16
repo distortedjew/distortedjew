@@ -4,5 +4,5 @@
   "analytics": { "provider": "none", "plausibleDomain": "", "ga4Id": "" },
   "ads": { "provider": "none", "adsenseClient": "", "slots": { "article": "", "home": "", "sidebar": "" } },
   "accounts": { "provider": "none", "supabaseUrl": "", "supabaseAnonKey": "" },
-  "newsletter": { "provider": "none", "buttondownUser": "", "formAction": "" }
+  "newsletter": { "provider": "none", "buttondownUser": "", "formAction": "", "emailField": "email" }
 }

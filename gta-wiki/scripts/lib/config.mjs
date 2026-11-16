@@ -27,11 +27,13 @@ export function loadConfig(env = process.env) {
   set(c.newsletter, 'provider', 'WIKI_NEWSLETTER_PROVIDER');
   set(c.newsletter, 'buttondownUser', 'WIKI_BUTTONDOWN_USER');
   set(c.newsletter, 'formAction', 'WIKI_NEWSLETTER_FORM_ACTION');
+  set(c.newsletter, 'emailField', 'WIKI_NEWSLETTER_EMAIL_FIELD');
   // Un provider si considera attivo solo se ha davvero i suoi identificativi
   c.enabled = {
     analytics: (c.analytics.provider === 'plausible' && !!c.analytics.plausibleDomain) || (c.analytics.provider === 'ga4' && !!c.analytics.ga4Id),
     ads: c.ads.provider === 'adsense' && !!c.ads.adsenseClient,
-    accounts: c.accounts.provider === 'supabase' && !!c.accounts.supabaseUrl && !!c.accounts.supabaseAnonKey,
+    // 'mock' è solo per sviluppo/test: il validatore (validators/accounts.mjs) lo rifiuta con WIKI_ENV=production
+    accounts: (c.accounts.provider === 'supabase' && !!c.accounts.supabaseUrl && !!c.accounts.supabaseAnonKey) || c.accounts.provider === 'mock',
     newsletter: (c.newsletter.provider === 'buttondown' && !!c.newsletter.buttondownUser) || (c.newsletter.provider === 'custom' && !!c.newsletter.formAction)
   };
   return c;
@@ -54,7 +56,8 @@ export function validateConfig(c) {
   if (/service_role/i.test(JSON.stringify(c))) errs.push('NON inserire la chiave service_role: solo la chiave pubblica (anon/publishable)');
   if (c.newsletter.provider === 'custom' && c.newsletter.formAction && !https(c.newsletter.formAction)) errs.push('newsletter.formAction deve essere https');
   if (c.newsletter.buttondownUser && !/^[\w-]{2,40}$/.test(c.newsletter.buttondownUser)) errs.push('newsletter.buttondownUser non valido');
-  const personal = c.enabled.analytics || c.enabled.ads || c.enabled.accounts || c.enabled.newsletter;
+  if (c.newsletter.emailField && !/^[\w.[\]-]{1,40}$/.test(c.newsletter.emailField)) errs.push('newsletter.emailField non valido');
+  const personal = c.enabled.analytics || c.enabled.ads || (c.enabled.accounts && c.accounts.provider !== 'mock') || c.enabled.newsletter;
   if (personal && (!c.legal.owner || !c.legal.email)) errs.push('Con analytics, pubblicità, account o newsletter attivi servono legal.owner e legal.email (titolare del trattamento): compila config/site.json o WIKI_LEGAL_OWNER / WIKI_LEGAL_EMAIL');
   if (c.legal.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.legal.email)) errs.push('legal.email non valida');
   return errs;

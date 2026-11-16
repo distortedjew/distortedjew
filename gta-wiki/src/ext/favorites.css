@@ -1,0 +1,15 @@
+/* Preferiti, pulsante account in header e banner demo. Token di style.css. */
+[hidden] { display: none !important; }
+.tool--account { text-decoration: none; }
+.tool--account[data-in="1"] { border-color: var(--aqua); color: var(--aqua); }
+
+.lf-fav { width: min(var(--wrap), 100% - 2rem); margin: 1.2rem auto 0; display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; }
+.lf-fav--top { margin: 0 0 1.2rem; width: auto; }
+.lf-fav__btn { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: .5rem 1.1rem; border-radius: 99px; border: 1px solid var(--line); background: transparent; color: var(--cream); font: 500 .85rem var(--mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+.lf-fav__btn:hover { border-color: var(--yellow); }
+.lf-fav__btn:focus-visible { outline: 3px solid var(--aqua); outline-offset: 3px; }
+.lf-fav__btn[aria-pressed="true"] { background: var(--yellow); border-color: var(--yellow); color: var(--ink); }
+.lf-fav__btn[aria-pressed="true"] .lf-fav__star { fill: currentColor; }
+.lf-fav__note { font-size: .85rem; color: var(--muted); }
+
+.lf-demo { position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; background: #b00020; color: #fff; padding: .55rem 1rem; text-align: center; font: 600 .85rem/1.4 var(--mono); border-top: 2px solid #fff; }
