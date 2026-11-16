@@ -1,8 +1,8 @@
 {
-  "_note": "Configurazione del sito. Solo identificativi PUBBLICI (mai chiavi segrete). Si possono sovrascrivere con le variabili d'ambiente WIKI_* (vedi scripts/lib/config.mjs). L'agente automatico non può modificare questo file.",
+  "_note": "Configurazione del sito. Solo identificativi PUBBLICI (mai chiavi segrete). Si possono sovrascrivere con le variabili d'ambiente WIKI_* (vedi scripts/lib/config.mjs e docs/MONETIZATION.md). L'agente automatico non può modificare questo file.",
   "legal": { "owner": "", "email": "", "country": "Italia" },
   "analytics": { "provider": "none", "plausibleDomain": "", "ga4Id": "" },
-  "ads": { "provider": "none", "adsenseClient": "", "slots": { "article": "", "home": "", "sidebar": "" } },
+  "ads": { "provider": "none", "adsenseClient": "", "cmp": "none", "allowOnPagesWithOfficialImages": false, "rockstarPermissionRef": "", "slots": { "article": "", "home": "", "sidebar": "" } },
   "accounts": { "provider": "none", "supabaseUrl": "", "supabaseAnonKey": "" },
   "newsletter": { "provider": "none", "buttondownUser": "", "formAction": "" }
 }

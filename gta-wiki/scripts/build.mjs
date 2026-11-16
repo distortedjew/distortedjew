@@ -645,14 +645,25 @@ put('faq/index.html', layout({
 }), { prio: 0.7 });
 
 // INFORMAZIONI
+// Testi di privacy e sicurezza: veri in ogni configurazione (dipendono da config.enabled)
+const optIn = [
+  config.enabled.analytics && `statistiche di visita (${config.analytics.provider === 'ga4' ? 'Google Analytics 4' : 'Plausible Analytics'})`,
+  config.enabled.ads && config.ads.cmp === 'google' && 'pubblicità (Google AdSense)'
+].filter(Boolean);
+const privacyText = (optIn.length
+  ? `<p>Il sito funziona senza cookie di tracciamento. Con il tuo consenso, e solo quello, può attivare: ${optIn.join(' e ')}. Finché non scegli dal banner non parte nessuna richiesta verso servizi esterni. Puoi cambiare idea in ogni momento da «Preferenze cookie» nel footer.</p>`
+  : '<p>Il sito non usa cookie, non usa strumenti di tracciamento né pubblicità e non carica risorse da servizi esterni (anche i font sono ospitati qui).</p>')
+  + (config.enabled.accounts || config.enabled.newsletter ? `<p>Se lo vuoi puoi anche ${[config.enabled.accounts && 'creare un account', config.enabled.newsletter && 'iscriverti alla newsletter'].filter(Boolean).join(' e ')}: in quel caso trattiamo i dati che inserisci.</p>` : '')
+  + `<p>Nel tuo browser viene salvata la preferenza sugli spoiler${optIn.length ? ' e la scelta sui consensi' : ''}, solo sul tuo dispositivo. Come ogni sito, l'hosting può registrare l'indirizzo IP nei propri log tecnici. Tutti i dettagli sono nell'<a href="${href('privacy/')}">informativa privacy</a>, nella pagina <a href="${href('cookie/')}">cookie</a> e nei <a href="${href('termini/')}">termini d'uso</a>.</p>`;
+const securityText = config.enabled.accounts || config.enabled.newsletter ? 'Il sito è statico; le funzioni di account e newsletter usano servizi esterni dichiarati nell\'informativa privacy.' : 'Il sito è statico, senza account né moduli.';
 put('informazioni/index.html', layout({
   title: 'Informazioni, metodo editoriale, privacy e sicurezza', section: 'info', path: 'informazioni/',
-  desc: 'Come funziona Leonida Files: wiki non ufficiale di GTA VI, metodo editoriale, stati di verifica, fonti, privacy senza cookie e segnalazione di errori o vulnerabilità.',
+  desc: 'Come funziona Leonida Files: wiki non ufficiale di GTA VI, metodo editoriale, stati di verifica, fonti, privacy e cookie, segnalazione di errori o vulnerabilità.',
   crumbs: [['Home', ''], ['Informazioni', 'informazioni/']],
   body: `<article class="article prose">
   <p class="eyebrow">Il progetto</p><h1 class="h1">Informazioni</h1>
   <h2>Cos'è Leonida Files</h2>
-  <p>Una wiki italiana, non ufficiale e senza scopo di lucro, dedicata a Grand Theft Auto VI. Non è affiliata a Rockstar Games o Take-Two Interactive. Marchi e opere appartengono ai rispettivi proprietari.</p>
+  <p>Una wiki italiana, non ufficiale${config.enabled.ads && config.ads.cmp === 'google' ? ' e indipendente' : ' e senza scopo di lucro'}, dedicata a Grand Theft Auto VI. Non è affiliata a Rockstar Games o Take-Two Interactive. Marchi e opere appartengono ai rispettivi proprietari.</p>
   <h2>Metodo editoriale</h2>
   <p>Un agente automatico controlla periodicamente fonti ufficiali e stampa di settore, riscrive le informazioni con parole proprie e le pubblica solo se superano un controllo automatico. Ogni scheda mostra uno stato:</p>
   <ul><li><strong>Confermato</strong>: fonte ufficiale o più fonti affidabili indipendenti.</li><li><strong>Non verificato</strong>: plausibile, ma con una sola fonte non ufficiale.</li><li><strong>Teoria</strong>: ipotesi o voce non verificata.</li><li><strong>Smentito</strong>: era una voce, ora è stata smentita.</li><li><strong>In arrivo</strong>: voce pianificata, non ancora scritta.</li></ul>
@@ -660,9 +671,9 @@ put('informazioni/index.html', layout({
   <h2>Segnala un errore</h2>
   <p>Hai trovato un'informazione sbagliata o una fonte migliore? <a href="https://github.com/distortedjew/distortedjew/issues/new" target="_blank" rel="noopener noreferrer">Apri una segnalazione su GitHub</a>.</p>
   <h2 id="privacy">Privacy</h2>
-  <p>Il sito non usa cookie, non usa strumenti di tracciamento né pubblicità e non carica risorse da servizi esterni (anche i font sono ospitati qui). Nel tuo browser viene salvata solo la preferenza sugli spoiler, e solo sul tuo dispositivo.</p>
+  ${privacyText}
   <h2>Sicurezza</h2>
-  <p>Il sito è statico, senza account né moduli. Se pensi di aver trovato una vulnerabilità, segnalala in modo riservato dalla <a href="https://github.com/distortedjew/distortedjew/security/advisories/new" target="_blank" rel="noopener noreferrer">pagina di sicurezza del repository</a>; trovi i riferimenti anche in <a href="${href('.well-known/security.txt')}">security.txt</a>.</p>
+  <p>${securityText} Se pensi di aver trovato una vulnerabilità, segnalala in modo riservato dalla <a href="https://github.com/distortedjew/distortedjew/security/advisories/new" target="_blank" rel="noopener noreferrer">pagina di sicurezza del repository</a>; trovi i riferimenti anche in <a href="${href('.well-known/security.txt')}">security.txt</a>.</p>
   <h2>Immagini</h2>
   <p>Le immagini ufficiali dei personaggi, quando presenti, sono materiale ${esc(CREDIT)}, usato a scopo informativo da fan. Se sei titolare dei diritti e vuoi una modifica, scrivici tramite la segnalazione GitHub.</p>
   </article>`
