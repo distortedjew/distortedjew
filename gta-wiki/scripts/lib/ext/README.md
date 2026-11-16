@@ -16,8 +16,9 @@ export default async function register(ctx) {
 | `ctx.SITE`, `ctx.BASE`, `ctx.CREDIT`, `ctx.SECTIONS`, `ctx.STATUS` | Costanti del sito. |
 | `ctx.put(rel, html, {lastmod, prio, skipSitemap})` | Aggiunge una pagina (es. `ctx.put('mappa/index.html', ctx.layout({...}))`). |
 | `ctx.layout({title, desc, path, body, section, crumbs, schema, type, image, noindex})` | Pagina completa con SEO, CSP e JSON-LD. |
+| `ctx.legalSections` | Array `{id, title, html: () => string}`: sezioni dell'informativa privacy (le estensioni che trattano dati vi aggiungono la propria). |
 | `ctx.nav` | Array `[slug, etichetta]` del menu (push per aggiungere una voce). |
-| `ctx.hooks.head / headerTools / bodyEnd / mainEnd` | Array di funzioni `(info) => html`. `info = {path, section, type, noindex}`. |
+| `ctx.hooks.head / headerTools / bodyEnd / mainEnd` | Array di funzioni `(info) => html`. `info = {path, section, type, noindex, body}` (body = HTML del contenuto della pagina). |
 | `ctx.hooks.footerLinks` | Array di `[etichetta, percorsoRelativo]`. |
 | `ctx.addSlot(nome, fn)` | Slot della home: `home:after-ticker`, `home:after-cast`, `home:after-gallery`, `home:end`. |
 | `ctx.styles / ctx.scripts` | Array di percorsi (relativi a `dist/`) di CSS/JS **same-origin** da caricare in ogni pagina. |

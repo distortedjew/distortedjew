@@ -210,7 +210,7 @@ ${extStyles.map((s) => `<link rel="stylesheet" href="${href(s)}">`).join('\n')}
 <script src="${href('app.js')}" defer></script>
 ${extScripts.map((s) => `<script src="${href(s)}" defer></script>`).join('\n')}
 ${[...schema, ...ldCrumbs].map(ldJson).join('\n')}
-${runHooks('head', { path: p, section, type, noindex })}
+${runHooks('head', { path: p, section, type, noindex, body })}
 </head>
 <body class="${section ? 'sec-' + section : ''}">
 <a class="skip" href="#main">Vai al contenuto</a>
@@ -222,7 +222,7 @@ ${runHooks('head', { path: p, section, type, noindex })}
     ${NAV.map(([s, l]) => `<a href="${href(s + '/')}"${section === s ? ' aria-current="page"' : ''}>${l}</a>`).join('')}
   </nav>
   <div class="top__tools">
-    ${runHooks('headerTools', { path: p, section })}
+    ${runHooks('headerTools', { path: p, section, body })}
     <button class="tool" id="spoiler-toggle" type="button" aria-pressed="false" title="Mostra o nascondi gli spoiler"><span class="tool__dot"></span><span id="spoiler-label">Spoiler: nascosti</span></button>
     <button class="tool tool--search" id="search-open" type="button" aria-label="Cerca nella wiki"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Cerca</span><kbd>/</kbd></button>
   </div>
@@ -233,7 +233,7 @@ ${runHooks('head', { path: p, section, type, noindex })}
 </dialog>
 <main id="main">
 ${body}
-${runHooks('mainEnd', { path: p, section, type, noindex })}
+${runHooks('mainEnd', { path: p, section, type, noindex, body })}
 </main>
 <footer class="foot">
   <div class="foot__grid">
@@ -252,7 +252,7 @@ ${runHooks('mainEnd', { path: p, section, type, noindex })}
     </nav>
   </div>
 </footer>
-${runHooks('bodyEnd', { path: p, section, type, noindex })}
+${runHooks('bodyEnd', { path: p, section, type, noindex, body })}
 </body>
 </html>`;
 }
@@ -269,6 +269,7 @@ const put = (rel, html, opts = {}) => {
 const ctx = {
   ROOT, meta, config, SITE, BASE, CREDIT, SECTIONS, STATUS, sectionBy,
   data: { characters, locations, eggs, guides, topics, faq, news },
+  legalSections: [], // [{id, title, html: () => string}] mostrate da /privacy/ (le estensioni che trattano dati vi aggiungono la loro sezione)
   nav: NAV, hooks, csp: { add: cspAdd }, styles: extStyles, scripts: extScripts, files: extFiles, searchIndex: extSearch,
   put, layout, esc, href, abs, trunc, fmtDate, badge, shot, thumb, ldJson, markdown, sources, updated, crumbsHtml,
   addSlot: (name, fn) => { (hooks.slots[name] ||= []).push(fn); },
