@@ -11,11 +11,12 @@
     "color": "#ff2e93",
     "accent": "#ffc93c",
     "hair": "long",
-    "summary": "Una delle due protagoniste giocabili. Il primo trailer la mostra dietro le sbarre in Leonida e poi libera, in fuga con Jason. È la prima protagonista femminile della serie in un capitolo principale.",
+    "summary": "Una delle due protagoniste. Il padre le ha insegnato a battersi fin da piccola, e difendere la famiglia l'ha portata nel penitenziario di Leonida, da cui è uscita per pura fortuna. Ora vuole costruire la bella vita sognata da sua madre fin dai tempi di Liberty City, puntando solo su mosse intelligenti.",
     "facts": [
-      "Giocabile insieme a Jason Duval: Rockstar ha confermato due protagonisti.",
-      "Nel Trailer 1 compare in carcere e poi durante una rapina con Jason.",
-      "Il suo legame con Jason è il cuore della storia mostrata finora."
+      "Rockstar la presenta come una delle due protagoniste di GTA VI.",
+      "Ha passato del tempo nel penitenziario di Leonida.",
+      "Sua madre sogna una vita migliore dai tempi di Liberty City.",
+      "Dopo il carcere dice di voler giocare solo mosse intelligenti."
     ],
     "locations": [
       "leonida-keys",
@@ -26,8 +27,8 @@
     ],
     "sources": [
       {
-        "label": "Rockstar Games – Trailer 1 e 2",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/lucia"
       }
     ],
     "updated": "2026-11-16",
@@ -45,11 +46,12 @@
     "color": "#00d1c1",
     "accent": "#ff7a30",
     "hair": "short",
-    "summary": "Il secondo protagonista giocabile. Ex militare, si è ritrovato nel giro dei piccoli traffici delle Leonida Keys prima di incontrare Lucia.",
+    "summary": "Uno dei due protagonisti. È cresciuto tra truffatori e malviventi e, dopo un periodo nell'esercito per lasciarsi alle spalle un'adolescenza difficile, è finito nelle Keys a lavorare per i trafficanti locali. Per Rockstar potrebbe essere il momento di cambiare strada, e l'incontro con Lucia può andare benissimo o malissimo.",
     "facts": [
-      "Giocabile insieme a Lucia Caminos.",
-      "Secondo il materiale ufficiale ha un passato nell'esercito.",
-      "Nel Trailer 1 lavora con Lucia a colpi sempre più grossi."
+      "Rockstar lo presenta come uno dei due protagonisti di GTA VI.",
+      "Ha un passato nell'esercito.",
+      "Nelle Keys lavorava per i trafficanti del posto.",
+      "Il suo rapporto con Lucia è il fulcro della presentazione ufficiale."
     ],
     "locations": [
       "leonida-keys",
@@ -61,8 +63,8 @@
     ],
     "sources": [
       {
-        "label": "Rockstar Games – Trailer 1 e 2",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/jason"
       }
     ],
     "updated": "2026-11-16",
@@ -71,29 +73,33 @@
   {
     "slug": "cal-hampton",
     "name": "Cal Hampton",
-    "role": "Da confermare",
-    "tagline": "Compare accanto a Jason nei materiali ufficiali.",
-    "status": "unverified",
+    "role": "Amico di Jason",
+    "tagline": "Paranoico, rilassato e sempre in casa.",
+    "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
     "playable": false,
     "color": "#ff7a30",
     "accent": "#fff4e3",
     "hair": "cap",
-    "summary": "Personaggio presentato nelle schede ufficiali legate al Trailer 2. Il suo ruolo preciso nella trama verrà descritto qui dopo il lancio.",
+    "summary": "Amico di Jason e, come lui, collaboratore di Brian. Secondo Rockstar si sente al sicuro soprattutto a casa, dove origlia le comunicazioni della Guardia Costiera con qualche birra a portata di mano. Il materiale lo mostra anche al minigolf, a pesca e a giocare a biliardo con Jason.",
     "facts": [
-      "Presentato nel materiale ufficiale del Trailer 2."
+      "È un amico di Jason.",
+      "Lavora, come Jason, nell'orbita di Brian Heder.",
+      "Spia le comunicazioni della Guardia Costiera.",
+      "Nelle immagini ufficiali compare al minigolf, in barca e al biliardo."
     ],
     "locations": [
       "leonida-keys"
     ],
     "related": [
-      "jason-duval"
+      "jason-duval",
+      "brian-heder"
     ],
     "sources": [
       {
-        "label": "Rockstar Games – VI",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/cal"
       }
     ],
     "updated": "2026-11-16",
@@ -102,27 +108,32 @@
   {
     "slug": "boobie-ike",
     "name": "Boobie Ike",
-    "role": "Da confermare",
-    "tagline": "Un nome che si fa notare a Vice City.",
-    "status": "unverified",
+    "role": "Imprenditore di Vice City",
+    "tagline": "Una leggenda locale che fa affari a sorriso aperto.",
+    "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
     "playable": false,
     "color": "#ffc93c",
     "accent": "#6d28d9",
     "hair": "bald",
-    "summary": "Figura del Trailer 2 legata a Vice City. Scheda in attesa di conferma sul ruolo reale nel gioco.",
+    "summary": "Figura molto nota a Vice City: ha trasformato il suo passato di strada in un piccolo impero fatto di immobili, un locale di spogliarello e uno studio di registrazione. Affabile finché non si parla di affari, punta soprattutto sull'etichetta Only Raw Records, creata con il giovane Dre'Quan.",
     "facts": [
-      "Presentato nel materiale ufficiale del Trailer 2."
+      "Possiede immobili, un locale e uno studio di registrazione.",
+      "È socio di Dre'Quan Priest in Only Raw Records.",
+      "Nelle immagini ufficiali compare nel locale Jack of Hearts.",
+      "Ciò che gli manca, dice Rockstar, è un successo discografico."
     ],
     "locations": [
       "vice-city"
     ],
-    "related": [],
+    "related": [
+      "dre-quan-priest"
+    ],
     "sources": [
       {
-        "label": "Rockstar Games – VI",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/boobie"
       }
     ],
     "updated": "2026-11-16",
@@ -131,27 +142,32 @@
   {
     "slug": "dre-quan-priest",
     "name": "Dre'Quan Priest",
-    "role": "Da confermare",
-    "tagline": "Stile e potere, a quanto pare.",
-    "status": "unverified",
+    "role": "Aspirante magnate musicale",
+    "tagline": "Spacciatore per necessità, musicista per ambizione.",
+    "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
     "playable": false,
     "color": "#6d28d9",
     "accent": "#5ee7df",
     "hair": "curly",
-    "summary": "Figura del Trailer 2. Il ruolo esatto è ancora da documentare.",
+    "summary": "Giovane con l'obiettivo di sfondare nella musica: per Rockstar è sempre stato più un trafficante di strada che un gangster. Dirige Only Raw Records insieme a Boobie Ike e ha messo sotto contratto le Real Dimez, un risultato che potrebbe allontanarlo dal locale di Boobie e puntarlo sulla scena di Vice City.",
     "facts": [
-      "Presentato nel materiale ufficiale del Trailer 2."
+      "Il suo obiettivo dichiarato è entrare nel mondo della musica.",
+      "È socio di Boobie Ike in Only Raw Records.",
+      "Ha messo sotto contratto le Real Dimez."
     ],
     "locations": [
       "vice-city"
     ],
-    "related": [],
+    "related": [
+      "boobie-ike",
+      "real-dimez"
+    ],
     "sources": [
       {
-        "label": "Rockstar Games – VI",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/drequan"
       }
     ],
     "updated": "2026-11-16",
@@ -160,18 +176,20 @@
   {
     "slug": "raul-bautista",
     "name": "Raul Bautista",
-    "role": "Da confermare",
-    "tagline": "Un volto che torna più volte nei materiali.",
-    "status": "unverified",
+    "role": "Rapinatore di banche",
+    "tagline": "Fascino e sfrontatezza, sempre a caccia di talenti.",
+    "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
     "playable": false,
     "color": "#e5007d",
     "accent": "#ffc93c",
     "hair": "short",
-    "summary": "Personaggio del Trailer 2. Scheda in attesa di dettagli verificati sul gioco finale.",
+    "summary": "Rapinatore esperto, descritto da Rockstar come sicuro di sé e astuto. Cerca persone pronte a rischiare per i colpi più redditizi, ma la sua incoscienza alza la posta a ogni colpo: prima o poi la sua squadra dovrà decidere se raddoppiare o ritirarsi.",
     "facts": [
-      "Presentato nel materiale ufficiale del Trailer 2."
+      "È un rapinatore di banche con molta esperienza.",
+      "Cerca nuovi collaboratori disposti a correre rischi.",
+      "Le sue scelte azzardate rendono ogni colpo più rischioso."
     ],
     "locations": [
       "leonida-keys"
@@ -181,8 +199,8 @@
     ],
     "sources": [
       {
-        "label": "Rockstar Games – VI",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/raul"
       }
     ],
     "updated": "2026-11-16",
@@ -191,27 +209,33 @@
   {
     "slug": "brian-heder",
     "name": "Brian Heder",
-    "role": "Da confermare",
-    "tagline": "Il primo volto che si vede nel Trailer 2.",
-    "status": "unverified",
+    "role": "Contrabbandiere delle Keys",
+    "tagline": "Un veterano del contrabbando che lascia fare agli altri.",
+    "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
     "playable": false,
     "color": "#14a8c8",
     "accent": "#ff7a30",
     "hair": "cap",
-    "summary": "Il personaggio che apre il Trailer 2. Il suo peso nella storia sarà chiarito dopo il lancio.",
+    "summary": "Trafficante di vecchio stampo dell'epoca d'oro del contrabbando nelle Keys. Continua a muovere merce dal suo cantiere nautico insieme alla terza moglie, Lori, e ormai fa lavorare gli altri. Secondo Rockstar ospita Jason gratis in una sua proprietà in cambio di aiuto nelle estorsioni locali.",
     "facts": [
-      "Presentato nel materiale ufficiale del Trailer 2."
+      "Gestisce traffici dal suo cantiere nautico.",
+      "È sposato con Lori, la sua terza moglie.",
+      "Fa vivere Jason in una sua proprietà senza affitto.",
+      "In cambio Jason lo aiuta nelle estorsioni del posto."
     ],
     "locations": [
       "leonida-keys"
     ],
-    "related": [],
+    "related": [
+      "jason-duval",
+      "cal-hampton"
+    ],
     "sources": [
       {
-        "label": "Rockstar Games – VI",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/brian"
       }
     ],
     "updated": "2026-11-16",
@@ -220,27 +244,33 @@
   {
     "slug": "real-dimez",
     "name": "Real Dimez",
-    "role": "Da confermare",
-    "tagline": "Nome da copertina, ruolo da scoprire.",
-    "status": "unverified",
+    "role": "Duo rap",
+    "tagline": "Due amiche dal liceo, tra rap e social.",
+    "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
     "playable": false,
     "color": "#ff2e93",
     "accent": "#5ee7df",
     "hair": "curly",
-    "summary": "Presente nei materiali del Trailer 2. Aggiorneremo la scheda con ruolo e missioni collegate.",
+    "summary": "Duo composto da Bae-Luxe e Roxy, amiche dai tempi del liceo che hanno trasformato le estorsioni ai trafficanti locali in denaro con brani rap provocanti e una presenza costante sui social. Un primo successo con il rapper DWNPLY le ha lanciate; ora, dopo cinque anni difficili, sono sotto contratto con Only Raw Records.",
     "facts": [
-      "Presentato nel materiale ufficiale del Trailer 2."
+      "Il gruppo è formato da Bae-Luxe e Roxy.",
+      "Sono amiche dai tempi del liceo.",
+      "Il loro primo successo è nato con il rapper locale DWNPLY.",
+      "Oggi sono sotto contratto con Only Raw Records."
     ],
     "locations": [
       "vice-city"
     ],
-    "related": [],
+    "related": [
+      "bae-luxe-e-roxy",
+      "dre-quan-priest"
+    ],
     "sources": [
       {
-        "label": "Rockstar Games – VI",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/dimez"
       }
     ],
     "updated": "2026-11-16",
@@ -249,27 +279,31 @@
   {
     "slug": "bae-luxe-e-roxy",
     "name": "Bae-Luxe & Roxy",
-    "role": "Da confermare",
-    "tagline": "Un duo che si presenta sempre insieme.",
-    "status": "unverified",
+    "role": "Duo rap (Real Dimez)",
+    "tagline": "Il duo dietro il nome Real Dimez.",
+    "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
     "playable": false,
     "color": "#ff7a30",
     "accent": "#6d28d9",
     "hair": "long",
-    "summary": "Coppia di personaggi mostrata nei materiali del Trailer 2. Scheda da completare con informazioni verificate nel gioco.",
+    "summary": "Bae-Luxe e Roxy sono il duo noto come Real Dimez: amiche dal liceo, con fiuto per gli affari e una forte presenza sui social. Rockstar le mostra in studio di registrazione, su un'auto davanti alla folla e accanto a Dre'Quan Priest. Ruolo nella trama non specificato.",
     "facts": [
-      "Presentate nel materiale ufficiale del Trailer 2."
+      "Insieme formano le Real Dimez.",
+      "Sono amiche dal liceo.",
+      "Hanno firmato con Only Raw Records."
     ],
     "locations": [
       "vice-city"
     ],
-    "related": [],
+    "related": [
+      "real-dimez"
+    ],
     "sources": [
       {
-        "label": "Rockstar Games – VI",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/dimez"
       }
     ],
     "updated": "2026-11-16",

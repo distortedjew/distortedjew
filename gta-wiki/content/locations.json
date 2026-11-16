@@ -8,86 +8,150 @@
     "needs_review": true,
     "spoiler": false,
     "summary": "Lo stato in cui è ambientato GTA VI. Comprende Vice City, le Leonida Keys, paludi, cittadine industriali e un parco nazionale a nord. Il tono è quello di una Florida satirica, tra social network, caldo e cronaca nera.",
-    "facts": ["Compare già nel Trailer 1 (dicembre 2023).", "Contiene diverse regioni mostrate nel Trailer 2."],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "facts": [
+      "Compare già nel Trailer 1 (dicembre 2023).",
+      "Contiene diverse regioni mostrate nel Trailer 2."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
     "slug": "vice-city",
     "name": "Vice City",
     "kind": "Città",
-    "tagline": "Neon, spiagge e traffico: il ritorno più atteso.",
+    "tagline": "La capitale del sole e del divertimento.",
     "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
-    "summary": "La metropoli principale del gioco, ispirata a Miami e già vista in GTA: Vice City (2002). Qui si concentrano locali, spiagge, quartieri ricchi e zone degradate.",
-    "facts": ["Ritorno della città dopo GTA: Vice City (2002).", "Cuore urbano della mappa di Leonida."],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "summary": "La città simbolo di GTA VI, descritta da Rockstar come la capitale americana del sole e del divertimento. Ogni quartiere ha la sua identità: gli hotel art déco e le spiagge bianche di Ocean Beach, i forni di Little Cuba, il mercato dell'usato Tisha-Wocka e il porto VC Port.",
+    "facts": [
+      "Ocean Beach è nota per gli hotel art déco in colori pastello.",
+      "Little Cuba è citata per i suoi forni.",
+      "Il mercato dell'usato Tisha-Wocka vende marchi contraffatti.",
+      "VC Port è definito la capitale mondiale delle crociere."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/vice-city"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
     "slug": "leonida-keys",
     "name": "Leonida Keys",
     "kind": "Arcipelago",
-    "tagline": "Isole, barche e affari poco puliti.",
+    "tagline": "Isole, barche e vita senza fretta.",
     "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
-    "summary": "Arcipelago ispirato alle Florida Keys. È la zona legata al passato di Jason e a diverse scene del Trailer 1.",
-    "facts": ["Citata nel materiale ufficiale dedicato a Jason."],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "summary": "Arcipelago tropicale dove la vita è semplice più che appariscente. Rockstar lo presenta come un posto dove rilassarsi con una sedia a sdraio, ma sulla soglia di acque tra le più belle e pericolose d'America.",
+    "facts": [
+      "È un arcipelago tropicale.",
+      "Il ritmo di vita è tranquillo e informale.",
+      "Le acque attorno sono descritte come belle ma pericolose.",
+      "Jason lavorava qui per i trafficanti locali."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/leonida-keys"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
     "slug": "grassrivers",
     "name": "Grassrivers",
     "kind": "Regione",
-    "tagline": "Paludi, alligatori e strade che spariscono.",
+    "tagline": "Paludi vaste, alligatori e sorprese tra le mangrovie.",
     "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
-    "summary": "Regione paludosa che richiama le Everglades. Presentata nei materiali del Trailer 2.",
-    "facts": ["Citata nel materiale del Trailer 2."],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "summary": "Distesa paludosa dove gli alligatori sono l'attrazione più famosa, ma Rockstar avverte che tra le mangrovie ci sono predatori più pericolosi e scoperte ancora più strane. Le immagini ufficiali mostrano aeroscafi, alligatori e un inseguimento della polizia.",
+    "facts": [
+      "Gli alligatori sono la presenza più celebre.",
+      "Tra le mangrovie ci sono pericoli e scoperte strane.",
+      "Le immagini ufficiali includono aeroscafi e inseguimenti."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/grassrivers"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
     "slug": "port-gellhorn",
     "name": "Port Gellhorn",
     "kind": "Cittadina",
-    "tagline": "Porto, ruggine e vita di provincia.",
+    "tagline": "Ex meta di vacanze, ora economia di strada.",
     "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
-    "summary": "Cittadina portuale presentata nel Trailer 2. I dettagli sulle missioni e sui negozi arriveranno dopo il lancio.",
-    "facts": ["Citata nel materiale del Trailer 2."],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "summary": "Ex località di villeggiatura piena di motel economici, attrazioni chiuse e centri commerciali vuoti. Secondo Rockstar i turisti non torneranno, ma è nata un'economia nuova, alimentata da superalcolici, antidolorifici e bevande energetiche da camionisti.",
+    "facts": [
+      "Era una località di vacanze molto frequentata.",
+      "Restano motel economici e attrazioni chiuse.",
+      "Le immagini ufficiali mostrano un motel e il Delights Cabaret."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/port-gellhorn"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
     "slug": "ambrosia",
     "name": "Ambrosia",
     "kind": "Regione",
-    "tagline": "Campi, fabbriche e motociclisti.",
+    "tagline": "Zucchero, industria e una banda di motociclisti.",
     "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
-    "summary": "Area industriale e rurale con presenza di bande di motociclisti, secondo il materiale del Trailer 2.",
-    "facts": ["Citata nel materiale del Trailer 2."],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "summary": "Zona nel cuore di Leonida dove contano ancora l'industria e i valori di una volta, a qualunque costo. Il lavoro lo dà la raffineria di zucchero Allied Crystal, mentre quasi tutto il resto lo fornisce la banda di motociclisti del posto.",
+    "facts": [
+      "Il datore di lavoro principale è la raffineria Allied Crystal.",
+      "Una banda di motociclisti è molto influente.",
+      "Le immagini ufficiali mostrano campi in fiamme al tramonto."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/ambrosia"
+      }
+    ],
     "updated": "2026-11-16"
   },
   {
     "slug": "mount-kalaga",
     "name": "Mount Kalaga National Park",
     "kind": "Parco nazionale",
-    "tagline": "Il nord selvaggio di Leonida.",
+    "tagline": "Natura, caccia e strade sterrate vicino al confine nord.",
     "status": "confirmed",
     "needs_review": true,
     "spoiler": false,
-    "summary": "Parco nazionale all'estremo nord della mappa. Ideale per esplorazione, caccia e fughe dalla polizia.",
-    "facts": ["Citato nel materiale del Trailer 2."],
-    "sources": [{ "label": "Rockstar Games – VI", "url": "https://www.rockstargames.com/VI" }],
+    "summary": "Parco nazionale vicino al confine settentrionale dello stato, adatto a caccia, pesca e percorsi fuoristrada. Nei boschi circostanti, riferisce Rockstar, vivono mistici di montagna e radicali paranoici lontani dagli occhi del governo.",
+    "facts": [
+      "Si trova vicino al confine nord dello stato.",
+      "Offre caccia, pesca e percorsi fuoristrada.",
+      "Nelle immagini ufficiali compaiono moto da cross, un puma e un kayak."
+    ],
+    "sources": [
+      {
+        "label": "Rockstar Games – Presentazione ufficiale",
+        "url": "https://www.rockstargames.com/VI/only-in-leonida/kalaga"
+      }
+    ],
     "updated": "2026-11-16"
   }
 ]
