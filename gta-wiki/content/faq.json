@@ -1,11 +1,110 @@
 [
-  { "q": "Quando esce GTA VI?", "a": "Il 19 novembre 2026, a mezzanotte ora locale in ogni regione. Dopo due rinvii (da autunno 2025 a maggio 2026, poi a novembre 2026), la data è stata ribadita da Take-Two ad agosto 2026.", "sources": [{ "label": "Riepilogo data di uscita", "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news" }, { "label": "Forbes – orari di lancio", "url": "https://www.forbes.com/sites/brianmazique/2026/11/12/gta-6-unlocks-at-midnight-on-november-19-but-millions-of-americans-can-start-playing-the-night-before/" }] },
-  { "q": "Su quali piattaforme è disponibile?", "a": "PlayStation 5 e Xbox Series X|S. Una versione PC non è stata annunciata per il lancio.", "sources": [{ "label": "Riepilogo data di uscita", "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news" }] },
-  { "q": "Posso precaricare il gioco?", "a": "Sì. Secondo il sito ufficiale Rockstar, il precaricamento è iniziato il 10 novembre.", "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }] },
-  { "q": "Chi sono i protagonisti?", "a": "Jason Duval e Lucia Caminos, entrambi giocabili. La loro storia è ambientata a Vice City e nello stato di Leonida.", "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }] },
-  { "q": "Dove è ambientato il gioco?", "a": "Nello stato di Leonida, ispirato alla Florida, con Vice City come città principale, le Leonida Keys, zone paludose, cittadine industriali e un parco nazionale a nord.", "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }] },
-  { "q": "Quali edizioni esistono?", "a": "Un'edizione Standard e una Ultimate. L'Ultimate include bonus distribuiti lungo la storia, come veicoli, un garage, abiti e accesso a negozi esclusivi.", "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }] },
-  { "q": "Ci sarà una versione online?", "a": "Rockstar non ha annunciato date né dettagli. Circolano voci su una modalità online nel primo trimestre del 2027, ma non sono confermate.", "sources": [{ "label": "Report su GTA 6 Online", "url": "https://shattered.io/gta-6-online-q1-2027-report-zero-rockstar-dates/" }] },
-  { "q": "Questa wiki è ufficiale?", "a": "No. È un progetto di fan, non affiliato a Rockstar Games o Take-Two Interactive. Ogni scheda indica lo stato di verifica e le fonti.", "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }] },
-  { "q": "Dove trovo immagini e video ufficiali?", "a": "Sul sito ufficiale Rockstar, nella sezione media: Rockstar mette a disposizione video e screenshot ufficiali da scaricare e condividere.", "sources": [{ "label": "Rockstar Games – Grand Theft Auto VI", "url": "https://www.rockstargames.com/VI" }] }
+  {
+    "q": "Quando esce GTA VI?",
+    "a": "Il 19 novembre 2026, a mezzanotte ora locale in ogni regione. Dopo due rinvii (da autunno 2025 a maggio 2026, poi a novembre 2026), la data è stata ribadita da Take-Two ad agosto 2026.",
+    "sources": [
+      {
+        "label": "Riepilogo data di uscita",
+        "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news"
+      },
+      {
+        "label": "Forbes – orari di lancio",
+        "url": "https://www.forbes.com/sites/brianmazique/2026/11/12/gta-6-unlocks-at-midnight-on-november-19-but-millions-of-americans-can-start-playing-the-night-before/"
+      }
+    ]
+  },
+  {
+    "q": "Su quali piattaforme è disponibile?",
+    "a": "PlayStation 5 e Xbox Series X|S. Una versione PC non è stata annunciata per il lancio.",
+    "sources": [
+      {
+        "label": "Riepilogo data di uscita",
+        "url": "https://endgametools.com/en/gta-6/news/gta-6-release-date-latest-news"
+      }
+    ]
+  },
+  {
+    "q": "Posso precaricare il gioco?",
+    "a": "Sì, per chi ha preordinato. Il precaricamento è iniziato il 10 novembre e richiede fino a 212 GB liberi, a seconda della console. Le copie fisiche includono solo un codice di download, non un disco.",
+    "sources": [
+      {
+        "label": "Rockstar Support – FAQ precaricamento",
+        "url": "https://support.rockstargames.com/articles/7nPqOA2uCbpEQHXx7KVrYd/grand-theft-auto-vi-pre-load-faq"
+      },
+      {
+        "label": "Rockstar Newswire – precaricamento",
+        "url": "https://www.rockstargames.com/newswire/article/k4ak9okk485712/grand-theft-auto-vi-pre-load-begins-on-november-10"
+      }
+    ]
+  },
+  {
+    "q": "Esiste una mappa ufficiale di Leonida?",
+    "a": "Rockstar ha annunciato un poster stampabile con una mappa di Leonida, in download gratuito sul sito ufficiale dal 19 novembre. Fino ad allora la mappa di questa wiki resta uno schema indicativo.",
+    "sources": [
+      {
+        "label": "Rockstar Newswire – precaricamento e dettagli",
+        "url": "https://www.rockstargames.com/newswire/article/k4ak9okk485712/grand-theft-auto-vi-pre-load-begins-on-november-10"
+      }
+    ]
+  },
+  {
+    "q": "Chi sono i protagonisti?",
+    "a": "Jason Duval e Lucia Caminos, entrambi giocabili. La loro storia è ambientata a Vice City e nello stato di Leonida.",
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ]
+  },
+  {
+    "q": "Dove è ambientato il gioco?",
+    "a": "Nello stato di Leonida, ispirato alla Florida, con Vice City come città principale, le Leonida Keys, zone paludose, cittadine industriali e un parco nazionale a nord.",
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ]
+  },
+  {
+    "q": "Quali edizioni esistono?",
+    "a": "Un'edizione Standard e una Ultimate. L'Ultimate include bonus distribuiti lungo la storia, come veicoli, un garage, abiti e accesso a negozi esclusivi.",
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ]
+  },
+  {
+    "q": "Ci sarà una versione online?",
+    "a": "Rockstar non ha annunciato date né dettagli. Circolano voci su una modalità online nel primo trimestre del 2027, ma non sono confermate.",
+    "sources": [
+      {
+        "label": "Report su GTA 6 Online",
+        "url": "https://shattered.io/gta-6-online-q1-2027-report-zero-rockstar-dates/"
+      }
+    ]
+  },
+  {
+    "q": "Questa wiki è ufficiale?",
+    "a": "No. È un progetto di fan, non affiliato a Rockstar Games o Take-Two Interactive. Ogni scheda indica lo stato di verifica e le fonti.",
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ]
+  },
+  {
+    "q": "Dove trovo immagini e video ufficiali?",
+    "a": "Sul sito ufficiale Rockstar, nella sezione media: Rockstar mette a disposizione video e screenshot ufficiali da scaricare e condividere.",
+    "sources": [
+      {
+        "label": "Rockstar Games – Grand Theft Auto VI",
+        "url": "https://www.rockstargames.com/VI"
+      }
+    ]
+  }
 ]
