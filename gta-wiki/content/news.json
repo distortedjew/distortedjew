@@ -1,6 +1,22 @@
 [
   {
     "date": "2026-11-17",
+    "title": "Secondo aggiornamento pre-lancio: versione 01.002.001",
+    "body": "Dopo il primo aggiornamento del 13 novembre (01.002.000, circa 1 GB), è in distribuzione una seconda patch pre-lancio, 01.002.001: circa 602 MB su PS5 e 1,6 GB su Xbox Series X|S. Rockstar non ha pubblicato note di rilascio. Dimensioni, contenuti e tempi di distribuzione (a scaglioni su PS5) arrivano da dataminer e account che monitorano gli store, non da Rockstar; si parla di correzioni di bug, ma non è confermato. Il gioco si sblocca comunque il 19 novembre.",
+    "status": "unverified",
+    "sources": [
+      {
+        "label": "TechTimes – secondo aggiornamento pre-lancio",
+        "url": "https://www.techtimes.com/articles/330886/20261117/gta-6-gets-second-pre-launch-update-602-mb-ps5-16-gb-xbox-still-no-patch-notes.htm"
+      },
+      {
+        "label": "Vice – secondo patch day-one su PS5 e Xbox",
+        "url": "https://www.vice.com/en/article/gta-6-second-day-one-patch-ps5-xbox/"
+      }
+    ]
+  },
+  {
+    "date": "2026-11-17",
     "title": "Nuovi dettagli di gameplay dalla visita a Rockstar North",
     "body": "Secondo la stampa, che riporta dichiarazioni di Rockstar raccolte durante una visita guidata allo studio di Edimburgo, all'inizio Jason e Lucia sanno scassinare solo serrature semplici e avviare i veicoli più economici; strumenti migliori arrivano più avanti. Nelle rapine si potranno disattivare le telecamere o cercare ingressi secondari e codici delle casseforti. Un «profilo criminale» terrà traccia dello stile di gioco, separato dal rapporto tra i due protagonisti, che si coltiva con messaggi, chiamate e appuntamenti. La polizia reagisce solo a crimini visti o allarmi. Resoconto di seconda mano: da confermare con le fonti originali o nel gioco finale.",
     "status": "unverified",
