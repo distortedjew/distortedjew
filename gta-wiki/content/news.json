@@ -26,12 +26,56 @@
   {
     "date": "2026-11-10",
     "title": "Inizia il precaricamento",
-    "body": "Il precaricamento dei file di gioco è iniziato il 10 novembre, come indicato sul sito ufficiale Rockstar.",
+    "body": "Il precaricamento è iniziato il 10 novembre, a mezzanotte locale su PS5 e a mezzanotte GMT su Xbox Series X|S. Rockstar indica uno spazio libero fino a 212 GB, a seconda della console. Le copie fisiche contengono solo un codice di download, senza disco, e sono nei negozi dal 12 novembre.",
     "status": "confirmed",
     "sources": [
       {
-        "label": "Rockstar Games – Grand Theft Auto VI",
-        "url": "https://www.rockstargames.com/VI"
+        "label": "Rockstar Newswire – precaricamento",
+        "url": "https://www.rockstargames.com/newswire/article/k4ak9okk485712/grand-theft-auto-vi-pre-load-begins-on-november-10"
+      },
+      {
+        "label": "Rockstar Support – FAQ precaricamento",
+        "url": "https://support.rockstargames.com/articles/7nPqOA2uCbpEQHXx7KVrYd/grand-theft-auto-vi-pre-load-faq"
+      }
+    ]
+  },
+  {
+    "date": "2026-11-09",
+    "title": "Rockstar ha completato lo sviluppo",
+    "body": "Durante la trimestrale di Take-Two, il CEO Strauss Zelnick ha detto che Rockstar ha completato lo sviluppo di GTA VI. La data di uscita resta il 19 novembre su PS5 e Xbox Series X|S.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "GamesBeat – cosa è emerso dalla call Take-Two",
+        "url": "https://gamesbeat.com/all-the-takeaways-on-gta-from-the-take-two-earnings-call-strauss-zelnick/"
+      },
+      {
+        "label": "VGChartz – GTA VI Goes Gold",
+        "url": "https://www.vgchartz.com/article/469616/grand-theft-auto-vi-goes-gold/"
+      }
+    ]
+  },
+  {
+    "date": "2026-11-09",
+    "title": "Grand Theft Auto VI: The Festival a Miami",
+    "body": "Rockstar e PlayStation presentano un evento musicale dal vivo il 21 novembre al Mana Wynwood di Miami, con artisti legati al gioco e alla colonna sonora. Si accede tramite lotteria per i biglietti.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "Rockstar Games – The Festival",
+        "url": "https://rockstargames.com/VI/gtavi-thefestival"
+      }
+    ]
+  },
+  {
+    "date": "2026-11-03",
+    "title": "Poster e mappa di Leonida in download gratuito il 19 novembre",
+    "body": "Rockstar ha annunciato che il 19 novembre aggiungerà al sito ufficiale un poster stampabile con la copertina e una mappa di Leonida, come download digitale gratuito. Questa wiki aggiornerà la sezione mappa solo dopo la pubblicazione.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "Rockstar Newswire – precaricamento e dettagli",
+        "url": "https://www.rockstargames.com/newswire/article/k4ak9okk485712/grand-theft-auto-vi-pre-load-begins-on-november-10"
       }
     ]
   },
