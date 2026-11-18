@@ -1,5 +1,17 @@
 [
   {
+    "date": "2026-11-18",
+    "title": "Vigilia del lancio: cosa dicono i dati ufficiali e la stampa",
+    "body": "Alla vigilia dell'uscita l'agenzia AP riporta che il gioco si sblocca a mezzanotte locale su PS5 e Xbox Series X|S, con alcune regioni dell'Asia e di altre aree che iniziano prima degli Stati Uniti. Il file pesa 212 GB. GTA VI ha otto nomination ai Game Awards, in programma il 10 dicembre, e la colonna sonora originale firmata Justice uscirà come album da 30 tracce l'11 dicembre. Il cast vocale completo non è stato rivelato. Le recensioni della critica erano attese il 18 novembre ma non risultano ancora verificabili: la wiki non riporta voti finché non sono disponibili da fonti affidabili.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "AP via News4JAX – GTA VI arriva con enormi aspettative",
+        "url": "https://www.news4jax.com/business/2026/11/18/after-a-13-year-wait-grand-theft-auto-vi-arrives-with-enormous-hype-and-expectations/"
+      }
+    ]
+  },
+  {
     "date": "2026-11-17",
     "title": "Secondo aggiornamento pre-lancio: versione 01.002.001",
     "body": "Dopo il primo aggiornamento del 13 novembre (01.002.000, circa 1 GB), è in distribuzione una seconda patch pre-lancio, 01.002.001: circa 602 MB su PS5 e 1,6 GB su Xbox Series X|S. Rockstar non ha pubblicato note di rilascio. Dimensioni, contenuti e tempi di distribuzione (a scaglioni su PS5) arrivano da dataminer e account che monitorano gli store, non da Rockstar; si parla di correzioni di bug, ma non è confermato. Il gioco si sblocca comunque il 19 novembre.",
@@ -98,12 +110,16 @@
   {
     "date": "2026-11-03",
     "title": "Poster e mappa di Leonida in download gratuito il 19 novembre",
-    "body": "Rockstar ha annunciato che il 19 novembre aggiungerà al sito ufficiale un poster stampabile con la copertina e una mappa di Leonida, come download digitale gratuito. Questa wiki aggiornerà la sezione mappa solo dopo la pubblicazione.",
+    "body": "Rockstar ha annunciato che il 19 novembre aggiungerà al sito ufficiale un poster stampabile con la copertina e una mappa di Leonida, come download digitale gratuito. Questa wiki aggiornerà la sezione mappa solo dopo la pubblicazione. Secondo GamesRadar, che riporta l'annuncio di Rockstar, una versione fisica fronte-retro sarà disponibile poco dopo il lancio nello store Rockstar a 0,99 dollari, oppure in regalo con qualsiasi acquisto; la mappa non è inclusa nelle edizioni fisiche con codice nella confezione.",
     "status": "confirmed",
     "sources": [
       {
         "label": "Rockstar Newswire – precaricamento e dettagli",
         "url": "https://www.rockstargames.com/newswire/article/k4ak9okk485712/grand-theft-auto-vi-pre-load-begins-on-november-10"
+      },
+      {
+        "label": "GamesRadar – poster e mappa fisici a 0,99 dollari",
+        "url": "https://gamesradar.com/games/grand-theft-auto/the-grand-theft-auto-bonus-that-used-to-be-free-with-every-physical-game-is-now-a-separate-usd1-purchase-for-gta-6"
       }
     ]
   },
