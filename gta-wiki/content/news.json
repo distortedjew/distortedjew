@@ -12,6 +12,22 @@
     ]
   },
   {
+    "date": "2026-11-18",
+    "title": "Uscita di GTA VI",
+    "body": "Lo sblocco è iniziato: GTA VI è giocabile a partire dalla mezzanotte locale del 19 novembre, a ondate per fuso orario. La Nuova Zelanda è stata la prima (la sera del 18 novembre in Italia e negli Stati Uniti), poi Australia e Asia, quindi l'Europa; gli Stati Uniti sono tra gli ultimi, a mezzanotte ora della costa orientale. Piattaforme: PS5 e Xbox Series X|S, senza versione PC annunciata. Su PS5 serve il firmware 14.23.00 o successivo, secondo PlayStation Support riportato da Vice. Il trucco di cambiare regione su Xbox per giocare prima non è confermato né da Rockstar né da Microsoft. La notizia si basa su due testate; la wiki passa alla modalità lancio e inizia a popolarsi con guide ed easter egg verificati.",
+    "status": "confirmed",
+    "sources": [
+      {
+        "label": "PlayStation LifeStyle – GTA VI si sblocca su PS5",
+        "url": "https://www.playstationlifestyle.net/2026/11/18/gta-vi-ps5-unlocking-now-ps5-ps-store"
+      },
+      {
+        "label": "Vice – GTA 6 è uscito in Nuova Zelanda, orari nel mondo",
+        "url": "https://www.vice.com/en/article/gta-6-new-zealand-worldwide-release-times/"
+      }
+    ]
+  },
+  {
     "date": "2026-11-17",
     "title": "Secondo aggiornamento pre-lancio: versione 01.002.001",
     "body": "Dopo il primo aggiornamento del 13 novembre (01.002.000, circa 1 GB), è in distribuzione una seconda patch pre-lancio, 01.002.001: circa 602 MB su PS5 e 1,6 GB su Xbox Series X|S. Rockstar non ha pubblicato note di rilascio. Dimensioni, contenuti e tempi di distribuzione (a scaglioni su PS5) arrivano da dataminer e account che monitorano gli store, non da Rockstar; si parla di correzioni di bug, ma non è confermato. Il gioco si sblocca comunque il 19 novembre.",
@@ -36,18 +52,6 @@
       {
         "label": "KeenGamer – dettagli di gameplay a pochi giorni dal lancio",
         "url": "https://www.keengamer.com/articles/news/rockstar-reveals-new-grand-theft-auto-vi-gameplay-details-days-before-launch/"
-      }
-    ]
-  },
-  {
-    "date": "2026-11-19",
-    "title": "Uscita di GTA VI",
-    "body": "Il gioco esce su PS5 e Xbox Series X|S a mezzanotte ora locale in ogni regione. Questa wiki passa in modalità lancio e inizia a popolarsi con guide ed easter egg verificati.",
-    "status": "planned",
-    "sources": [
-      {
-        "label": "Cronologia ufficiale",
-        "url": "https://www.rockstargames.com/VI"
       }
     ]
   },
