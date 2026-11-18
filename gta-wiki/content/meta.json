@@ -1,7 +1,7 @@
 {
   "siteName": "Leonida Files",
   "tagline": "La wiki non ufficiale di Grand Theft Auto VI",
-  "phase": "prelaunch",
+  "phase": "launched",
   "release": {
     "iso": "2026-11-19T00:00:00",
     "note": "Mezzanotte ora locale, in ogni regione. PS5 e Xbox Series X|S. Nessuna versione PC al lancio."
@@ -9,6 +9,10 @@
   "siteUrl": "",
   "lastUpdate": "2026-11-18",
   "changelog": [
+    {
+      "date": "2026-11-18",
+      "text": "Sblocco iniziato (Nuova Zelanda per prima): wiki in modalità lancio e news «Uscita di GTA VI» aggiornata."
+    },
     {
       "date": "2026-11-18",
       "text": "Vigilia del lancio (dati AP: Game Awards, album Justice, 212 GB) e dettagli sul poster fisico a 0,99 dollari."
